@@ -1,5 +1,5 @@
 // Offline support: after the first visit the app also runs without internet (school Wi-Fi).
-const CACHE = 'buchstaben-zoo-v2';
+const CACHE = 'krakel-krone-v3';
 const PRECACHE = [
   '/',
   '/manifest.webmanifest',

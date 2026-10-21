@@ -89,8 +89,77 @@ const spawn = (team: TeamId, ch: string, score: number) => {
 };
 [...'ABCDEFGH'].forEach((ch, i) => spawn('A', ch, [95, 40, 70, 20, 85, 55, 10, 65][i]));
 [...'abcdefgh'].forEach((ch, i) => spawn('B', ch, [60, 90, 35, 75, 50, 80, 45, 30][i]));
-for (let t = 0; t < 9; t += 1 / 30) duel.update(1 / 30);
-const dc = createCanvas(W, H);
-duel.render(dc.getContext('2d') as unknown as CanvasRenderingContext2D);
-writeFileSync(`${out}/scene-duel.png`, dc.toBuffer('image/png'));
-console.log('wrote duel');
+const snap = (name: string) => {
+  const dc = createCanvas(W, H);
+  duel.render(dc.getContext('2d') as unknown as CanvasRenderingContext2D);
+  writeFileSync(`${out}/${name}`, dc.toBuffer('image/png'));
+  console.log('wrote', name);
+};
+for (let t = 0; t < 6; t += 1 / 30) duel.update(1 / 30);
+snap('scene-duel.png');
+[...'KLMN'].forEach((ch, i) => spawn('A', ch, [95, 92, 90, 85][i]));
+for (let t = 0; t < 22; t += 1 / 30) duel.update(1 / 30);
+snap('scene-duel-2.png');
+
+// ---- Klasse gegen Riesenburg
+const { SiegeScene } = await import('../src/scenes/siegeScene.ts');
+const siegeHost: SceneHost = { ...host, settings: { ...structuredClone(DEFAULTS), siege: { className: 'Klasse 2b', size: 'mittel', timeLimit: 0 } }, finished: () => console.log('siege finished') };
+const siege = new SiegeScene(siegeHost, W);
+const siegeSnap = (name: string) => {
+  const dc = createCanvas(W, H);
+  siege.render(dc.getContext('2d') as unknown as CanvasRenderingContext2D);
+  writeFileSync(`${out}/${name}`, dc.toBuffer('image/png'));
+  console.log('wrote', name);
+};
+const stepSiege = (sec: number) => {
+  for (let t = 0; t < sec; t += 1 / 30) siege.update(1 / 30);
+};
+stepSiege(0.9);
+siegeSnap('siege-1-rise.png');
+stepSiege(1.2);
+siegeSnap('siege-2-laugh.png');
+stepSiege(1.7);
+siegeSnap('siege-3-banner.png');
+stepSiege(1.6);
+siegeSnap('siege-4-countdown.png');
+stepSiege(2);
+const addClass = (ch: string, score: number) => {
+  const g = glyph(ch, score, 'A', '#c2410c');
+  const cv = createCanvas(g.crop.width, g.crop.height);
+  const cx = cv.getContext('2d');
+  const d = cx.createImageData(g.crop.width, g.crop.height);
+  d.data.set(g.crop.data);
+  cx.putImageData(d, 0, 0);
+  siege.glyphs.set(g.id, { glyph: g, sticker: cv as unknown as AnyCanvas });
+  siege.sim.spawn('A', score, g.id);
+};
+[...'KlasseZweiB'].forEach((ch, i) => addClass(ch, [95, 70, 85, 40, 90, 60, 75, 95, 30, 88, 66][i]));
+stepSiege(12);
+siegeSnap('siege-5-battle.png');
+// speed up: empty the first wall
+siege.sim.castles.B.pile = siege.sim.castles.B.pile.map(() => 0);
+siege.sim.castles.B.tank = 0;
+siege.sim.castles.B.flying = [];
+[...'ABC'].forEach((ch) => addClass(ch, 95));
+for (let i = 0; i < 40 * 30 && !siege.seq; i++) siege.update(1 / 30);
+stepSiege(0.9);
+siegeSnap('siege-6-wall-burst.png');
+stepSiege(1.6);
+siegeSnap('siege-7-wall-banner.png');
+// finale: jump to the last wall and win
+while (siege.sim.stage < siege.walls.length - 1 || siege.seq) {
+  if (!siege.seq) {
+    siege.sim.castles.B.pile = siege.sim.castles.B.pile.map(() => 0);
+    siege.sim.castles.B.tank = 0;
+    siege.sim.castles.B.flying = [];
+    addClass('X', 95);
+  }
+  siege.update(1 / 30);
+}
+siege.sim.castles.B.pile = siege.sim.castles.B.pile.map(() => 0);
+siege.sim.castles.B.tank = 0;
+siege.sim.castles.B.flying = [];
+addClass('Y', 95);
+for (let i = 0; i < 40 * 30 && !siege.seq; i++) siege.update(1 / 30);
+stepSiege(3.6);
+siegeSnap('siege-8-victory.png');

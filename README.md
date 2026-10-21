@@ -1,4 +1,6 @@
-# Buchstaben-Zoo 🐠👽🦒
+# Krakel & Krone 👑
+
+*Schreib schön – und dein Krakel bekommt eine Krone!*
 
 Ein Schreib-Motivationsspiel für die Grundschule. Eine Dokumentenkamera schaut auf das Blatt. Jeder geschriebene Buchstabe und jede Zahl wird zu einem süßen Wesen:
 
@@ -11,9 +13,19 @@ Auf dem Bauch jedes Wesens klebt das echte Zeichen des Kindes.
   - **Frei schreiben**: jedes Zeichen zählt.
   - **Buchstaben üben**: z. B. „Schreibe 5× das B“. Das Wesen gibt dazu einen Tipp („Bäuche schön zumachen!“, „Ganz langsam und ruhig schreiben.“).
 - **Team-Duell**: Zwei Teams schreiben auf kleine Zettel. Die Teams werden an der Stift- oder der Zettelfarbe erkannt.
-  - Jedes Zeichen wird zu einer Figur, die zur gegnerischen Seifenblasen-Burg läuft.
-  - Schöne Zeichen sind groß und stark. Besiegte Figuren zerplatzen wie Seifenblasen.
+  - Jedes Zeichen wird zu einer Figur mit **1–5 Sternen** (je schöner, desto mehr). Jeder Stern ist ein Schlag.
+  - Treffen zwei Figuren aufeinander, ziehen sie sich gegenseitig Sterne ab. Bei 0 Sternen zerplatzt eine Figur wie eine Seifenblase.
+  - Die Burgen sind Stapel aus Seifenblasen. Jeder Schlag lässt eine Blase platzen, die Blasen darüber rutschen nach.
+  - Eine **Seifenblasen-Maschine** bläst neue Blasen nach, bis ihr Tank leer ist. Wer zuerst alle Blasen des Gegners zum Platzen bringt, gewinnt.
   - Gekritzel macht nur „Pfff?“.
+- **Klasse gegen Riesenburg**: Die ganze Klasse ist ein Team gegen Riese Rumpel. Alle Stiftfarben zählen.
+  - Die Riesenburg hat 2–4 Mauern aus Seifenblasen, jede mit eigener Seifenblasen-Maschine.
+  - Der Riese schickt Tintenklecks-Wächter, die vor der Burg verteidigen.
+  - Zwischensequenzen:
+    - Die Burg steigt aus dem Boden, der Riese lacht, Countdown.
+    - Jede gefallene Mauer zerplatzt mit Kamerafahrt, der Riese wird wütend.
+    - Am Ende fällt der Riese herunter, schwenkt die weiße Fahne, es gibt Konfetti.
+  - Optional mit Zeitlimit; die Auswertung bleibt immer positiv.
   - Am Ende werden das schönste Zeichen und die tapferste Figur jedes Teams gefeiert.
 
 **Datenschutz:**

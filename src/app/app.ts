@@ -9,9 +9,10 @@ import type { EngineInfo } from '../recog/engine.ts';
 import { createVision, type VisionClient } from '../recog/workerClient.ts';
 import { aquarium } from '../scenes/aquarium.ts';
 import { DuelScene, type DuelResult } from '../scenes/duelScene.ts';
+import { SiegeScene, type SiegeResult } from '../scenes/siegeScene.ts';
 import { HabitatScene, type HabitatDef } from '../scenes/habitat.ts';
 import { savanna } from '../scenes/savanna.ts';
-import type { Scene, SceneHost } from '../scenes/scene.ts';
+import type { Scene, SceneHost, Snapshot } from '../scenes/scene.ts';
 import { space } from '../scenes/space.ts';
 import { openCameraSetup } from '../ui/cameraSetup.ts';
 import { showDebug } from '../ui/debugView.ts';
@@ -24,15 +25,17 @@ import { openSettings } from '../ui/settingsPanel.ts';
 import { renderStart } from '../ui/startScreen.ts';
 import { openTargetPicker } from '../ui/targetPicker.ts';
 import { toast } from '../ui/toast.ts';
-import { confetti, openVictory } from '../ui/victoryScreen.ts';
+import { openSiegeLobby } from '../ui/siegeLobby.ts';
+import { confetti, openSiegeResult, openVictory } from '../ui/victoryScreen.ts';
 import { PEN_PRESETS, SLIP_PRESETS } from '../vision/color.ts';
+import { DETECT_SIZE } from '../vision/constants.ts';
 import type { ScanResult, VisionOptions } from '../vision/types.ts';
 import { loadSettings, saveSettings, type HabitatId, type Settings } from './settings.ts';
 
 const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna };
 const DEBUG = new URLSearchParams(location.search).has('debug');
 
-type Mode = { kind: 'start' } | { kind: 'habitat'; id: HabitatId } | { kind: 'duel' };
+type Mode = { kind: 'start' } | { kind: 'habitat'; id: HabitatId } | { kind: 'duel' } | { kind: 'siege' };
 
 export class App {
   settings: Settings = loadSettings();
@@ -135,6 +138,7 @@ export class App {
   }
 
   private render(): void {
+    this.hud?.root.classList.toggle('cinematic', !!this.scene?.cinematic);
     const ctx = this.stage.begin();
     if (this.scene) this.scene.render(ctx, this.stage.worldW);
     else {
@@ -175,6 +179,13 @@ export class App {
           start: () => this.startDuel(),
           openCamera: () => this.cameraSetup(),
         }),
+      openSiege: () =>
+        openSiegeLobby(
+          this.settings,
+          () => this.save(),
+          () => this.startSiege(),
+          () => this.cameraSetup(),
+        ),
     });
   }
 
@@ -221,6 +232,7 @@ export class App {
 
   private enterGame(): void {
     unlockAudio();
+    this.probe.start();
     clear(this.ui);
     if (!document.fullscreenElement) void document.documentElement.requestFullscreen?.().catch(() => undefined);
     void this.requestWakeLock();
@@ -284,8 +296,32 @@ export class App {
     toast('Zettel unter die Kamera legen und „Fertig!“ drücken!', 'info', 4500);
   }
 
+  startSiege(): void {
+    this.enterGame();
+    this.mode = { kind: 'siege' };
+    this.scene = new SiegeScene(this.host(), this.stage.worldW);
+    this.hud = new Hud(this.ui, {
+      title: '🏰 Riesenburg',
+      settings: this.settings,
+      camera: this.camera,
+      practice: false,
+      onScan: () => void this.scan('manual'),
+      onMenu: () => this.showStart(),
+      onNewSheet: () => {
+        void this.vision.reset();
+        toast('Alles gilt wieder als neu.', 'info');
+      },
+      onToggleAuto: () => this.toggleAuto(),
+      onFullscreen: () => this.toggleFullscreen(),
+      onCamera: () => this.cameraSetup(),
+    });
+    this.hud.setCounter('');
+    this.auto.setEnabled(this.settings.recog.autoScan);
+  }
+
   private leaveGame(): void {
     this.auto.setEnabled(false);
+    this.probe.stop();
     this.scene?.destroy();
     this.scene = null;
     this.hud?.destroy();
@@ -300,7 +336,7 @@ export class App {
       toast: (t, k) => toast(t, k),
       showCard: (info) => openGlyphCard(info, DEBUG),
       progress: () => this.updateProgress(),
-      finished: (r) => this.duelFinished(r as DuelResult),
+      finished: (r) => (this.mode.kind === 'siege' ? this.siegeFinished(r as SiegeResult) : this.duelFinished(r as DuelResult)),
     };
   }
 
@@ -351,6 +387,15 @@ export class App {
     const m = modal(content, () => this.updateProgress());
   }
 
+  private siegeFinished(r: SiegeResult): void {
+    this.auto.setEnabled(false);
+    openSiegeResult(
+      r,
+      () => this.startSiege(),
+      () => this.showStart(),
+    );
+  }
+
   private duelFinished(r: DuelResult): void {
     this.auto.setEnabled(false);
     openVictory(
@@ -365,12 +410,13 @@ export class App {
   private visionOptions(forTest = false): VisionOptions {
     const s = this.settings;
     const duel = this.mode.kind === 'duel';
+    const siege = this.mode.kind === 'siege';
     return {
       pen: s.recog.pen,
       ruled: s.recog.ruled,
       strictness: s.recog.strictness,
       style: s.recog.style,
-      target: !duel && !forTest && s.practice.mode === 'ueben' && this.mode.kind === 'habitat' ? s.practice.target : undefined,
+      target: !forTest && s.practice.mode === 'ueben' && this.mode.kind === 'habitat' ? s.practice.target : undefined,
       team: duel
         ? {
             by: s.duel.by,
@@ -381,7 +427,7 @@ export class App {
             })),
           }
         : undefined,
-      dedup: duel ? 'slips' : 'sheet',
+      dedup: duel || siege ? 'slips' : 'sheet',
       debug: DEBUG,
     };
   }
@@ -411,14 +457,26 @@ export class App {
     this.hud?.setBusy(true);
     try {
       if (trigger === 'manual') {
-        await this.probe.waitStill(2500, () => toast('Hände weg – gleich mache ich ein Foto! 📸', 'info', 2000));
+        await this.probe.waitStill(1500, () => toast('Hände weg – gleich mache ich ein Foto! 📸', 'info', 2000));
       }
-      const out = await this.scanOnce();
-      if (!out || !this.scene) return;
-      const { res, snapshot } = out;
-      const detW = res.frameW / res.scale;
-      const detH = res.frameH / res.scale;
-      this.scene.handleScan(res, { canvas: snapshot, detW, detH });
+      await this.visionReady;
+      const g = await this.camera.grab(this.settings.camera);
+      // show the photo right away; the recognition runs meanwhile in the worker
+      const s = Math.min(1, DETECT_SIZE / Math.max(g.frame.width, g.frame.height));
+      const snap: Snapshot = { canvas: g.snapshot, detW: Math.round(g.frame.width * s), detH: Math.round(g.frame.height * s) };
+      this.scene.beginCapture?.(snap);
+      let res: ScanResult;
+      try {
+        res = await this.vision.scan(g.frame, this.visionOptions());
+      } catch (e) {
+        this.scene?.cancelCapture?.();
+        throw e;
+      }
+      if (DEBUG) showDebug(res);
+      if (!this.scene) return;
+      snap.detW = res.frameW / res.scale;
+      snap.detH = res.frameH / res.scale;
+      this.scene.handleScan(res, snap);
       this.auto.markScanned();
     } catch (e) {
       if (e instanceof CameraError) toast(`${e.message} ${e.hint}`, 'warn', 7000);

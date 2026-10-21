@@ -51,6 +51,12 @@ export interface Settings {
     /** minutes, 0 = no limit */
     timeLimit: number;
   };
+  siege: {
+    className: string;
+    size: 'klein' | 'mittel' | 'gross';
+    /** minutes, 0 = no limit */
+    timeLimit: number;
+  };
   firstRunDone: boolean;
 }
 
@@ -69,9 +75,11 @@ export const DEFAULTS: Settings = {
     castle: 'mittel',
     timeLimit: 0,
   },
+  siege: { className: 'Unsere Klasse', size: 'mittel', timeLimit: 0 },
   firstRunDone: false,
 };
 
+// key kept from the working title "Buchstaben-Zoo", so existing settings stay
 const KEY = 'buchstaben-zoo.settings';
 
 function merge<T>(base: T, over: unknown): T {

@@ -97,7 +97,7 @@ export function openDuelLobby(d: LobbyDeps): void {
     h(
       'p',
       { class: 'help', style: 'font-size:1.05rem' },
-      'Jedes Team schreibt Buchstaben und Zahlen auf kleine Zettel. Unter der Kamera wird jedes Zeichen zu einer Figur. Je schöner, desto stärker! Wessen Seifenblasen-Burg zuerst platzt, verliert.',
+      'Jedes Team schreibt Buchstaben und Zahlen auf kleine Zettel. Unter der Kamera wird jedes Zeichen zu einer Figur mit 1 bis 5 Sternen – je schöner geschrieben, desto mehr. Jeder Stern ist ein Schlag: Treffen sich zwei Figuren, ziehen sie sich gegenseitig Sterne ab. An der gegnerischen Burg lässt jeder Schlag eine Seifenblase platzen. Die Seifenblasen-Maschine bläst neue nach, bis ihr Tank leer ist. Wer zuerst alle Blasen des Gegners zum Platzen bringt, gewinnt!',
     ),
     h(
       'div',
@@ -120,12 +120,12 @@ export function openDuelLobby(d: LobbyDeps): void {
     h(
       'div',
       { class: 'row' },
-      h('label', null, 'Burg-Stärke'),
+      h('label', null, 'Seifenblasen'),
       segmented(
         [
-          { value: 'klein', label: 'Kurz' },
+          { value: 'klein', label: 'Wenige (kurzes Spiel)' },
           { value: 'mittel', label: 'Mittel' },
-          { value: 'gross', label: 'Lang' },
+          { value: 'gross', label: 'Viele (langes Spiel)' },
         ],
         s.castle,
         (v) => {

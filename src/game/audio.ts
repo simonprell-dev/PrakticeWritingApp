@@ -122,4 +122,35 @@ export const sfx = {
   click() {
     tone(900, 0.05, { type: 'triangle', gain: 0.1 });
   },
+  /** the castle rises from the ground */
+  rumble() {
+    noise(1.4, { freq: 120, q: 0.7, gain: 0.5 });
+    tone(55, 1.2, { type: 'sawtooth', to: 40, gain: 0.08 });
+  },
+  /** the giant laughs: ho ho ho */
+  laugh() {
+    [0, 0.22, 0.44].forEach((d, i) => {
+      tone(150 - i * 12, 0.18, { type: 'square', to: 120 - i * 12, gain: 0.07, delay: d });
+      tone(300 - i * 24, 0.18, { type: 'triangle', to: 240 - i * 24, gain: 0.08, delay: d });
+    });
+  },
+  /** the giant grumbles */
+  grumble() {
+    tone(110, 0.5, { type: 'sawtooth', to: 70, gain: 0.07 });
+    noise(0.4, { freq: 300, q: 0.8, gain: 0.12, delay: 0.05 });
+  },
+  tick() {
+    tone(660, 0.12, { type: 'square', gain: 0.07 });
+  },
+  go() {
+    tone(880, 0.3, { type: 'square', gain: 0.08 });
+    tone(1320, 0.35, { type: 'triangle', gain: 0.1, delay: 0.05 });
+  },
+  /** a whole wall bursts */
+  cascade() {
+    for (let i = 0; i < 8; i++) {
+      const f = 700 + Math.random() * 900;
+      tone(f, 0.07, { to: f * 2, gain: 0.12, delay: i * 0.09 });
+    }
+  },
 };

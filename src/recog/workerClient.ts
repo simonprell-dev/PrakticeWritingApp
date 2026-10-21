@@ -1,7 +1,10 @@
-// Promise API around the vision worker, with an in-thread fallback (?noworker or no Worker support).
+// Promise API around the vision workers. Several workers recognise the glyphs of one scan in parallel;
+// falls back to a single worker or to the main thread (?noworker or no Worker support).
 import type { Vec3 } from '../vision/color.ts';
+import type { GlyphJob } from '../vision/pipeline.ts';
 import type { RGBAImage, ScanResult, VisionOptions } from '../vision/types.ts';
 import type { EngineInfo } from './engine.ts';
+import type { Analysis } from './recognizer.ts';
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: number };
 
@@ -15,7 +18,8 @@ export interface VisionClient {
 
 const BASE = new URL(import.meta.env.BASE_URL || '/', location.href).href;
 
-class WorkerVision implements VisionClient {
+/** one worker */
+class WorkerHandle {
   private w: Worker;
   private seq = 1;
   private pending = new Map<number, Pending>();
@@ -36,7 +40,7 @@ class WorkerVision implements VisionClient {
     };
   }
 
-  private call<T>(msg: Record<string, unknown>, transfer: Transferable[] = [], timeout = 20000): Promise<T> {
+  call<T>(msg: Record<string, unknown>, transfer: Transferable[] = [], timeout = 20000): Promise<T> {
     const id = this.seq++;
     return new Promise<T>((resolve, reject) => {
       const timer = window.setTimeout(() => {
@@ -47,18 +51,49 @@ class WorkerVision implements VisionClient {
       this.w.postMessage({ ...msg, id }, transfer);
     });
   }
+}
 
-  init() {
-    return this.call<EngineInfo>({ type: 'init', base: BASE }, [], 60000);
+class WorkerPool implements VisionClient {
+  private workers: WorkerHandle[];
+
+  constructor(n: number) {
+    this.workers = Array.from({ length: n }, () => new WorkerHandle());
   }
-  scan(frame: RGBAImage, opts: VisionOptions) {
-    return this.call<ScanResult>({ type: 'scan', frame, opts }, [frame.data.buffer as ArrayBuffer]);
+
+  private get main(): WorkerHandle {
+    return this.workers[0];
   }
+
+  async init() {
+    const infos = await Promise.all(this.workers.map((w) => w.call<EngineInfo>({ type: 'init', base: BASE }, [], 60000)));
+    return infos[0];
+  }
+
+  async scan(frame: RGBAImage, opts: VisionOptions): Promise<ScanResult> {
+    if (this.workers.length === 1) return this.main.call<ScanResult>({ type: 'scan', frame, opts }, [frame.data.buffer as ArrayBuffer]);
+    const { id, jobs } = await this.main.call<{ id: number; jobs: GlyphJob[] }>({ type: 'segment', frame, opts }, [frame.data.buffer as ArrayBuffer]);
+    const t0 = performance.now();
+    let analyses: Analysis[];
+    if (jobs.length <= 2) analyses = await this.main.call<Analysis[]>({ type: 'analyze', jobs, opts });
+    else {
+      // glyphs are spread over all workers and recognised at the same time
+      const k = Math.min(this.workers.length, jobs.length);
+      const size = Math.ceil(jobs.length / k);
+      const parts = await Promise.all(
+        Array.from({ length: k }, (_, i) => this.workers[i].call<Analysis[]>({ type: 'analyze', jobs: jobs.slice(i * size, (i + 1) * size), opts })),
+      );
+      analyses = parts.flat();
+    }
+    const recognize = Math.round(performance.now() - t0);
+    return this.main.call<ScanResult>({ type: 'finish', scanId: id, analyses, opts, timings: { recognize } });
+  }
+
   reset() {
-    return this.call<void>({ type: 'reset' });
+    return this.main.call<void>({ type: 'reset' });
   }
+
   calibrate(frame: RGBAImage, kind: 'pen' | 'slip') {
-    return this.call<never>({ type: 'calibrate', frame, kind }, [frame.data.buffer as ArrayBuffer]);
+    return this.main.call<never>({ type: 'calibrate', frame, kind }, [frame.data.buffer as ArrayBuffer]);
   }
 }
 
@@ -82,10 +117,14 @@ class InlineVision implements VisionClient {
 }
 
 export function createVision(): VisionClient {
-  const noWorker = new URLSearchParams(location.search).has('noworker') || typeof Worker === 'undefined';
+  const q = new URLSearchParams(location.search);
+  const noWorker = q.has('noworker') || typeof Worker === 'undefined';
   if (!noWorker) {
     try {
-      return new WorkerVision();
+      // leave one core for drawing; at most 4 workers
+      const cores = navigator.hardwareConcurrency || 2;
+      const n = q.has('oneworker') ? 1 : Math.max(1, Math.min(4, cores - 1));
+      return new WorkerPool(n);
     } catch {
       /* fall through */
     }

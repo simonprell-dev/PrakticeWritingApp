@@ -28,9 +28,15 @@ export interface SceneHost {
 export interface Scene {
   update(dt: number): void;
   render(ctx: CanvasRenderingContext2D, worldW: number): void;
+  /** the photo was just taken (shown while the recognition runs) */
+  beginCapture?(snap: Snapshot): void;
+  /** the recognition failed */
+  cancelCapture?(): void;
   handleScan(res: ScanResult, snap: Snapshot): void;
   /** world coordinates; returns true when something was hit */
   tap(x: number, y: number): boolean;
   resize(worldW: number): void;
   destroy(): void;
+  /** a cutscene is running: the app fades out the top HUD */
+  cinematic?: boolean;
 }

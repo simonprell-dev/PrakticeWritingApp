@@ -1,5 +1,5 @@
 // Full scan: frame -> regions -> ink -> lines -> glyphs -> recognition/score -> team -> dedup.
-import type { GlyphFeatures, Recognizer } from '../recog/recognizer.ts';
+import type { Analysis, GlyphFeatures, Recognizer } from '../recog/recognizer.ts';
 import { qualityFeatures } from '../recog/quality.ts';
 import { buildSkel } from '../recog/templates.ts';
 import type { Vec3 } from './color.ts';
@@ -8,7 +8,7 @@ import { clampBox, resizeRGBAToPlanes, sampleBilinear } from './image.ts';
 import { inkThresholds, normalisePlanes, type NormPlanes } from './ink.ts';
 import { removeRuledLines } from './lines.ts';
 import { close, strokeWidth } from './morphology.ts';
-import { aspect, CNN_SIZE, cutGlyph, toCnnInput, toQualityMask, toTemplateMask } from './normalize.ts';
+import { aspect, CNN_SIZE, cutGlyph, toCnnInput, toQualityMask, toTemplateMask, type GlyphCrop } from './normalize.ts';
 import { detectRegions, type PaperRegion } from './paper.ts';
 import { findGlyphs } from './segment.ts';
 import { absorptionOf, classifyPen } from './team.ts';
@@ -25,7 +25,9 @@ import type {
   VisionOptions,
 } from './types.ts';
 
-export const DETECT_SIZE = 1280;
+import { DETECT_SIZE } from './constants.ts';
+
+export { DETECT_SIZE };
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -97,8 +99,33 @@ function detBox(p: Patch, b: Box): Box {
   return { x: x0, y: y0, w: Math.max(...xs) - x0, h: Math.max(...ys) - y0 };
 }
 
+/** Everything the recognition of one glyph needs (serialisable, can go to another worker). */
+export interface GlyphJob {
+  crop: GlyphCrop;
+  dots: number;
+  bodyH: number;
+  baselineDev?: number;
+  /** also evaluate the mirrored glyph (practice mode) */
+  mirror: boolean;
+}
+
+/** Heavy per-glyph feature extraction (CNN input, skeleton, stroke quality). */
+export function featuresOf(job: GlyphJob): GlyphFeatures {
+  const cnn = toCnnInput(job.crop);
+  return {
+    cnn,
+    cnnMirror: job.mirror ? flipH(cnn, CNN_SIZE) : undefined,
+    skel: buildSkel(toTemplateMask(job.crop)),
+    quality: qualityFeatures(toQualityMask(job.crop)),
+    aspect: aspect(job.crop),
+    dots: job.dots,
+    bodyH: job.bodyH,
+    baselineDev: job.baselineDev,
+  };
+}
+
 interface PatchGlyph {
-  feat: GlyphFeatures;
+  job: GlyphJob;
   crop: RGBAImage;
   thumb: Uint8Array;
   box: Box;
@@ -106,7 +133,6 @@ interface PatchGlyph {
   team?: TeamId;
   neutral: boolean;
   dots: number;
-  cnn: Float32Array;
 }
 
 function flipH(a: Float32Array, size: number): Float32Array {
@@ -148,9 +174,6 @@ function processPatch(
     const cnnLabels = new Set(g.dots === 1 ? [...g.baseLabels, ...g.dotLabels] : g.baseLabels);
     const cnnBox = g.dots === 1 ? g.box : g.baseBox;
     const crop = cutGlyph(ink, seg.labels, w, cnnBox, cnnLabels);
-    const cnn = toCnnInput(crop);
-    const skel = buildSkel(toTemplateMask(crop));
-    const quality = qualityFeatures(toQualityMask(crop));
     let baselineDev: number | undefined;
     if (spacing > 0) {
       const cx = g.baseBox.x + g.baseBox.w / 2;
@@ -159,16 +182,7 @@ function processPatch(
       for (const ly of hLines) best = Math.min(best, Math.abs(bottom - (ly + cx * tanSkew)));
       baselineDev = best / spacing;
     }
-    const feat: GlyphFeatures = {
-      cnn,
-      cnnMirror: opts.target ? flipH(cnn, CNN_SIZE) : undefined,
-      skel,
-      quality,
-      aspect: aspect(crop),
-      dots: g.dots,
-      bodyH: g.baseBox.h,
-      baselineDev,
-    };
+    const job: GlyphJob = { crop, dots: g.dots, bodyH: g.baseBox.h, baselineDev, mirror: !!opts.target };
 
     // all pixels of the glyph (body + dots) for team colour, sticker and thumbnail
     const all = new Set([...g.baseLabels, ...g.dotLabels]);
@@ -223,7 +237,7 @@ function processPatch(
       if (!team) neutral = true;
     }
     out.push({
-      feat,
+      job,
       crop: sticker,
       thumb: thumbnail(member, bw, bh),
       box: detBox(p, g.box),
@@ -231,7 +245,6 @@ function processPatch(
       team,
       neutral,
       dots: g.dots,
-      cnn,
     });
   }
   return { glyphs: out, mask: lr.mask, sw: seg.strokeWidth || strokeWidth(lr.mask) };
@@ -244,28 +257,49 @@ export interface ScanDeps {
 
 let glyphCounter = 1;
 
-export function runScan(frame: RGBAImage, opts: VisionOptions, deps: ScanDeps): ScanResult {
+/** Result of phase 1 (image analysis) – kept in the worker until the glyphs are recognised. */
+export interface FrameSegmentation {
+  frame: { width: number; height: number };
+  scale: number;
+  dw: number;
+  dh: number;
+  regions: PaperRegion[];
+  glyphs: PatchGlyph[];
+  lines: RuledLine[];
+  masks: { p: Patch; mask: Mask }[];
+  ink: Float32Array;
+  timings: Record<string, number>;
+}
+
+function timer() {
   const timings: Record<string, number> = {};
   let t = now();
-  const lap = (name: string) => {
-    const n = now();
-    timings[name] = Math.round(n - t);
-    t = n;
+  return {
+    timings,
+    lap(name: string) {
+      const n = now();
+      timings[name] = (timings[name] ?? 0) + Math.round(n - t);
+      t = n;
+    },
   };
+}
+
+/** Phase 1: paper, ink, lines, segmentation – produces one job per glyph. */
+export function segmentFrame(frame: RGBAImage, opts: VisionOptions): FrameSegmentation {
+  const tm = timer();
   const scale = Math.min(1, DETECT_SIZE / Math.max(frame.width, frame.height));
   const dw = Math.max(1, Math.round(frame.width * scale));
   const dh = Math.max(1, Math.round(frame.height * scale));
   const planes = resizeRGBAToPlanes(frame, dw, dh);
-  lap('resize');
-  let r = Math.max(4, Math.round(Math.max(dw, dh) / 160));
+  tm.lap('resize');
+  let r = Math.max(4, Math.round(Math.max(dw, dh) / 107));
   let np = normalisePlanes(planes, dw, dh, r);
-  lap('ink');
+  tm.lap('ink');
   const regions = detectRegions(planes, dw, dh, {
     mode: opts.team?.by === 'slip' ? 'slip-color' : 'page',
     calibs: opts.team?.calibs,
   });
-  lap('regions');
-
+  tm.lap('regions');
   let glyphs: PatchGlyph[] = [];
   let lines: RuledLine[] = [];
   const masks: { p: Patch; mask: Mask }[] = [];
@@ -289,19 +323,35 @@ export function runScan(frame: RGBAImage, opts: VisionOptions, deps: ScanDeps): 
     }
     break;
   }
-  lap('segment');
+  tm.lap('segment');
+  return { frame: { width: frame.width, height: frame.height }, scale, dw, dh, regions, glyphs, lines, masks, ink: np.ink, timings: tm.timings };
+}
 
-  const scores = deps.recognizer.scoreScan(
-    glyphs.map((g) => g.feat),
-    { target: opts.target, strictness: opts.strictness, style: opts.style },
-  );
-  lap('recognize');
+/** Phase 2 for a list of glyph jobs (any worker). */
+export function analyzeJobs(jobs: GlyphJob[], opts: VisionOptions, recognizer: Recognizer): Analysis[] {
+  return jobs.map((job) => {
+    const f = featuresOf(job);
+    const a = recognizer.analyze(f, { target: opts.target, strictness: opts.strictness, style: opts.style });
+    if (opts.debug) a.cnn = f.cnn;
+    return a;
+  });
+}
 
+/** Phase 3: scan-wide scoring (size consistency, case), duplicates, result. */
+export function finishScan(
+  seg: FrameSegmentation,
+  analyses: Analysis[],
+  opts: VisionOptions,
+  deps: ScanDeps,
+  extraTimings: Record<string, number> = {},
+): ScanResult {
+  const tm = timer();
+  const scores = deps.recognizer.finalize(analyses, { target: opts.target, strictness: opts.strictness, style: opts.style });
+  const glyphs = seg.glyphs;
   const mem: MemGlyph[] = glyphs.map((g) => ({ box: g.box, thumb: g.thumb }));
   const match = deps.memory.match(mem);
   deps.memory.commit(mem, match);
-  lap('dedup');
-
+  tm.lap('dedup');
   const out: ScannedGlyph[] = glyphs.map((g, i) => ({
     id: glyphCounter++,
     box: g.box,
@@ -312,11 +362,11 @@ export function runScan(frame: RGBAImage, opts: VisionOptions, deps: ScanDeps): 
     score: scores[i],
     isNew: match.isNew[i],
   }));
-
   let debug: DebugLayers | undefined;
   if (opts.debug) {
+    const { dw, dh } = seg;
     const full: Mask = { width: dw, height: dh, data: new Uint8Array(dw * dh) };
-    for (const { p, mask } of masks) {
+    for (const { p, mask } of seg.masks) {
       for (let y = 0; y < p.h; y++) {
         for (let x = 0; x < p.w; x++) {
           if (!mask.data[y * p.w + x]) continue;
@@ -328,18 +378,21 @@ export function runScan(frame: RGBAImage, opts: VisionOptions, deps: ScanDeps): 
       }
     }
     debug = {
-      ink: { width: dw, height: dh, data: np.ink },
+      ink: { width: dw, height: dh, data: seg.ink },
       mask: full,
-      lines,
-      cnnInputs: glyphs.map((g) => g.cnn),
+      lines: seg.lines,
+      cnnInputs: analyses.map((x) => x.cnn ?? new Float32Array(784)),
     };
   }
-  timings.total = Object.values(timings).reduce((a, b) => a + b, 0);
+  const timings: Record<string, number> = { ...seg.timings, ...extraTimings, ...tm.timings };
+  timings.total = Object.entries(timings)
+    .filter(([k]) => k !== 'total')
+    .reduce((acc, [, v]) => acc + v, 0);
   return {
-    frameW: frame.width,
-    frameH: frame.height,
-    scale: 1 / scale,
-    regions: regions.map((reg) => ({ id: reg.id, box: reg.box, team: reg.team })),
+    frameW: seg.frame.width,
+    frameH: seg.frame.height,
+    scale: 1 / seg.scale,
+    regions: seg.regions.map((reg) => ({ id: reg.id, box: reg.box, team: reg.team })),
     glyphs: out,
     shift: match.shift,
     newSheet: match.newSheet,
@@ -348,6 +401,18 @@ export function runScan(frame: RGBAImage, opts: VisionOptions, deps: ScanDeps): 
     timings,
     debug,
   };
+}
+
+/** All three phases in one thread (tests, lab, single worker). */
+export function runScan(frame: RGBAImage, opts: VisionOptions, deps: ScanDeps): ScanResult {
+  const seg = segmentFrame(frame, opts);
+  const t0 = now();
+  const analyses = analyzeJobs(
+    seg.glyphs.map((g) => g.job),
+    opts,
+    deps.recognizer,
+  );
+  return finishScan(seg, analyses, opts, deps, { recognize: Math.round(now() - t0) });
 }
 
 /** Pen calibration: mean absorption direction of the ink in the centre of the frame. */

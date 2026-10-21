@@ -30,7 +30,7 @@ def sha256(path: Path) -> str:
 
 def fetch(url: str, dest: Path) -> None:
     tmp = dest.with_suffix(dest.suffix + ".part")
-    req = urllib.request.Request(url, headers={"User-Agent": "buchstaben-zoo-train"})
+    req = urllib.request.Request(url, headers={"User-Agent": "krakel-und-krone-train"})
     with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:
         total = int(r.headers.get("Content-Length") or 0)
         done = 0

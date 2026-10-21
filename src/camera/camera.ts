@@ -1,5 +1,6 @@
 // Camera access: device choice (document camera preferred), orientation, region of interest, frame averaging.
 import type { Settings } from '../app/settings.ts';
+import { DETECT_SIZE } from '../vision/constants.ts';
 import type { RGBAImage } from '../vision/types.ts';
 
 const DOC_CAM = /ipevo|elmo|doc|visuali[sz]er|lumens|aver|hovercam|dokument|okiolabs|joyusing|ziggi|vzr|presenter|wolfvision/i;
@@ -58,7 +59,9 @@ export class Camera {
   deviceId: string | undefined;
   label = '';
   private canvas = document.createElement('canvas');
-  private ctx = this.canvas.getContext('2d', { willReadFrequently: true })!;
+  private ctx = this.canvas.getContext('2d')!;
+  private small = document.createElement('canvas');
+  private smallCtx = this.small.getContext('2d', { willReadFrequently: true })!;
   onEnded: (() => void) | null = null;
 
   constructor() {
@@ -184,31 +187,58 @@ export class Camera {
     return { x, y, w: Math.max(32, Math.round(Math.min(1, r.w) * w)), h: Math.max(32, Math.round(Math.min(1, r.h) * h)) };
   }
 
-  /** Captures `frames` frames ~70 ms apart and averages them (less noise, steadier pencil strokes). */
-  async grab(cam: Settings['camera'], frames = 3): Promise<Grab> {
+  /** Waits for the next video frame (falls back to a short timeout). */
+  private nextFrame(): Promise<void> {
+    const v = this.video as HTMLVideoElement & { requestVideoFrameCallback?: (cb: () => void) => number };
+    return new Promise((resolve) => {
+      const timer = setTimeout(resolve, 70);
+      v.requestVideoFrameCallback?.(() => {
+        clearTimeout(timer);
+        resolve();
+      });
+    });
+  }
+
+  /** Captures `frames` consecutive frames and averages the sharp ones (less noise, steadier pencil strokes). */
+  async grab(cam: Settings['camera'], frames = 2, maxSide = DETECT_SIZE): Promise<Grab> {
     if (!this.ready()) throw new CameraError('Die Kamera ist noch nicht bereit.', 'Einen Moment warten oder die Kamera neu verbinden.');
     const roi = this.roiPx(cam);
+    // the graphics card scales straight to detection size (the recognition does not need more)
+    const s = Math.min(1, maxSide / Math.max(roi.w, roi.h));
+    const ow = Math.max(1, Math.round(roi.w * s));
+    const oh = Math.max(1, Math.round(roi.h * s));
+    if (this.small.width !== ow || this.small.height !== oh) {
+      this.small.width = ow;
+      this.small.height = oh;
+    }
+    const sctx = this.smallCtx;
+    sctx.imageSmoothingEnabled = true;
+    sctx.imageSmoothingQuality = 'high';
     const shots: { data: Uint8ClampedArray; sharp: number }[] = [];
     for (let k = 0; k < frames; k++) {
-      if (k) await new Promise((r) => setTimeout(r, 70));
+      if (k) await this.nextFrame();
       this.drawOriented(cam);
-      const id = this.ctx.getImageData(roi.x, roi.y, roi.w, roi.h);
-      shots.push({ data: id.data, sharp: sharpness(id.data, roi.w, roi.h) });
+      sctx.drawImage(this.canvas, roi.x, roi.y, roi.w, roi.h, 0, 0, ow, oh);
+      const id = sctx.getImageData(0, 0, ow, oh);
+      shots.push({ data: id.data, sharp: sharpness(id.data, ow, oh) });
     }
     // a refocusing camera delivers blurry frames: only average the sharp ones
-    const best = Math.max(...shots.map((s) => s.sharp));
-    const use = shots.filter((s) => s.sharp >= best * 0.7);
-    const acc = new Uint16Array(use[0].data.length);
-    for (const s of use) for (let i = 0; i < acc.length; i++) acc[i] += s.data[i];
-    const out = new Uint8ClampedArray(acc.length);
-    for (let i = 0; i < out.length; i++) out[i] = acc[i] / use.length;
-    const frame: RGBAImage = { width: roi.w, height: roi.h, data: out };
+    const best = Math.max(...shots.map((x) => x.sharp));
+    const use = shots.filter((x) => x.sharp >= best * 0.7);
+    let out: Uint8ClampedArray;
+    if (use.length === 1) out = use[0].data;
+    else {
+      const acc = new Uint16Array(use[0].data.length);
+      for (const x of use) for (let i = 0; i < acc.length; i++) acc[i] += x.data[i];
+      out = new Uint8ClampedArray(acc.length);
+      for (let i = 0; i < out.length; i++) out[i] = acc[i] / use.length;
+    }
+    const frame: RGBAImage = { width: ow, height: oh, data: out };
     const snapshot = document.createElement('canvas');
-    const s = Math.min(1, 720 / Math.max(roi.w, roi.h));
-    snapshot.width = Math.round(roi.w * s);
-    snapshot.height = Math.round(roi.h * s);
-    // the internal canvas still holds the last oriented frame
-    snapshot.getContext('2d')!.drawImage(this.canvas, roi.x, roi.y, roi.w, roi.h, 0, 0, snapshot.width, snapshot.height);
+    const ss = Math.min(1, 720 / Math.max(ow, oh));
+    snapshot.width = Math.round(ow * ss);
+    snapshot.height = Math.round(oh * ss);
+    snapshot.getContext('2d')!.drawImage(this.small, 0, 0, snapshot.width, snapshot.height);
     return { frame, snapshot };
   }
 

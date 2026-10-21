@@ -31,7 +31,7 @@ def rename(font, family: str) -> None:
     ps = family.replace(" ", "") + "-Regular"
     values = {
         1: family,
-        3: f"{ps};buchstaben-zoo-subset",
+        3: f"{ps};krakel-und-krone-subset",
         4: f"{family} Regular",
         6: ps,
         16: family,

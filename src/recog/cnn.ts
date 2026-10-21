@@ -90,6 +90,10 @@ export class GlyphNet {
   }
 }
 
+/**
+ * 3x3 convolution (padding 1) as im2col + matrix product: the inner loop runs over all h*w output
+ * pixels at once, which V8 executes several times faster than many short row loops.
+ */
 function conv3(
   x: Float32Array,
   c: number,
@@ -101,37 +105,78 @@ function conv3(
   o: number,
   relu: boolean,
 ): Float32Array {
-  const pw = w + 2;
-  const ph = h + 2;
-  const padded = new Float32Array(c * ph * pw);
+  const hw = h * w;
+  const K = c * 9;
+  const col = new Float32Array(K * hw);
   for (let ci = 0; ci < c; ci++) {
-    for (let y = 0; y < h; y++) {
-      padded.set(x.subarray(ci * h * w + y * w, ci * h * w + y * w + w), ci * ph * pw + (y + 1) * pw + 1);
-    }
-  }
-  const out = new Float32Array(o * h * w);
-  const acc = new Float32Array(h * w);
-  for (let oi = 0; oi < o; oi++) {
-    acc.fill(W[bOff + oi]);
-    for (let ci = 0; ci < c; ci++) {
-      const base = ci * ph * pw;
-      const k = wOff + (oi * c + ci) * 9;
-      for (let ky = 0; ky < 3; ky++) {
-        for (let kx = 0; kx < 3; kx++) {
-          const wv = W[k + ky * 3 + kx];
-          if (wv === 0) continue;
-          for (let y = 0; y < h; y++) {
-            const src = base + (y + ky) * pw + kx;
-            const dst = y * w;
-            for (let xx = 0; xx < w; xx++) acc[dst + xx] += wv * padded[src + xx];
-          }
+    const src = ci * hw;
+    for (let ky = 0; ky < 3; ky++) {
+      for (let kx = 0; kx < 3; kx++) {
+        const row = (ci * 9 + ky * 3 + kx) * hw;
+        const dy = ky - 1;
+        const dx = kx - 1;
+        for (let y = 0; y < h; y++) {
+          const sy = y + dy;
+          if (sy < 0 || sy >= h) continue;
+          const x0 = dx < 0 ? 1 : 0;
+          const x1 = dx > 0 ? w - 1 : w;
+          const d = row + y * w;
+          const s0 = src + sy * w + dx;
+          for (let xx = x0; xx < x1; xx++) col[d + xx] = x[s0 + xx];
         }
       }
     }
-    const ob = oi * h * w;
-    if (relu) for (let i = 0; i < h * w; i++) out[ob + i] = acc[i] > 0 ? acc[i] : 0;
-    else out.set(acc, ob);
   }
+  const out = new Float32Array(o * hw);
+  for (let oi = 0; oi < o; oi++) out.fill(W[bOff + oi], oi * hw, (oi + 1) * hw);
+  // register blocking: 4 output channels x 2 inputs per pass, every input value is loaded once
+  let oi = 0;
+  for (; oi + 4 <= o; oi += 4) {
+    const b0 = oi * hw;
+    const b1 = b0 + hw;
+    const b2 = b1 + hw;
+    const b3 = b2 + hw;
+    const r0 = wOff + oi * K;
+    const r1 = r0 + K;
+    const r2 = r1 + K;
+    const r3 = r2 + K;
+    let k = 0;
+    for (; k + 2 <= K; k += 2) {
+      const w0 = W[r0 + k], w1 = W[r1 + k], w2 = W[r2 + k], w3 = W[r3 + k];
+      const v0 = W[r0 + k + 1], v1 = W[r1 + k + 1], v2 = W[r2 + k + 1], v3 = W[r3 + k + 1];
+      const ca = k * hw;
+      const cb = ca + hw;
+      for (let i = 0; i < hw; i++) {
+        const p = col[ca + i];
+        const q = col[cb + i];
+        out[b0 + i] += w0 * p + v0 * q;
+        out[b1 + i] += w1 * p + v1 * q;
+        out[b2 + i] += w2 * p + v2 * q;
+        out[b3 + i] += w3 * p + v3 * q;
+      }
+    }
+    for (; k < K; k++) {
+      const w0 = W[r0 + k], w1 = W[r1 + k], w2 = W[r2 + k], w3 = W[r3 + k];
+      const ca = k * hw;
+      for (let i = 0; i < hw; i++) {
+        const p = col[ca + i];
+        out[b0 + i] += w0 * p;
+        out[b1 + i] += w1 * p;
+        out[b2 + i] += w2 * p;
+        out[b3 + i] += w3 * p;
+      }
+    }
+  }
+  for (; oi < o; oi++) {
+    const ob = oi * hw;
+    const wk = wOff + oi * K;
+    for (let k = 0; k < K; k++) {
+      const wv = W[wk + k];
+      const cb = k * hw;
+      for (let i = 0; i < hw; i++) out[ob + i] += wv * col[cb + i];
+    }
+  }
+  if (relu) for (let i = 0; i < out.length; i++) if (out[i] < 0) out[i] = 0;
   return out;
 }
 

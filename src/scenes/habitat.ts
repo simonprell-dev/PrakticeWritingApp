@@ -109,6 +109,14 @@ export class HabitatScene implements Scene {
     }
   }
 
+  beginCapture(snap: Snapshot): void {
+    this.fx.capture(snap, this.W);
+  }
+
+  cancelCapture(): void {
+    this.fx.cancel();
+  }
+
   handleScan(res: ScanResult, snap: Snapshot): void {
     const stickers = new Map<number, AnyCanvas>();
     for (const g of res.glyphs) stickers.set(g.id, canvasFromRGBA(g.crop));

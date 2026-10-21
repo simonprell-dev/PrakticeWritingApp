@@ -29,7 +29,8 @@ export interface ScoreOptions {
 /** Characters whose mirror image is the same character, so a mirror check makes no sense. */
 const SYMMETRIC = new Set('AHIMOTUVWXYilmnouvwx08');
 
-interface Analysis {
+/** Result of the per-glyph analysis (serialisable, can come from another worker). */
+export interface Analysis {
   char: string;
   scoredAs: string;
   input: ScoreInput;
@@ -37,6 +38,8 @@ interface Analysis {
   normH: number;
   bodyH: number;
   top3?: { char: string; p: number }[];
+  /** CNN input (debug view only) */
+  cnn?: Float32Array;
 }
 
 /** Case pairs that look identical in isolation: the letter height decides. */
@@ -94,7 +97,7 @@ export class Recognizer {
     return Math.min(1, (T * this.calibRef) / Math.max(0.45, med));
   }
 
-  private analyze(f: GlyphFeatures, opts: ScoreOptions): Analysis {
+  analyze(f: GlyphFeatures, opts: ScoreOptions): Analysis {
     const probs = this.net ? this.net.probs(f.cnn) : null;
     const gp = probs ? this.groupProbs(probs) : null;
     let top3: Analysis['top3'];
@@ -236,7 +239,14 @@ export class Recognizer {
 
   /** Scores all glyphs of one scan (size consistency needs the whole scan). */
   scoreScan(feats: GlyphFeatures[], opts: ScoreOptions): GlyphScore[] {
-    const an = feats.map((f) => this.analyze(f, opts));
+    return this.finalize(
+      feats.map((f) => this.analyze(f, opts)),
+      opts,
+    );
+  }
+
+  /** Scan-wide part of the scoring: size consistency and upper/lower case need all glyphs. */
+  finalize(an: Analysis[], opts: ScoreOptions): GlyphScore[] {
     if (an.length >= 3) {
       const hs = an.map((a) => a.normH).sort((a, b) => a - b);
       const med = hs[hs.length >> 1];

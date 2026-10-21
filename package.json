@@ -1,8 +1,8 @@
 {
-  "name": "buchstaben-zoo",
+  "name": "krakel-und-krone",
   "version": "1.0.0",
   "private": true,
-  "description": "Schreib-Motivationsspiel mit Dokumentenkamera: schöne Buchstaben werden zu süßen Wesen.",
+  "description": "Krakel & Krone – Schreib-Motivationsspiel mit Dokumentenkamera: schöne Buchstaben werden zu süßen Wesen mit Krone.",
   "type": "module",
   "engines": {
     "node": "24.x"

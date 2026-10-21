@@ -20,9 +20,39 @@ export function close(m: Mask, r: number): Mask {
   return erode(dilate(m, r), r);
 }
 
+/** 3x3 dilation/erosion without window bookkeeping (the most frequent case). */
+function rank1(m: Mask, isDilate: boolean): Mask {
+  const { width: w, height: h, data } = m;
+  const tmp = new Uint8Array(w * h);
+  const out = newMask(w, h);
+  for (let y = 0; y < h; y++) {
+    const o = y * w;
+    for (let x = 0; x < w; x++) {
+      const l = x > 0 ? data[o + x - 1] : 0;
+      const r = x < w - 1 ? data[o + x + 1] : 0;
+      const c = data[o + x];
+      tmp[o + x] = isDilate ? l | c | r : l & c & r;
+    }
+  }
+  const d = out.data;
+  for (let y = 0; y < h; y++) {
+    const o = y * w;
+    const up = y > 0 ? o - w : -1;
+    const dn = y < h - 1 ? o + w : -1;
+    for (let x = 0; x < w; x++) {
+      const a = up >= 0 ? tmp[up + x] : 0;
+      const b = dn >= 0 ? tmp[dn + x] : 0;
+      const c = tmp[o + x];
+      d[o + x] = isDilate ? a | c | b : a & c & b;
+    }
+  }
+  return out;
+}
+
 function rankBinary(m: Mask, r: number, isDilate: boolean): Mask {
   const { width: w, height: h, data } = m;
   if (r <= 0) return { width: w, height: h, data: data.slice() };
+  if (r === 1) return rank1(m, isDilate);
   const tmp = new Uint8Array(w * h);
   const out = newMask(w, h);
   const k = 2 * r + 1;

@@ -134,8 +134,12 @@ await run('fakecam-duel.y4m', async (page) => {
   await page.screenshot({ path: OUT + 'e2e-9-duel-later.png' });
   // finish the duel: pop the right castle
   await page.evaluate(() => {
-    const app = (window as unknown as { __app: { scene: { sim: { castles: { B: { hp: number } }; spawn: (t: string, s: number, id: number) => unknown } } } }).__app;
-    app.scene.sim.castles.B.hp = 1;
+    type Castle = { pile: number[]; tank: number; flying: unknown[] };
+    const app = (window as unknown as { __app: { scene: { sim: { castles: { B: Castle }; spawn: (t: string, s: number, id: number) => unknown } } } }).__app;
+    const b = app.scene.sim.castles.B;
+    b.pile = b.pile.map((_, i) => (i === 0 ? 1 : 0));
+    b.tank = 0;
+    b.flying = [];
     app.scene.sim.spawn('A', 95, 999);
   });
   await sleep(26000);
@@ -145,6 +149,64 @@ await run('fakecam-duel.y4m', async (page) => {
   await clickText(page, '.btn', 'Einstellungen');
   await sleep(500);
   await page.screenshot({ path: OUT + 'e2e-11-settings.png' });
+});
+
+await run('fakecam-sheet.y4m', async (page) => {
+  await page.goto(`http://localhost:${PORT}/?e2e`, { waitUntil: 'networkidle0' });
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('buchstaben-zoo.settings') || '{}');
+    s.firstRunDone = true;
+    localStorage.setItem('buchstaben-zoo.settings', JSON.stringify(s));
+  });
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(1500);
+  // scan latency in the aquarium
+  await clickText(page, '.tile', 'Meer');
+  await sleep(2500);
+  await page.evaluate(() => document.querySelector('.debug-panel')?.remove());
+  const measure = () => page.evaluate(async () => {
+    type FxState = { polaroid: { resultAt: number } | null };
+    const app = (window as unknown as { __app: { scene: { fx: FxState; creatures: unknown[] } } }).__app;
+    const t0 = performance.now();
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+    const marks: Record<string, number> = {};
+    while (performance.now() - t0 < 8000) {
+      const fx = app.scene.fx;
+      if (!marks.photo && fx.polaroid) marks.photo = performance.now() - t0;
+      if (!marks.result && fx.polaroid && fx.polaroid.resultAt >= 0) marks.result = performance.now() - t0;
+      if (!marks.firstCreature && app.scene.creatures.length > 0) marks.firstCreature = performance.now() - t0;
+      if (marks.firstCreature) break;
+      await new Promise((r) => setTimeout(r, 15));
+    }
+    return marks;
+  });
+  const fmt = (m: Record<string, number>) => JSON.stringify(Object.fromEntries(Object.entries(m).map(([k, v]) => [k, Math.round(v)])));
+  console.log('scan latency 1st scan (ms):', fmt(await measure()));
+  await sleep(3000);
+  await page.keyboard.press('n');
+  await sleep(300);
+  await page.evaluate(() => {
+    const app = (window as unknown as { __app: { scene: { creatures: unknown[] } } }).__app;
+    app.scene.creatures.length = 0;
+  });
+  console.log('scan latency 2nd scan (ms):', fmt(await measure()));
+  await sleep(300);
+  await page.screenshot({ path: OUT + 'e2e-12-scan-photo.png' });
+  await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.btn.icon')].find((b) => b.textContent === '⌂')?.click());
+  await sleep(600);
+  // Klasse gegen Riesenburg
+  await clickText(page, '.tile', 'Riesenburg');
+  await sleep(500);
+  await page.screenshot({ path: OUT + 'e2e-13-siege-lobby.png' });
+  await clickText(page, '.modal button', 'Angriff');
+  await sleep(2000);
+  await page.evaluate(() => document.querySelector('.debug-panel')?.remove());
+  await page.screenshot({ path: OUT + 'e2e-14-siege-intro.png' });
+  await sleep(6500);
+  await page.keyboard.press('Space');
+  await sleep(9000);
+  await page.evaluate(() => document.querySelector('.debug-panel')?.remove());
+  await page.screenshot({ path: OUT + 'e2e-15-siege-battle.png' });
 });
 
 server.kill();

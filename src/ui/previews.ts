@@ -4,6 +4,8 @@ import { alienSprite } from '../game/creatures/alien.ts';
 import { bubbleSprite } from '../game/creatures/bubble.ts';
 import { fighterSprite } from '../game/creatures/duelFigure.ts';
 import { fishSprite } from '../game/creatures/fish.ts';
+import { drawGiant } from '../game/creatures/giant.ts';
+import { inkGuardSprite } from '../game/creatures/inkGuard.ts';
 import { makeGenome, type Archetype, type Genome } from '../game/creatures/genome.ts';
 import { animalSprite } from '../game/creatures/savanna.ts';
 import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
@@ -37,7 +39,7 @@ function genome(score: number, seed: number, a: Archetype, hue?: number, variant
   return g;
 }
 
-export function tilePreview(kind: 'meer' | 'weltraum' | 'savanne' | 'duell', canvas: HTMLCanvasElement): void {
+export function tilePreview(kind: 'meer' | 'weltraum' | 'savanne' | 'duell' | 'riesenburg', canvas: HTMLCanvasElement): void {
   const W = 480;
   const H = 360;
   canvas.width = W;
@@ -87,6 +89,38 @@ export function tilePreview(kind: 'meer' | 'weltraum' | 'savanne' | 'duell', can
     ctx.fill();
     draw(ctx, animalSprite(genome(70, 2, 'animal', undefined, 2), letterSticker('7')), 110, 200, 0.6);
     draw(ctx, animalSprite(genome(96, 4, 'animal', undefined, 0), letterSticker('L')), 300, 250, 0.75);
+  } else if (kind === 'riesenburg') {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#8fb8ff');
+    g.addColorStop(0.5, '#ffd1e8');
+    g.addColorStop(0.51, '#a6dd6f');
+    g.addColorStop(1, '#78c25a');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // castle walls
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#3b2160';
+    for (const [x, top, w, l] of [
+      [300, 120, 200, 0.55],
+      [270, 190, 170, 0.62],
+    ] as const) {
+      ctx.fillStyle = `hsl(262,38%,${l * 100}%)`;
+      ctx.beginPath();
+      ctx.roundRect(x, top, w, H - top, 10);
+      ctx.fill();
+      ctx.stroke();
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = `hsl(${262 + i * 20},60%,80%)`;
+        ctx.beginPath();
+        ctx.arc(x + 25 + i * (w - 50) / 3, top, 12, Math.PI, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+    for (let i = 0; i < 6; i++) ctx.drawImage(bubbleSprite(17, i * 40, 262, true) as CanvasImageSource, 262 + (i % 3) * 34, 280 + Math.floor(i / 3) * 34);
+    drawGiant(ctx as never, 400, 135, 0.3, 'laugh', 0.3);
+    draw(ctx, inkGuardSprite(28, 3), 200, 270, 1, -1);
+    draw(ctx, fighterSprite(genome(95, 9, 'fighter', 25), letterSticker('K'), 40), 95, 285, 1);
   } else {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#9fd8ff');

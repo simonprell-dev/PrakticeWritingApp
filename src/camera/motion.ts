@@ -12,6 +12,11 @@ export class MotionProbe {
   last: Float32Array | null = null;
   private camera: Camera;
   private cam: () => Settings['camera'];
+  private timer = 0;
+  /** latest motion value of the background sampling */
+  motion = 0;
+  /** time since when the picture has been still */
+  calmSince = 0;
 
   constructor(camera: Camera, cam: () => Settings['camera']) {
     this.camera = camera;
@@ -48,24 +53,41 @@ export class MotionProbe {
     return changed / ref.length;
   }
 
-  /** Waits until the picture is still (no hands moving) or the time is up. */
-  async waitStill(maxMs = 3000, onWaiting?: () => void): Promise<boolean> {
+  /** Samples continuously in the background (while a game runs), so a scan never has to wait for a measurement. */
+  start(): void {
+    if (this.timer) return;
+    this.prev = null;
+    this.calmSince = performance.now();
+    this.timer = window.setInterval(() => {
+      this.motion = this.sample();
+      if (this.motion > 0.006) this.calmSince = performance.now();
+    }, 90);
+  }
+
+  stop(): void {
+    clearInterval(this.timer);
+    this.timer = 0;
+    this.prev = null;
+  }
+
+  /** still for at least ms milliseconds */
+  isCalm(ms = 250): boolean {
+    return performance.now() - this.calmSince >= ms;
+  }
+
+  /** Resolves immediately when the hands are already away, otherwise waits for stillness (or the time limit). */
+  async waitStill(maxMs = 1500, onWaiting?: () => void): Promise<boolean> {
+    if (!this.timer) this.start();
+    if (this.isCalm()) return true;
     const t0 = performance.now();
-    let calm = 0;
     let warned = false;
     while (performance.now() - t0 < maxMs) {
-      const m = this.sample();
-      if (m < 0.006) {
-        calm++;
-        if (calm >= 3) return true;
-      } else {
-        calm = 0;
-        if (!warned && m > 0.02) {
-          warned = true;
-          onWaiting?.();
-        }
+      if (!warned && this.motion > 0.02) {
+        warned = true;
+        onWaiting?.();
       }
-      await new Promise((r) => setTimeout(r, 110));
+      await new Promise((r) => setTimeout(r, 50));
+      if (this.isCalm(280)) return true;
     }
     return false;
   }
@@ -107,7 +129,6 @@ export class AutoScan {
 
   /** Remember what the last scan saw, so an unchanged sheet does not trigger again. */
   markScanned(): void {
-    this.probe.sample();
     this.scannedRef = this.probe.last ? this.probe.last.slice() : null;
     this.cooldownUntil = performance.now() + 2000;
     this.state = 'cooldown';
@@ -115,7 +136,8 @@ export class AutoScan {
 
   private async tick(): Promise<void> {
     if (!this.enabled || this.busy()) return;
-    const m = this.probe.sample();
+    this.probe.start();
+    const m = this.probe.motion;
     const now = performance.now();
     const prevState = this.state;
     if (this.state === 'cooldown') {

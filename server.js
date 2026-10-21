@@ -166,7 +166,7 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Buchstaben-Zoo läuft auf http://localhost:${PORT}`);
+  console.log(`Krakel & Krone läuft auf http://localhost:${PORT}`);
 });
 
 for (const sig of ['SIGTERM', 'SIGINT']) {

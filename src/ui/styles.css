@@ -174,10 +174,48 @@ body {
   display: flex;
   gap: 0.02em;
 }
-.logo span {
+.logo {
+  align-items: flex-end;
+}
+.logo-word {
+  display: inline-flex;
+  position: relative;
+}
+.logo-word > span {
   display: inline-block;
   animation: bob 2.4s ease-in-out infinite;
   text-shadow: 0 5px 0 rgba(59, 42, 92, 0.15);
+}
+/* the scribble word wobbles a bit wilder */
+.logo .krakel > span {
+  animation-name: wobble;
+}
+.logo .krakel > span:nth-child(odd) {
+  transform: rotate(-7deg);
+}
+@keyframes wobble {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-7deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(6deg);
+  }
+}
+.logo .krone::before {
+  content: '👑';
+  position: absolute;
+  top: -0.62em;
+  left: -0.08em;
+  font-size: 0.62em;
+  transform: rotate(-16deg);
+  filter: drop-shadow(0 3px 0 rgba(59, 42, 92, 0.2));
+}
+.logo-amp {
+  color: var(--ink-soft);
+  font-size: 0.72em;
+  margin: 0 0.28em 0.08em;
+  opacity: 0.8;
 }
 @keyframes bob {
   0%,
@@ -212,11 +250,16 @@ body {
 }
 .tiles {
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
   gap: clamp(12px, 2vw, 28px);
   width: min(1400px, 100%);
 }
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+  .tiles {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 700px) {
   .tiles {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -776,4 +819,14 @@ input[type='range'] {
 }
 .legal a {
   color: var(--accent);
+}
+
+/* cutscenes (Riesenburg): the top HUD steps aside */
+.hud .hud-top {
+  transition: opacity 0.4s, transform 0.4s;
+}
+.hud.cinematic .hud-top {
+  opacity: 0;
+  transform: translateY(-30px);
+  pointer-events: none;
 }

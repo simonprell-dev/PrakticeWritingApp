@@ -5,7 +5,11 @@ import { hsl, TAU } from '../math.ts';
 const cache = new Map<string, AnyCanvas>();
 
 export function bubbleSprite(r: number, hueShift = 0, tint?: number, strong = false): AnyCanvas {
-  const key = `${Math.round(r)}:${Math.round(hueShift)}:${tint ?? ''}:${strong}`;
+  // quantised so the cache stays small
+  r = Math.max(2, Math.round(r));
+  hueShift = (((Math.round(hueShift / 15) * 15) % 360) + 360) % 360;
+  if (tint !== undefined) tint = (((Math.round(tint / 15) * 15) % 360) + 360) % 360;
+  const key = `${r}:${hueShift}:${tint ?? ''}:${strong}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const s = Math.ceil(r * 2 + 6);

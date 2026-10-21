@@ -134,7 +134,7 @@ function impressum(info: LegalInfo): HTMLElement {
     section(
       'Hinweis',
       p(
-        'Buchstaben-Zoo ist ein Lern- und Motivationsspiel für das Schreibenlernen. Die vergebenen Sterne und Stufen sind ein Spiel und keine Leistungsbewertung.',
+        'Krakel & Krone ist ein Lern- und Motivationsspiel für das Schreibenlernen. Die vergebenen Sterne und Stufen sind ein Spiel und keine Leistungsbewertung.',
       ),
     ),
     section('Datenschutz und Lizenzen', p('Siehe Datenschutzerklärung und Lizenzhinweise (Links unten).')),

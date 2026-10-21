@@ -13,15 +13,26 @@ export interface StartDeps {
   openPicker: (done: () => void) => void;
   startHabitat: (id: HabitatId) => void;
   openDuel: () => void;
+  openSiege: () => void;
 }
 
 const COLORS = ['#ff6f91', '#ff9671', '#ffc75f', '#7ccf6b', '#4fb3ff', '#8f7bff', '#ff6fd8'];
 
 export function renderStart(root: HTMLElement, d: StartDeps): void {
   const s = d.settings;
-  const logo = h('h1', { class: 'logo', 'aria-label': 'Buchstaben-Zoo' });
-  [...'Buchstaben-Zoo'].forEach((ch, i) =>
-    logo.append(h('span', { style: `color:${COLORS[i % COLORS.length]};animation-delay:${i * 0.12}s` }, ch === ' ' ? ' ' : ch)),
+  // "Krakel" wobbles like a scribble, "Krone" wears the crown
+  const word = (text: string, cls: string, offset: number) =>
+    h(
+      'span',
+      { class: `logo-word ${cls}`, 'aria-hidden': 'true' },
+      ...[...text].map((ch, i) => h('span', { style: `color:${COLORS[(i + offset) % COLORS.length]};animation-delay:${(i + offset) * 0.12}s` }, ch)),
+    );
+  const logo = h(
+    'h1',
+    { class: 'logo', 'aria-label': 'Krakel & Krone' },
+    word('Krakel', 'krakel', 0),
+    h('span', { class: 'logo-amp', 'aria-hidden': 'true' }, '&'),
+    word('Krone', 'krone', 6),
   );
   const targetChip = h('span');
   const renderTarget = () => {
@@ -51,7 +62,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
   );
   renderTarget();
 
-  const tile = (id: 'meer' | 'weltraum' | 'savanne' | 'duell', label: string, hint: string, onClick: () => void) => {
+  const tile = (id: 'meer' | 'weltraum' | 'savanne' | 'duell' | 'riesenburg', label: string, hint: string, onClick: () => void) => {
     const cv = h('canvas', { width: 480, height: 360 });
     const t = button([cv, h('div', { class: 'label' }, label), h('div', { class: 'hint' }, hint)], onClick, 'tile', label);
     const draw = () => tilePreview(id, cv);
@@ -68,7 +79,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
       'div',
       { class: 'start' },
       logo,
-      h('p', { class: 'subtitle' }, 'Schreib schön – und schau, was aus deinen Buchstaben wird!'),
+      h('p', { class: 'subtitle' }, 'Schreib schön – und dein Krakel bekommt eine Krone!'),
       h('div', { class: 'mode-row' }, mode, targetChip),
       h(
         'div',
@@ -77,6 +88,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         tile('weltraum', '👽 Weltraum', 'Aliens zwischen den Planeten', () => d.startHabitat('weltraum')),
         tile('savanne', '🦒 Savanne', 'Tiere in der Steppe', () => d.startHabitat('savanne')),
         tile('duell', '⚔️ Team-Duell', 'Zwei Teams, Zettel, Blasen-Burgen', d.openDuel),
+        tile('riesenburg', '🏰 Riesenburg', 'Die ganze Klasse gegen den Riesen', d.openSiege),
       ),
       h(
         'div',
@@ -114,7 +126,9 @@ export function openHelp(): void {
       h('li', null, 'F: Vollbild, Esc: Menü'),
     ),
     h('h3', null, 'Team-Duell'),
-    h('p', null, `Zwei Teams schreiben auf kleine Zettel (z. B. rote und blaue Stifte). Jedes Zeichen wird zu einer Figur, die zur anderen Burg läuft. Schöne Zeichen sind groß und stark, Gekritzel macht nur „Pfff“. Beispiel-Aufgabe: „Schreibt ${withArticle('A')} bis ${withArticle('Z')}!“`),
+    h('p', null, `Zwei Teams schreiben auf kleine Zettel (z. B. rote und blaue Stifte). Jedes Zeichen wird zu einer Figur mit 1–5 Sternen – so oft kann sie zuschlagen. Treffen sich zwei Figuren, ziehen sie sich Sterne ab. An der gegnerischen Burg lässt jeder Schlag eine Seifenblase platzen; die Seifenblasen-Maschine bläst neue nach, bis ihr Tank leer ist. Gekritzel macht nur „Pfff“. Beispiel-Aufgabe: „Schreibt ${withArticle('A')} bis ${withArticle('Z')}!“`),
+    h('h3', null, 'Klasse gegen Riesenburg'),
+    h('p', null, 'Die ganze Klasse ist ein Team gegen Riese Rumpel. Jedes Zeichen wird zu einer Figur mit 1–5 Sternen. Die Figuren besiegen die Tintenklecks-Wächter und lassen die Seifenblasen der Riesenburg platzen – Mauer für Mauer, mit Zwischensequenzen, bis der Riese aufgibt. Alle Stiftfarben zählen.'),
     h('h3', null, 'Datenschutz'),
     h(
       'p',

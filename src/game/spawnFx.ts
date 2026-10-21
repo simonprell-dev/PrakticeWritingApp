@@ -1,4 +1,7 @@
-// Scan feedback: the photo appears as a polaroid, glyph boxes pop up, stickers fly into the scene.
+// Scan feedback in two phases:
+//  1. capture(): flash + shutter right when the photo is taken, the photo appears as a polaroid with a
+//     moving scan light while the recognition runs in the worker,
+//  2. start(): the results arrive in the same polaroid, glyph boxes pop up, stickers fly into the scene.
 import type { Snapshot } from '../scenes/scene.ts';
 import type { ScannedGlyph } from '../vision/types.ts';
 import { sfx } from './audio.ts';
@@ -25,7 +28,10 @@ interface Polaroid {
   w: number;
   h: number;
   t: number;
+  /** p.t when the results arrived, -1 while scanning */
+  resultAt: number;
   closing: number;
+  label: string;
   boxes: { x: number; y: number; w: number; h: number; isNew: boolean; at: number; team?: string }[];
 }
 
@@ -33,6 +39,8 @@ export class SpawnFx {
   polaroid: Polaroid | null = null;
   flights: Flight[] = [];
   private particles: Particles;
+  private flashT = -1;
+  private worldW = 1920;
 
   constructor(particles: Particles) {
     this.particles = particles;
@@ -42,7 +50,27 @@ export class SpawnFx {
     return !!this.polaroid || this.flights.length > 0;
   }
 
+  private layout(snap: Snapshot, worldW: number) {
+    const w = Math.min(620, worldW * 0.36);
+    const h = (w * snap.canvas.height) / snap.canvas.width;
+    return { x: worldW / 2 - w / 2, y: 120, w, h };
+  }
+
+  /** Phase 1: the photo was just taken. */
+  capture(snap: Snapshot, worldW: number): void {
+    sfx.shutter();
+    this.worldW = worldW;
+    this.flashT = 0;
+    this.polaroid = { snap, ...this.layout(snap, worldW), t: 0, resultAt: -1, closing: -1, label: 'Ich schaue', boxes: [] };
+  }
+
+  /** The recognition failed: let the polaroid go away. */
+  cancel(): void {
+    if (this.polaroid && this.polaroid.resultAt < 0) this.polaroid.closing = 0;
+  }
+
   /**
+   * Phase 2: results.
    * @param target where each new glyph should fly to (world coords), or null to skip
    * @param onLand called when the sticker arrives
    */
@@ -55,25 +83,26 @@ export class SpawnFx {
     onLand: (g: ScannedGlyph, i: number) => void,
     teamColor?: (g: ScannedGlyph) => string,
   ): void {
-    sfx.shutter();
-    const maxW = Math.min(620, worldW * 0.36);
-    const aspect = snap.canvas.height / snap.canvas.width;
-    const w = maxW;
-    const h = maxW * aspect;
-    const x = worldW / 2 - w / 2;
-    const y = 120;
-    const sc = w / snap.detW;
+    let p = this.polaroid;
+    if (!p || p.snap.canvas !== snap.canvas || p.closing >= 0) {
+      this.capture(snap, worldW);
+      p = this.polaroid!;
+    }
+    p.snap = snap;
+    p.resultAt = p.t;
+    const sc = p.w / snap.detW;
     const newOnes = glyphs.filter((g) => g.isNew);
-    const stagger = clamp(3.2 / Math.max(1, newOnes.length), 0.07, 0.26);
+    p.label = newOnes.length ? (newOnes.length === 1 ? '1 neues Zeichen!' : `${newOnes.length} neue Zeichen!`) : 'Nichts Neues';
+    const stagger = clamp(2.4 / Math.max(1, newOnes.length), 0.06, 0.18);
     let k = 0;
-    const boxes: Polaroid['boxes'] = [];
+    p.boxes = [];
     glyphs.forEach((g) => {
-      const bx = x + g.box.x * sc;
-      const by = y + g.box.y * sc;
+      const bx = p.x + g.box.x * sc;
+      const by = p.y + g.box.y * sc;
       const bw = g.box.w * sc;
       const bh = g.box.h * sc;
-      const at = 0.3 + (g.isNew ? k : 0) * stagger * 0.5;
-      boxes.push({ x: bx, y: by, w: bw, h: bh, isNew: g.isNew, at, team: teamColor?.(g) });
+      const at = p.resultAt + 0.04 + (g.isNew ? k : 0) * stagger * 0.5;
+      p.boxes.push({ x: bx, y: by, w: bw, h: bh, isNew: g.isNew, at, team: teamColor?.(g) });
       if (!g.isNew) return;
       const idx = k++;
       const to = target(g, idx);
@@ -84,26 +113,34 @@ export class SpawnFx {
         sticker: st,
         from: { x: bx + bw / 2, y: by + bh / 2, s: Math.max(bw, bh) },
         to,
-        delay: 0.6 + idx * stagger,
+        delay: 0.08 + idx * stagger,
         t: 0,
-        dur: 0.75,
+        dur: 0.5,
         landed: false,
         onLand: () => onLand(g, idx),
       });
     });
-    this.polaroid = { snap, x, y, w, h, t: 0, closing: -1, boxes };
   }
 
   update(dt: number): void {
+    if (this.flashT >= 0) {
+      this.flashT += dt;
+      if (this.flashT > 0.3) this.flashT = -1;
+    }
     const p = this.polaroid;
     if (p) {
       p.t += dt;
-      const lastBox = p.boxes.reduce((m, b) => Math.max(m, b.at), 0);
-      const pending = this.flights.some((f) => f.t < f.delay + 0.1);
-      if (p.closing < 0 && !pending && p.t > Math.max(1.4, lastBox + 0.8)) p.closing = 0;
-      if (p.closing >= 0) {
+      if (p.closing < 0) {
+        if (p.resultAt < 0) {
+          if (p.t > 10) p.closing = 0; // recognition never answered
+        } else {
+          const lastBox = p.boxes.reduce((m, b) => Math.max(m, b.at), p.resultAt);
+          const pending = this.flights.some((f) => f.t < f.delay + 0.1);
+          if (!pending && p.t > Math.max(p.resultAt + 0.9, lastBox + 0.5)) p.closing = 0;
+        }
+      } else {
         p.closing += dt;
-        if (p.closing > 0.45) this.polaroid = null;
+        if (p.closing > 0.4) this.polaroid = null;
       }
     }
     for (const f of this.flights) {
@@ -123,7 +160,7 @@ export class SpawnFx {
 
   private flightPos(f: Flight, u: number) {
     const cx = (f.from.x + f.to.x) / 2;
-    const cy = Math.min(f.from.y, f.to.y) - 220;
+    const cy = Math.min(f.from.y, f.to.y) - 200;
     const x = (1 - u) * (1 - u) * f.from.x + 2 * (1 - u) * u * cx + u * u * f.to.x;
     const y = (1 - u) * (1 - u) * f.from.y + 2 * (1 - u) * u * cy + u * u * f.to.y;
     return { x, y };
@@ -132,8 +169,8 @@ export class SpawnFx {
   render(ctx: CanvasRenderingContext2D): void {
     const p = this.polaroid;
     if (p) {
-      const enter = ease.outBack(clamp(p.t / 0.35));
-      const exit = p.closing >= 0 ? 1 - ease.inQuad(clamp(p.closing / 0.45)) : 1;
+      const enter = ease.outBack(clamp(p.t / 0.28));
+      const exit = p.closing >= 0 ? 1 - ease.inQuad(clamp(p.closing / 0.4)) : 1;
       const s = enter * (0.85 + 0.15 * exit);
       ctx.save();
       ctx.globalAlpha = exit;
@@ -143,17 +180,33 @@ export class SpawnFx {
       ctx.translate(-(p.x + p.w / 2), -(p.y + p.h / 2));
       const pad = 16;
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
-      ctx.fillRect(p.x - pad + 8, p.y - pad + 10, p.w + 2 * pad, p.h + 2 * pad + 40);
+      ctx.fillRect(p.x - pad + 8, p.y - pad + 10, p.w + 2 * pad, p.h + 2 * pad + 44);
       ctx.fillStyle = '#fffdf7';
-      ctx.fillRect(p.x - pad, p.y - pad, p.w + 2 * pad, p.h + 2 * pad + 40);
+      ctx.fillRect(p.x - pad, p.y - pad, p.w + 2 * pad, p.h + 2 * pad + 44);
       ctx.drawImage(p.snap.canvas as CanvasImageSource, p.x, p.y, p.w, p.h);
-      // flash
-      if (p.t < 0.3) {
-        ctx.fillStyle = `rgba(255,255,255,${1 - p.t / 0.3})`;
+      if (p.t < 0.25) {
+        ctx.fillStyle = `rgba(255,255,255,${1 - p.t / 0.25})`;
         ctx.fillRect(p.x, p.y, p.w, p.h);
       }
+      // moving scan light while the recognition runs
+      if (p.resultAt < 0) {
+        const u = ((p.t * 1.4) % 1.25) - 0.12;
+        const bx = p.x + u * p.w;
+        const band = p.w * 0.16;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(p.x, p.y, p.w, p.h);
+        ctx.clip();
+        const g = ctx.createLinearGradient(bx - band, 0, bx + band, 0);
+        g.addColorStop(0, 'rgba(255,240,120,0)');
+        g.addColorStop(0.5, 'rgba(255,240,120,0.55)');
+        g.addColorStop(1, 'rgba(255,240,120,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(bx - band, p.y, band * 2, p.h);
+        ctx.restore();
+      }
       for (const b of p.boxes) {
-        const u = clamp((p.t - b.at) / 0.25);
+        const u = clamp((p.t - b.at) / 0.22);
         if (u <= 0) continue;
         const grow = ease.outBack(u);
         ctx.save();
@@ -167,6 +220,12 @@ export class SpawnFx {
         ctx.stroke();
         ctx.restore();
       }
+      // caption on the white border
+      ctx.fillStyle = '#3b2a5c';
+      ctx.font = '600 26px Fredoka, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      const dots = p.resultAt < 0 ? '.'.repeat(1 + (Math.floor(p.t * 3) % 3)) : '';
+      ctx.fillText(p.label + dots, p.x + p.w / 2, p.y + p.h + 40);
       ctx.restore();
     }
     for (const f of this.flights) {
@@ -184,6 +243,13 @@ export class SpawnFx {
       ctx.arc(0, 0, size * 0.62, 0, TAU);
       ctx.fill();
       ctx.drawImage(f.sticker as CanvasImageSource, (-f.sticker.width * sc) / 2, (-f.sticker.height * sc) / 2, f.sticker.width * sc, f.sticker.height * sc);
+      ctx.restore();
+    }
+    // camera flash over the whole screen
+    if (this.flashT >= 0) {
+      ctx.save();
+      ctx.fillStyle = `rgba(255,255,255,${0.55 * (1 - this.flashT / 0.3)})`;
+      ctx.fillRect(0, 0, this.worldW, 1080);
       ctx.restore();
     }
   }

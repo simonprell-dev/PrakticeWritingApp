@@ -111,7 +111,7 @@ In anderen Bundesländern ist die jeweilige Landesbehörde zuständig.
 
 > Liebe Eltern,
 >
-> im Unterricht üben wir das Schreiben mit dem Lernspiel „Buchstaben-Zoo“. Die Kinder schreiben Buchstaben und Zahlen auf Papier, eine Dokumentenkamera zeigt das Blatt. Aus jedem Zeichen entsteht ein Spielwesen. Je sorgfältiger geschrieben, desto prächtiger ist es.
+> im Unterricht üben wir das Schreiben mit dem Lernspiel „Krakel & Krone“. Die Kinder schreiben Buchstaben und Zahlen auf Papier, eine Dokumentenkamera zeigt das Blatt. Aus jedem Zeichen entsteht ein Spielwesen. Je sorgfältiger geschrieben, desto prächtiger ist es.
 >
 > **Datenschutz:**
 > - Die Kamerabilder werden ausschließlich auf dem Schulgerät ausgewertet. Sie werden nicht ins Internet übertragen und nicht gespeichert.
