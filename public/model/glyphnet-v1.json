@@ -1,0 +1,86 @@
+{
+ "version": "v1",
+ "input": [
+  28,
+  28
+ ],
+ "classes": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzß",
+ "dtype": "f16",
+ "temperature": 0.6381,
+ "preprocess": {
+  "size": 28,
+  "fit": 24,
+  "strokePx": 2.3,
+  "blur": 0.6
+ },
+ "layers": [
+  {
+   "type": "conv",
+   "in": 1,
+   "out": 16,
+   "k": 3,
+   "relu": true,
+   "w": 0,
+   "b": 144
+  },
+  {
+   "type": "conv",
+   "in": 16,
+   "out": 16,
+   "k": 3,
+   "relu": true,
+   "w": 160,
+   "b": 2464
+  },
+  {
+   "type": "maxpool",
+   "k": 2
+  },
+  {
+   "type": "conv",
+   "in": 16,
+   "out": 32,
+   "k": 3,
+   "relu": true,
+   "w": 2480,
+   "b": 7088
+  },
+  {
+   "type": "conv",
+   "in": 32,
+   "out": 32,
+   "k": 3,
+   "relu": true,
+   "w": 7120,
+   "b": 16336
+  },
+  {
+   "type": "maxpool",
+   "k": 2
+  },
+  {
+   "type": "conv",
+   "in": 32,
+   "out": 64,
+   "k": 3,
+   "relu": true,
+   "w": 16368,
+   "b": 34800
+  },
+  {
+   "type": "maxpool",
+   "k": 2
+  },
+  {
+   "type": "dense",
+   "in": 576,
+   "out": 63,
+   "w": 34864,
+   "b": 71152
+  }
+ ],
+ "accuracy": {
+  "top1": 0.8012,
+  "group": 0.9381
+ }
+}

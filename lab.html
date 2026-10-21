@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Buchstaben-Zoo · Labor</title>
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        background: #f6f3fb;
+        color: #2d2342;
+      }
+      header {
+        padding: 10px 16px;
+        background: #7c5cff;
+        color: #fff;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      header h1 {
+        font-size: 18px;
+        margin: 0 12px 0 0;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 12px;
+        padding: 12px;
+      }
+      #list img {
+        width: 100%;
+        border-radius: 6px;
+        cursor: pointer;
+        border: 3px solid transparent;
+      }
+      #list img.on {
+        border-color: #7c5cff;
+      }
+      #out canvas {
+        max-width: 100%;
+        border-radius: 6px;
+        background: #fff;
+      }
+      table {
+        border-collapse: collapse;
+        background: #fff;
+        font-size: 13px;
+      }
+      td,
+      th {
+        padding: 3px 7px;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+      }
+      label {
+        font-size: 13px;
+      }
+      select,
+      input,
+      button {
+        font: inherit;
+        font-size: 13px;
+      }
+      .layers {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .muted {
+        color: #776c90;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>🔬 Labor</h1>
+      <input id="files" type="file" accept="image/*" multiple />
+      <button id="cam">Kamera</button>
+      <button id="snap">Foto aufnehmen</button>
+      <button id="save">Aufnahme speichern</button>
+      <label>Ziel <input id="target" size="2" maxlength="1" placeholder="frei" /></label>
+      <label>Strenge <select id="strict"><option>leicht</option><option selected>mittel</option><option>streng</option></select></label>
+      <label>Stift <select id="pen"><option value="auto">auto</option><option value="felt">Filz</option><option value="pencil">Blei</option></select></label>
+      <label>Linien <select id="ruled"><option>auto</option><option>on</option><option>off</option></select></label>
+      <label>Vorlage <select id="style"><option>beide</option><option>grund</option><option>druck</option></select></label>
+      <span id="status"></span>
+    </header>
+    <p style="margin:6px 16px;font-size:12px"><a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a> · <a href="/lizenzen">Lizenzen</a> – Fotos werden nur in diesem Browser ausgewertet.</p>
+    <main>
+      <div id="list"></div>
+      <div id="out"><p class="muted">Bilder laden (Fotos der Dokumentenkamera) oder die Kamera starten. Alles bleibt im Browser.</p></div>
+    </main>
+    <script type="module" src="/src/lab/lab.ts"></script>
+  </body>
+</html>

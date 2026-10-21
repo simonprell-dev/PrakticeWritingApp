@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
+
+# training tooling (never deployed)
+tools/train/.venv/
+tools/train/data/
+tools/train/fonts/
+tools/train/out/
+__pycache__/
+*.pyc
+
+# local snapshots from the lab page
+test/fixtures/photos/private/
+tools/.browsers/

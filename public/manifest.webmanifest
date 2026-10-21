@@ -1,0 +1,11 @@
+{
+  "name": "Buchstaben-Zoo",
+  "short_name": "Buchstaben-Zoo",
+  "description": "Schreib schön – und aus deinen Buchstaben werden süße Fische, Aliens und Tiere.",
+  "lang": "de",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#fdf6ff",
+  "theme_color": "#7c5cff",
+  "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

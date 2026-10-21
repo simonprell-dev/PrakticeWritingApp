@@ -1,0 +1,16 @@
+{
+  "configured": false,
+  "type": "privat",
+  "name": "[Name der verantwortlichen Person oder Schule]",
+  "representative": "",
+  "address": "[Straße Hausnummer]\n[PLZ Ort]",
+  "email": "[E-Mail-Adresse]",
+  "phone": "",
+  "dpo": "",
+  "authority": "",
+  "supervision": "",
+  "contentResponsible": "",
+  "serverLocation": "EU West (Amsterdam, Niederlande)",
+  "logDays": "30",
+  "date": "Oktober 2026"
+}

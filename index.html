@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#7c5cff" />
+    <meta name="description" content="Buchstaben-Zoo: Schreib schön – und aus deinen Buchstaben werden süße Fische, Aliens und Tiere." />
+    <title>Buchstaben-Zoo</title>
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preload" href="/fonts/Fredoka.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      /* works even when the app's scripts and styles could not be loaded */
+      #loading {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        padding: 24px;
+        background: #fdf6ff;
+        color: #3b2a5c;
+        font: 600 26px 'Segoe UI', system-ui, sans-serif;
+        text-align: center;
+        z-index: 100;
+      }
+      #loading .hint {
+        max-width: 640px;
+        font-size: 17px;
+        font-weight: 400;
+        line-height: 1.5;
+        background: #fff;
+        border: 3px solid #3b2a5c;
+        border-radius: 20px;
+        padding: 14px 20px;
+        opacity: 0;
+        animation: show-hint 0.4s 5s forwards;
+      }
+      #loading code {
+        background: #ece6ff;
+        border-radius: 6px;
+        padding: 1px 6px;
+      }
+      @keyframes show-hint {
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+    <div id="ui"></div>
+    <div id="loading">
+      <div>Buchstaben-Zoo lädt …</div>
+      <div class="hint">
+        Es geht nicht weiter? Dann bitte die Seite neu laden (Strg + F5).<br /><br />
+        <b>Beim Entwickeln:</b> Die Datei <code>index.html</code> kann man nicht direkt öffnen (auch nicht über eine
+        Vorschau in VS Code). Im Terminal <code>npm run dev</code> eingeben und dann
+        <code>http://localhost:5173</code> in Chrome oder Edge öffnen.
+      </div>
+    </div>
+    <noscript>Bitte JavaScript einschalten.</noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
