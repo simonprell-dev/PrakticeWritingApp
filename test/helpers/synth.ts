@@ -47,6 +47,34 @@ export interface PageSpec {
   table?: number;
   /** paper slips on a dark table (everything else is table) */
   slips?: { x: number; y: number; w: number; h: number; color?: [number, number, number] }[];
+  /** German school lines (DIN 16552-1): 1 and 2 = four lines per row, 3 = two lines (middle band only) */
+  lineatur?: SchoolLines;
+}
+
+export interface SchoolLines {
+  kind: 1 | 2 | 3;
+  /** px per mm */
+  mm: number;
+  /** y of the first row's top line (for kind 3: its middle line) */
+  top: number;
+  /** distance from one row to the next (mm) */
+  pitch: number;
+  color: [number, number, number];
+  width: number;
+  /** coloured middle band (Kontrastlineatur) */
+  band?: [number, number, number];
+}
+
+/** band height (mm) of a school line system */
+export function bandMm(kind: 1 | 2 | 3): number {
+  return kind === 1 ? 5 : kind === 2 ? 4 : 3.5;
+}
+
+/** y (px) of the lines of row r: [top, middle, base, bottom]; kind 3 has only middle and base */
+export function rowLines(L: SchoolLines, r: number): { top: number; mid: number; base: number; bottom: number } {
+  const b = bandMm(L.kind) * L.mm;
+  const y0 = L.top + r * L.pitch * L.mm;
+  return L.kind === 3 ? { top: y0 - b, mid: y0, base: y0 + b, bottom: y0 + 2 * b } : { top: y0, mid: y0 + b, base: y0 + 2 * b, bottom: y0 + 3 * b };
 }
 
 /** Ink coverage plane in 0..1 */
@@ -99,6 +127,17 @@ export function makePage(bank: TemplateBank, spec: PageSpec): RGBAImage {
   const paper = spec.paper ?? [238, 236, 230];
   const data = new Uint8ClampedArray(w * h * 4);
   const lineCov = new Float32Array(w * h);
+  const bandMask = new Uint8Array(w * h);
+  if (spec.lineatur) {
+    const L = spec.lineatur;
+    for (let r = 0; ; r++) {
+      const rl = rowLines(L, r);
+      if (rl.top > h) break;
+      const ys = L.kind === 3 ? [rl.mid, rl.base] : [rl.top, rl.mid, rl.base, rl.bottom];
+      for (const y0 of ys) for (let x = 0; x < w; x++) stampDisk(lineCov, w, h, x + 0.5, y0, L.width / 2);
+      if (L.band) for (let y = Math.max(0, Math.ceil(rl.mid)); y < Math.min(h, rl.base); y++) bandMask.fill(1, y * w, y * w + w);
+    }
+  }
   if (spec.lines) {
     const L = spec.lines;
     for (let y0 = L.offset; y0 < h; y0 += L.spacing) {
@@ -124,6 +163,11 @@ export function makePage(bank: TemplateBank, spec: PageSpec): RGBAImage {
       }
       if (onTable) c = [70 * light, 55 * light, 45 * light];
       else {
+        if (spec.lineatur?.band && bandMask[i]) c = spec.lineatur.band.map((v) => v * light) as typeof c;
+        if (spec.lineatur && lineCov[i] > 0) {
+          const a = lineCov[i];
+          c = c.map((v, k) => v * (1 - a) + spec.lineatur!.color[k] * light * a) as typeof c;
+        }
         if (spec.lines && lineCov[i] > 0) {
           const a = lineCov[i];
           c = c.map((v, k) => v * (1 - a) + spec.lines!.color[k] * light * a) as typeof c;
@@ -142,4 +186,30 @@ export function makePage(bank: TemplateBank, spec: PageSpec): RGBAImage {
     }
   }
   return { width: w, height: h, data };
+}
+
+const ASCENDERS = 'bdfhklt';
+const DESCENDERS = 'gjpqy';
+
+/**
+ * A word written on row \`row\` of the school lines, every letter sized to its bands (capitals and
+ * ascenders up to the top line, descenders down to the bottom line). \`grow\` > 1 writes them too big.
+ */
+export function schoolWord(bank: TemplateBank, L: SchoolLines, row: number, text: string, x0: number, grow = 1): GlyphSpec[] {
+  const rl = rowLines(L, row);
+  const b = bandMm(L.kind) * L.mm;
+  let x = x0;
+  return [...text].map((char) => {
+    const t = bank.forChar(char, 'druck')[0];
+    const upper = char !== char.toLowerCase() || /[0-9]/.test(char);
+    let top = rl.mid;
+    let bottom = rl.base;
+    if (upper || ASCENDERS.includes(char)) top = char === 't' ? rl.mid - b * 0.6 : rl.base - 2 * b;
+    if (DESCENDERS.includes(char)) bottom = rl.base + b;
+    const hgt = (bottom - top) * grow;
+    top = bottom - hgt;
+    const g: GlyphSpec = { char, x: x + (hgt * t.aspect) / 2, y: (top + bottom) / 2, size: hgt * Math.max(1, t.aspect), pen: Math.max(3, b * 0.16) };
+    x += hgt * t.aspect + b * 0.55;
+    return g;
+  });
 }

@@ -61,6 +61,7 @@ function legalFromEnv() {
     address: lines(e.LEGAL_ADDRESS),
     email: e.LEGAL_EMAIL || '',
     phone: e.LEGAL_PHONE || '',
+    website: e.LEGAL_WEBSITE || '',
     dpo: lines(e.LEGAL_DPO),
     authority: lines(e.LEGAL_AUTHORITY),
     supervision: lines(e.LEGAL_SUPERVISION),

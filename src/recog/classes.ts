@@ -49,3 +49,41 @@ export const PRACTICE_SETS = [
 export function classIndex(ch: string): number {
   return CHARSET.indexOf(ch);
 }
+
+/**
+ * Letters for the surprise bubbles of the practice mode: the same kind as the practice letter (capitals,
+ * small letters or digits), never one the recogniser could confuse with it (or with the other practice
+ * letters in `alsoAvoid`), and no umlauts or ß (they differ from other letters only by their dots).
+ */
+export function surprisePool(target: string, alsoAvoid: string[] = []): string[] {
+  const set = PRACTICE_SETS.find((s) => s.chars.includes(target)) ?? PRACTICE_SETS[0];
+  const avoid = new Set([target, ...alsoAvoid].map((c) => groupOf(baseOf(c))));
+  return [...set.chars].filter((c) => !isUmlaut(c) && c !== 'ß' && !avoid.has(groupOf(c)));
+}
+
+/** where a letter sits in the school lines: bands its body reaches above and below the base line */
+export function zoneOf(ch: string): [number, number] {
+  const b = baseOf(ch);
+  if (isDigit(b) || b !== b.toLowerCase()) return [2, 0];
+  if ('bdfhklß'.includes(b)) return [2, 0];
+  if (b === 't') return [1.6, 0];
+  if ('gjpqy'.includes(b)) return [1, 1];
+  return [1, 0];
+}
+
+/** measured position in the bands (see GlyphFeatures.zone) */
+export interface Zone {
+  top: number;
+  bottom: number;
+  /** the base line was a guess (evenly spaced lines): it may also be one band higher */
+  ambiguous: boolean;
+}
+
+/** how far (in bands) a written letter is from where it belongs in the school lines */
+export function zoneDeviation(ch: string, z: Zone): number {
+  const [eT, eB] = zoneOf(ch);
+  // ß is taught with and without a descender (Bavarian Druckschrift: below the base line)
+  const bottoms = baseOf(ch) === 'ß' ? [eB, 1] : [eB];
+  const dev = (k: number) => Math.min(...bottoms.map((b) => Math.abs(z.top - k - eT) + Math.abs(z.bottom + k - b)));
+  return z.ambiguous ? Math.min(dev(0), dev(1)) : dev(0);
+}

@@ -1,8 +1,10 @@
+import type { SaveMeta } from '../app/saves.ts';
 import type { HabitatId, Settings } from '../app/settings.ts';
-import { withArticle } from '../recog/classes.ts';
-import { button, h, modal, segmented } from './dom.ts';
-import { legalLinks, legalWarning, openLegal } from './legal.ts';
-import { tilePreview } from './previews.ts';
+import { button, h, segmented } from './dom.ts';
+import { openGuide } from './guide.ts';
+import { legalLinks, legalWarning } from './legal.ts';
+import { continueBanner } from './savesPanel.ts';
+import { tilePreview, type TileKind } from './previews.ts';
 
 export interface StartDeps {
   settings: Settings;
@@ -12,8 +14,14 @@ export interface StartDeps {
   openSettings: () => void;
   openPicker: (done: () => void) => void;
   startHabitat: (id: HabitatId) => void;
+  openPaint: () => void;
   openDuel: () => void;
   openSiege: () => void;
+  openTowers: () => void;
+  /** the game played last (to continue it), if there is one */
+  lastGame: () => Promise<SaveMeta | null>;
+  resume: (id: string) => void;
+  openSaves: () => void;
 }
 
 const COLORS = ['#ff6f91', '#ff9671', '#ffc75f', '#7ccf6b', '#4fb3ff', '#8f7bff', '#ff6fd8'];
@@ -40,7 +48,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
     if (s.practice.mode !== 'ueben') return;
     targetChip.append(
       button(
-        [h('span', null, 'Üben:'), h('span', { class: 'glyph' }, s.practice.target), h('span', null, `× ${s.practice.count}`), h('span', null, '✎')],
+        [h('span', null, 'Üben:'), h('span', { class: 'glyph' }, s.practice.targets.join(' ')), h('span', null, `je ${s.practice.count}×`), h('span', null, '✎')],
         () => d.openPicker(renderTarget),
         'btn target-chip',
         'Buchstaben wählen',
@@ -62,7 +70,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
   );
   renderTarget();
 
-  const tile = (id: 'meer' | 'weltraum' | 'savanne' | 'duell' | 'riesenburg', label: string, hint: string, onClick: () => void) => {
+  const tile = (id: TileKind, label: string, hint: string, onClick: () => void) => {
     const cv = h('canvas', { width: 480, height: 360 });
     const t = button([cv, h('div', { class: 'label' }, label), h('div', { class: 'hint' }, hint)], onClick, 'tile', label);
     const draw = () => tilePreview(id, cv);
@@ -74,12 +82,19 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
   const short = cam.label.length > 32 ? cam.label.slice(0, 30) + '…' : cam.label;
   const camChip = button(cam.ok ? `📷 ${short}` : '📷 Kamera einrichten', d.openCamera, `btn small cam-chip ${cam.ok ? 'ok' : 'bad'}`, cam.label);
 
+  // "Weiterspielen" appears as soon as the saved games are read
+  const cont = h('div', { class: 'continue-row' });
+  void d.lastGame().then((m) => {
+    if (m) cont.append(continueBanner(m, () => d.resume(m.id)));
+  });
+
   root.append(
     h(
       'div',
       { class: 'start' },
       logo,
       h('p', { class: 'subtitle' }, 'Schreib schön – und dein Krakel bekommt eine Krone!'),
+      cont,
       h('div', { class: 'mode-row' }, mode, targetChip),
       h(
         'div',
@@ -89,13 +104,16 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         tile('savanne', '🦒 Savanne', 'Tiere in der Steppe', () => d.startHabitat('savanne')),
         tile('duell', '⚔️ Team-Duell', 'Zwei Teams, Zettel, Blasen-Burgen', d.openDuel),
         tile('riesenburg', '🏰 Riesenburg', 'Die ganze Klasse gegen den Riesen', d.openSiege),
+        tile('tuerme', '🏗️ Türme bauen', 'Bis zu 8 Teams, Aliens helfen', d.openTowers),
+        tile('malen', '🎨 Mal-Aquarium', 'Fische ausmalen – sie schwimmen los', d.openPaint),
       ),
       h(
         'div',
         { class: 'footer' },
         camChip,
+        button('📂 Spielstände', d.openSaves, 'btn small'),
         button('⚙️ Einstellungen', d.openSettings, 'btn small'),
-        button('❓ Hilfe', openHelp, 'btn small'),
+        button('👩‍🏫 Für Lehrer und Eltern', openGuide, 'btn small'),
       ),
       legalLinks(),
     ),
@@ -103,47 +121,4 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
   void legalWarning().then((w) => {
     if (w) root.querySelector('.start')?.append(w);
   });
-}
-
-export function openHelp(): void {
-  const content = h(
-    'div',
-    { style: 'max-width:760px' },
-    h('h2', null, 'So geht’s'),
-    h('h3', null, '1. Kamera'),
-    h('p', null, 'Dokumentenkamera anschließen, „Kamera einrichten“ öffnen, Bild drehen bis die Schrift aufrecht ist und einen Rahmen um das Blatt ziehen.'),
-    h('h3', null, '2. Schreiben'),
-    h('p', null, 'Die Kinder schreiben Buchstaben oder Zahlen unter die Kamera. Dann „Fertig!“ drücken – oder Leertaste, Enter oder den Presenter. Mit „Automatisch scannen“ (Einstellungen) geht es auch ohne Knopf.'),
-    h('h3', null, '3. Staunen'),
-    h('p', null, 'Jedes Zeichen wird zu einem Wesen. Je schöner geschrieben, desto prächtiger. Krakelige Zeichen werden zu lustigen, zerknitterten Wesen. Antippen zeigt das Zeichen groß mit einem Tipp.'),
-    h('h3', null, 'Tasten'),
-    h(
-      'ul',
-      null,
-      h('li', null, 'Leertaste / Enter / Bild↓ / Pfeil → : Scannen'),
-      h('li', null, 'N: Neues Blatt (alles Geschriebene gilt als neu)'),
-      h('li', null, 'A: Automatisch scannen an/aus'),
-      h('li', null, 'F: Vollbild, Esc: Menü'),
-    ),
-    h('h3', null, 'Team-Duell'),
-    h('p', null, `Zwei Teams schreiben auf kleine Zettel (z. B. rote und blaue Stifte). Jedes Zeichen wird zu einer Figur mit 1–5 Sternen – so oft kann sie zuschlagen. Treffen sich zwei Figuren, ziehen sie sich Sterne ab. An der gegnerischen Burg lässt jeder Schlag eine Seifenblase platzen; die Seifenblasen-Maschine bläst neue nach, bis ihr Tank leer ist. Gekritzel macht nur „Pfff“. Beispiel-Aufgabe: „Schreibt ${withArticle('A')} bis ${withArticle('Z')}!“`),
-    h('h3', null, 'Klasse gegen Riesenburg'),
-    h('p', null, 'Die ganze Klasse ist ein Team gegen Riese Rumpel. Jedes Zeichen wird zu einer Figur mit 1–5 Sternen. Die Figuren besiegen die Tintenklecks-Wächter und lassen die Seifenblasen der Riesenburg platzen – Mauer für Mauer, mit Zwischensequenzen, bis der Riese aufgibt. Alle Stiftfarben zählen.'),
-    h('h3', null, 'Datenschutz'),
-    h(
-      'p',
-      null,
-      'Die Kamerabilder werden nur auf diesem Gerät ausgewertet, nirgendwohin geschickt und nicht gespeichert. Es gibt keine Konten, keine Cookies und kein Tracking. Bitte die Kamera nur auf das Papier richten und als Teamnamen keine Namen von Kindern verwenden.',
-    ),
-    h(
-      'div',
-      { class: 'actions' },
-      button('Datenschutzerklärung', () => {
-        m.close();
-        void openLegal('datenschutz');
-      }, 'btn small'),
-      button('Alles klar!', () => m.close(), 'btn primary'),
-    ),
-  );
-  const m = modal(content);
 }

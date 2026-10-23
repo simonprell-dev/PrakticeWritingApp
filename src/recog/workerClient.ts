@@ -2,8 +2,9 @@
 // falls back to a single worker or to the main thread (?noworker or no Worker support).
 import type { Vec3 } from '../vision/color.ts';
 import type { GlyphJob } from '../vision/pipeline.ts';
+import type { CardScan } from '../vision/cards.ts';
 import type { RGBAImage, ScanResult, VisionOptions } from '../vision/types.ts';
-import type { EngineInfo } from './engine.ts';
+import type { EngineInfo, SavedMemory } from './engine.ts';
 import type { Analysis } from './recognizer.ts';
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: number };
@@ -12,6 +13,11 @@ export interface VisionClient {
   init(): Promise<EngineInfo>;
   scan(frame: RGBAImage, opts: VisionOptions): Promise<ScanResult>;
   reset(): Promise<void>;
+  /** the remembered glyphs (to continue a saved game on the same sheet) */
+  getMemory(): Promise<SavedMemory>;
+  setMemory(m: SavedMemory): Promise<void>;
+  /** Mal-Aquarium: finds the colouring cards */
+  cards(frame: RGBAImage): Promise<CardScan>;
   calibrate(frame: RGBAImage, kind: 'pen'): Promise<{ absorb: Vec3; pixels: number }>;
   calibrate(frame: RGBAImage, kind: 'slip'): Promise<{ rgb: Vec3 }>;
 }
@@ -74,7 +80,9 @@ class WorkerPool implements VisionClient {
     const { id, jobs } = await this.main.call<{ id: number; jobs: GlyphJob[] }>({ type: 'segment', frame, opts }, [frame.data.buffer as ArrayBuffer]);
     const t0 = performance.now();
     let analyses: Analysis[];
-    if (jobs.length <= 2) analyses = await this.main.call<Analysis[]>({ type: 'analyze', jobs, opts });
+    // only the new handwriting is recognised; a rescan of a known sheet needs no recognition at all
+    if (!jobs.length) analyses = [];
+    else if (jobs.length <= 2) analyses = await this.main.call<Analysis[]>({ type: 'analyze', jobs, opts });
     else {
       // glyphs are spread over all workers and recognised at the same time
       const k = Math.min(this.workers.length, jobs.length);
@@ -90,6 +98,20 @@ class WorkerPool implements VisionClient {
 
   reset() {
     return this.main.call<void>({ type: 'reset' });
+  }
+
+  getMemory() {
+    return this.main.call<SavedMemory>({ type: 'memory-get' });
+  }
+
+  setMemory(memory: SavedMemory) {
+    return this.main.call<void>({ type: 'memory-set', memory });
+  }
+
+  cards(frame: RGBAImage) {
+    // a free worker if there is one: the first one may still be loading the model
+    const w = this.workers[this.workers.length - 1];
+    return w.call<CardScan>({ type: 'cards', frame }, [frame.data.buffer as ArrayBuffer]);
   }
 
   calibrate(frame: RGBAImage, kind: 'pen' | 'slip') {
@@ -110,6 +132,15 @@ class InlineVision implements VisionClient {
   }
   async reset() {
     (await this.engine).reset();
+  }
+  async getMemory() {
+    return (await this.engine).exportMemory();
+  }
+  async setMemory(m: SavedMemory) {
+    (await this.engine).importMemory(m);
+  }
+  async cards(frame: RGBAImage) {
+    return (await this.engine).cards(frame);
   }
   async calibrate(frame: RGBAImage, kind: 'pen' | 'slip') {
     return (await this.engine).calibrate(frame, kind) as never;

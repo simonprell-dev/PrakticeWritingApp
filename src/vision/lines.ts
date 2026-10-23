@@ -32,7 +32,8 @@ function projectionPeaks(hist: Float64Array, minCount: number): { pos: number; t
   return out;
 }
 
-function estimateSkew(m: Mask, maxDeg = 6, stepDeg = 0.5): number {
+/** Skew of the strongest horizontal structure (lines, text rows) in a mask, by projection profiles. */
+export function estimateSkew(m: Mask, maxDeg = 6, stepDeg = 0.5): number {
   const { width: w, height: h, data } = m;
   const xs: number[] = [];
   const ys: number[] = [];
@@ -146,4 +147,86 @@ export function removeRuledLines(detect: Mask, target: Mask, mode: 'auto' | 'on'
     }
   }
   return { lines, skew, mask: out };
+}
+
+/** which line system the paper has; 'auto' tells it from the lines themselves */
+export type LineatureMode = 'auto' | 'school4' | 'school2' | 'plain' | 'none';
+
+/**
+ * German school lines (DIN 16552-1): Lineatur 1 and 2 have four lines per row (three equal bands of
+ * 5 or 4 mm, the middle band often coloured), Lineatur 3 only the two lines of the middle band.
+ * Plain ruled paper has single lines.
+ */
+export interface LineModel {
+  kind: 'none' | 'plain' | 'school';
+  /** school: height of one band (px); plain: line spacing (px) */
+  unit: number;
+  /** all line positions (sheared detection rows: y - shearShift(x)) */
+  lines: number[];
+  /** base lines (Grundlinien) when they are known */
+  bases: number[];
+  skew: number;
+}
+
+const percentile = (a: number[], q: number) => {
+  const s = [...a].sort((x, y) => x - y);
+  return s[Math.min(s.length - 1, Math.floor(q * s.length))] ?? 0;
+};
+
+/**
+ * Lines and bands from the row profile of the background (see ink.ts), then the line system:
+ * coloured bands give the middle band directly; otherwise four-line groups (Lineatur 1/2), pairs
+ * (Lineatur 3) or evenly spaced lines. Evenly spaced lines are school lines when the letters span
+ * more than one gap (\`bodyHeights\` of the glyphs), else plain ruled paper.
+ */
+export function lineModel(profile: Float32Array, pad: number, skew: number, mode: LineatureMode, bodyHeights: number[]): LineModel {
+  const none: LineModel = { kind: 'none', unit: 0, lines: [], bases: [], skew };
+  if (mode === 'none') return none;
+  const thr = Math.max(0.035, percentile([...profile], 0.5) * 3);
+  const runs: { a: number; b: number }[] = [];
+  for (let i = 0; i < profile.length; ) {
+    if (profile[i] < thr) {
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j < profile.length && profile[j] >= thr) j++;
+    runs.push({ a: i - pad, b: j - pad });
+    i = j;
+  }
+  const bandMin = 7;
+  const bands = runs.filter((r) => r.b - r.a >= bandMin);
+  const lines = runs.map((r) => (r.b - r.a >= bandMin ? [r.a, r.b] : [(r.a + r.b - 1) / 2])).flat();
+  lines.sort((x, y) => x - y);
+  if (bands.length && mode !== 'plain') {
+    const unit = percentile(
+      bands.map((b) => b.b - b.a),
+      0.5,
+    );
+    return { kind: 'school', unit, lines, bases: bands.map((b) => b.b), skew };
+  }
+  if (lines.length < 2) return none;
+  const diffs = lines.slice(1).map((v, i) => v - lines[i]);
+  const s = percentile(diffs, 0.25);
+  if (s < 4) return none;
+  if (mode === 'plain') return { kind: 'plain', unit: percentile(diffs, 0.5), lines, bases: [], skew };
+  // groups of lines that belong to one writing row
+  const groups: number[][] = [[lines[0]]];
+  diffs.forEach((d, i) => {
+    // Lineatur 2: 4 mm bands, 5 mm to the next row
+    if (d > 1.15 * s) groups.push([]);
+    groups[groups.length - 1].push(lines[i + 1]);
+  });
+  const grouped = groups.length > 1 && groups.some((g) => g.length > 1);
+  const school = mode === 'school4' || mode === 'school2' || grouped || percentile(bodyHeights, 0.5) > 1.3 * s;
+  if (!school) return { kind: 'plain', unit: s, lines, bases: [], skew };
+  const per = mode === 'school2' ? 2 : mode === 'school4' ? 4 : 0;
+  const bases: number[] = [];
+  if (grouped || per) {
+    for (const g of groups) {
+      if ((per === 4 || !per) && g.length === 4) bases.push(g[2]);
+      else if ((per === 2 || !per) && g.length === 2) bases.push(g[1]);
+    }
+  }
+  return { kind: 'school', unit: s, lines, bases, skew };
 }

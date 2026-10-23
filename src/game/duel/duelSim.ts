@@ -71,6 +71,20 @@ export interface TeamStats {
 
 export type CastleSize = keyof typeof BALANCE.castle;
 
+/** everything needed to continue a duel later (plain data) */
+export interface DuelSave {
+  worldW: number;
+  fighters: Fighter[];
+  castles: Record<TeamId, Castle>;
+  time: number;
+  timeLimit: number;
+  stats: Record<TeamId, TeamStats>;
+  nextId: number;
+  stages: SiegeStage[] | null;
+  stage: number;
+  stageCleared: boolean;
+}
+
 const other = (t: TeamId): TeamId => (t === 'A' ? 'B' : 'A');
 
 export class DuelSim {
@@ -103,6 +117,52 @@ export class DuelSim {
     this.castles = { A: make('A', BALANCE.castleInset), B: make('B', worldW - BALANCE.castleInset) };
     const empty = (): TeamStats => ({ written: 0, scoreSum: 0, best: null, bravest: null, castleDamage: 0, fighters: 0 });
     this.stats = { A: empty(), B: empty() };
+  }
+
+  exportState(): DuelSave {
+    return structuredClone({
+      worldW: this.worldW,
+      fighters: this.fighters.filter((f) => f.state !== 'gone'),
+      castles: this.castles,
+      time: this.time,
+      timeLimit: this.timeLimit,
+      stats: this.stats,
+      nextId: this.nextId,
+      stages: this.stages,
+      stage: this.stage,
+      stageCleared: this.stageCleared,
+    });
+  }
+
+  /** Continues a saved duel. `glyphId` maps the glyph ids of the saved game to the ids used now. */
+  importState(s: DuelSave, glyphId: (id: number) => number = (id) => id): void {
+    const d = structuredClone(s);
+    for (const f of d.fighters) {
+      f.glyphId = glyphId(f.glyphId);
+      f.knock = 0;
+      f.hitT = 0;
+    }
+    for (const st of Object.values(d.stats)) {
+      if (st.best) st.best.glyphId = glyphId(st.best.glyphId);
+      if (st.bravest) st.bravest.glyphId = glyphId(st.bravest.glyphId);
+    }
+    // bubbles that were on their way go back into the tank
+    for (const c of Object.values(d.castles)) {
+      c.tank += c.flying.length;
+      c.flying = [];
+    }
+    this.worldW = d.worldW;
+    this.fighters = d.fighters;
+    this.castles = d.castles;
+    this.time = d.time;
+    this.timeLimit = d.timeLimit;
+    this.stats = d.stats;
+    this.nextId = d.nextId;
+    this.stages = d.stages;
+    this.stage = d.stage;
+    this.stageCleared = d.stageCleared;
+    this.over = null;
+    this.events = [];
   }
 
   /** Klasse gegen Riesenburg: castle A has no bubbles, castle B has several walls. */

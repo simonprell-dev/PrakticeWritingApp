@@ -8,7 +8,8 @@
 
 | Daten | Wo verarbeitet | Weitergabe | Speicherdauer |
 |---|---|---|---|
-| **Kamerabilder / Handschrift** | nur im Browser des Geräts (Web Worker) | **keine** | nur im Arbeitsspeicher, solange das Spiel läuft |
+| **Kamerafotos** | nur im Browser des Geräts (Web Worker) | **keine** | nur im Arbeitsspeicher, bis die Auswertung fertig ist |
+| **Spielstände** (ausgeschnittene Buchstaben mit Bewertung, ausgemalte Fisch-Karten mit dem darauf geschriebenen Fischnamen, Vorschaubild, Spieleinstellungen) | `IndexedDB` des Browsers | keine (nur wenn jemand selbst eine Datei herunterlädt) | das letzte Spiel jeder Spielart bis zum nächsten Spiel dieser Art; benannte Spielstände bis zum Löschen (einzeln, „Alle Spielstände löschen“, „Alles zurücksetzen“ oder Websitedaten löschen) |
 | **Einstellungen** (Kamera, Bildausschnitt, Strenge, Teamnamen, Übungsbuchstabe) | `localStorage` des Browsers | keine | bis „Alles zurücksetzen“ oder Löschen der Websitedaten |
 | **App-Dateien** (Offline-Betrieb) | Cache des Service Workers | keine | bis zur nächsten Aktualisierung |
 | **Verbindungsdaten** (IP-Adresse, Zeit, URL, Statuscode, Datenmenge, Browser) | beim Hoster **Railway** (Auftragsverarbeiter) | Railway Corporation, USA | 7 Tage (Railway-Tarife Trial/Hobby) bzw. 30 Tage (Pro) |
@@ -19,6 +20,7 @@ Außerdem:
   - Hintergrund zu den Schriften: Das LG München I (Urteil vom 20.01.2022, Az. 3 O 17493/20) hat die Einbindung von Google Fonts über Googles Server als Datenschutzverstoß gewertet.
 - **Der eigene Server (`server.js`) schreibt keine Zugriffsprotokolle.** Die Protokolle entstehen nur auf der Plattform von Railway.
 - **Ein Cookie-Banner ist nicht nötig.** Die Speicherung im Browser ist für die gewünschten Funktionen unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG).
+- **Spielstände enthalten Handschrift der Kinder** (ausgeschnittene Buchstaben, ausgemalte Bilder). Sie bleiben im Browser des Geräts. Auf gemeinsam genutzten Geräten in den Einstellungen „Letztes Spiel merken“ ausschalten oder die Spielstände nach dem Unterricht löschen. Heruntergeladene Spielstand-Dateien wie andere Schülerarbeiten behandeln.
 
 **In der App:**
 - Datenschutzerklärung, Impressum und Lizenzhinweise sind auf der Startseite unten verlinkt.
@@ -32,7 +34,7 @@ Außerdem:
 ### Organisatorisch
 - [ ] **Verantwortlichen festlegen.** Wer betreibt die Website: eine Lehrkraft privat, die Schule, ein Förderverein? Davon hängen die Rechtsgrundlage (`LEGAL_TYPE`) und die zuständige Aufsichtsbehörde ab.
 - [ ] **Schule:** Den Einsatz mit der Schulleitung abstimmen. Die/den **Datenschutzbeauftragte/n** einbinden. Die Verarbeitung ins **Verzeichnis von Verarbeitungstätigkeiten** (Art. 30 DSGVO) aufnehmen.
-- [ ] **Datenschutz-Folgenabschätzung (Art. 35 DSGVO):** Die Bilder werden nur lokal und ohne Speicherung verarbeitet. Deshalb ist sie voraussichtlich nicht erforderlich. Die Entscheidung trifft der Verantwortliche zusammen mit der/dem Datenschutzbeauftragten.
+- [ ] **Datenschutz-Folgenabschätzung (Art. 35 DSGVO):** Die Bilder werden nur lokal verarbeitet; gespeichert werden nur Spielstände im Browser des Geräts (ohne Kamerafotos). Deshalb ist sie voraussichtlich nicht erforderlich. Die Entscheidung trifft der Verantwortliche zusammen mit der/dem Datenschutzbeauftragten.
 - [ ] **Eltern informieren** (empfohlen, siehe Vorlage in Abschnitt 4). Eine Einwilligung ist für die App selbst nicht nötig, weil keine Daten der Kinder das Gerät verlassen.
 - [ ] **Im Unterricht:**
   - Die Kamera nur auf das Papier richten, keine Gesichter.
@@ -80,6 +82,8 @@ Außerdem:
 
 In Railway: **Service → Variables → New Variable**. Für Zeilenumbrüche `|` verwenden.
 
+Ohne diese Variablen liefert der Server die Angaben aus `public/legal.json` aus (dort stehen die Angaben des aktuellen Betreibers). Gesetzte Variablen haben Vorrang.
+
 | Variable | Pflicht | Beispiel |
 |---|---|---|
 | `LEGAL_TYPE` | ja | `schule` (öffentliche Schule → Art. 6 Abs. 1 lit. e DSGVO), `privat` oder `organisation` (→ lit. f) |
@@ -88,6 +92,7 @@ In Railway: **Service → Variables → New Variable**. Für Zeilenumbrüche `|`
 | `LEGAL_ADDRESS` | ja | `Schulstraße 1 \| 12345 Musterstadt` |
 | `LEGAL_EMAIL` | ja | `verwaltung@gs-musterstadt.de` |
 | `LEGAL_PHONE` | empfohlen | `01234 56789-0` |
+| `LEGAL_WEBSITE` | optional | eigene Website, wird im Impressum verlinkt, z. B. `https://prelldynamics.de/` |
 | `LEGAL_DPO` | wenn vorhanden | `Datenschutzbeauftragte/r der Schule \| datenschutz@gs-musterstadt.de` |
 | `LEGAL_AUTHORITY` | empfohlen | siehe unten |
 | `LEGAL_SUPERVISION` | bei Schulen empfohlen | `Staatliches Schulamt … \| Anschrift` |
@@ -115,8 +120,9 @@ In anderen Bundesländern ist die jeweilige Landesbehörde zuständig.
 >
 > **Datenschutz:**
 > - Die Kamerabilder werden ausschließlich auf dem Schulgerät ausgewertet. Sie werden nicht ins Internet übertragen und nicht gespeichert.
+> - Damit ein Spiel in der nächsten Stunde weitergehen kann, merkt sich das Programm auf dem Schulgerät die ausgeschnittenen Buchstaben und ausgemalten Bilder. Diese Spielstände verlassen das Gerät nicht und werden gelöscht, wenn wir sie nicht mehr brauchen.
 > - Die Kamera zeigt nur das Papier, keine Gesichter.
-> - Die Kinder brauchen kein Konto. Es werden keine Namen erfasst.
+> - Die Kinder brauchen kein Konto. Es werden keine Namen erfasst. Auf die Malvorlage schreiben die Kinder einen Namen für ihren Fisch, nicht ihren eigenen.
 > - Die „Sterne“ im Spiel sind keine Noten.
 >
 > Bei Fragen wenden Sie sich gern an [Ansprechperson].

@@ -7,7 +7,7 @@ import { fighterSprite } from '../game/creatures/duelFigure.ts';
 import { makeGenome } from '../game/creatures/genome.ts';
 import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
 import { BALANCE, laneY, pileRowY } from '../game/duel/balance.ts';
-import { DuelSim, type CastleSize, type DuelEvent, type Fighter, type TeamStats } from '../game/duel/duelSim.ts';
+import { DuelSim, type CastleSize, type DuelEvent, type DuelSave, type Fighter, type TeamStats } from '../game/duel/duelSim.ts';
 import { clamp, ease, hsl, lerp, TAU } from '../game/math.ts';
 import { Particles } from '../game/particles.ts';
 import { hashBytes, mulberry32 } from '../game/rng.ts';
@@ -15,6 +15,7 @@ import { SpawnFx } from '../game/spawnFx.ts';
 import { WORLD_H } from '../game/stage.ts';
 import { PEN_PRESETS, SLIP_PRESETS } from '../vision/color.ts';
 import type { ScanResult, ScannedGlyph, TeamId } from '../vision/types.ts';
+import { loadGlyph, restoredId, saveGlyph, type SavedGlyph, type SceneSave } from './saved.ts';
 import type { Scene, SceneHost, Snapshot } from './scene.ts';
 
 export interface DuelTeamResult {
@@ -95,7 +96,7 @@ function starShape(ctx: CanvasRenderingContext2D, x: number, y: number, r: numbe
   ctx.restore();
 }
 
-function hexHue(hex: string): number {
+export function hexHue(hex: string): number {
   const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
   if (!m) return 0;
   const [r, g, b] = [m[1], m[2], m[3]].map((v) => parseInt(v, 16) / 255);
@@ -119,6 +120,16 @@ export function teamColor(t: TeamSettings, by: 'pen' | 'slip'): string {
 }
 
 const TEAMS = ['A', 'B'] as const;
+
+/** the duel side of a glyph (the vision knows up to four colours) */
+const sideOf = (g: ScannedGlyph): TeamId | undefined => (g.team === 'A' || g.team === 'B' ? g.team : undefined);
+
+/** a duel (or the Riesenburg) in a saved game */
+export interface DuelSceneSave {
+  sim: DuelSave;
+  /** the letters of the fighters still on the field and of the best and bravest ones */
+  glyphs: SavedGlyph[];
+}
 
 export interface DuelConfig {
   names: Record<TeamId, string>;
@@ -253,18 +264,22 @@ export class DuelScene implements Scene {
     const stickers = new Map<number, AnyCanvas>();
     for (const g of res.glyphs) stickers.set(g.id, canvasFromRGBA(g.crop));
     const fresh = res.glyphs.filter((g) => g.isNew);
-    const neutral = fresh.filter((g) => !g.team).length;
+    const neutral = fresh.filter((g) => !sideOf(g)).length;
     this.fx.start(
       snap,
       res.glyphs,
       stickers,
       this.W,
-      (g) => (g.team ? { x: this.sim.gateX(g.team), y: 620 } : null),
       (g) => {
-        if (!g.team) return;
+        const team = sideOf(g);
+        return team ? { x: this.sim.gateX(team), y: 620 } : null;
+      },
+      (g) => {
+        const team = sideOf(g);
+        if (!team) return;
         const sticker = stickers.get(g.id)!;
         this.glyphs.set(g.id, { glyph: g, sticker });
-        const f = this.sim.spawn(g.team, g.score.score, g.id);
+        const f = this.sim.spawn(team, g.score.score, g.id);
         this.onSpawn(f, g);
         if (f) {
           sfx.hatch(g.score.score);
@@ -274,7 +289,10 @@ export class DuelScene implements Scene {
         }
         this.host.progress();
       },
-      (g) => (g.team ? this.colors[g.team] : '#9a9a9a'),
+      (g) => {
+        const team = sideOf(g);
+        return team ? this.colors[team] : '#9a9a9a';
+      },
     );
     if (res.duplicates) this.host.toast(res.duplicates === 1 ? 'Diesen Zettel kenne ich schon!' : `${res.duplicates} Zeichen kenne ich schon!`, 'info');
     if (neutral) this.host.toast(`${neutral} Zeichen konnte ich keinem Team zuordnen. Stiftfarbe prüfen!`, 'warn');
@@ -753,6 +771,42 @@ export class DuelScene implements Scene {
 
   tap(): boolean {
     return false;
+  }
+
+  /** something happened that is worth keeping */
+  protected hasProgress(): boolean {
+    return this.sim.stats.A.written + this.sim.stats.B.written > 0;
+  }
+
+  protected summary(): string {
+    return `Noch ${this.sim.remaining('A')} : ${this.sim.remaining('B')} Blasen`;
+  }
+
+  async saveState(): Promise<SceneSave | null> {
+    if (this.sim.over || !this.hasProgress()) return null;
+    const sim = this.sim.exportState();
+    const ids = new Set<number>(sim.fighters.map((f) => f.glyphId));
+    for (const st of Object.values(sim.stats)) {
+      if (st.best) ids.add(st.best.glyphId);
+      if (st.bravest) ids.add(st.bravest.glyphId);
+    }
+    const kept = [...ids].map((id) => this.glyphs.get(id)).filter((g) => !!g);
+    const summary = this.summary();
+    const state: DuelSceneSave = { sim, glyphs: await Promise.all(kept.map((g) => saveGlyph(g.glyph))) };
+    return { state, summary };
+  }
+
+  async restoreState(raw: unknown): Promise<void> {
+    const s = raw as DuelSceneSave;
+    for (const l of await Promise.all(s.glyphs.map(loadGlyph))) this.glyphs.set(l.glyph.id, l);
+    this.sim.importState(s.sim, restoredId);
+    // the saved game may come from a wider or narrower screen
+    this.resize(this.W);
+    this.views.clear();
+    this.flights = [];
+    this.falling = [];
+    this.resetPile('A');
+    this.resetPile('B');
   }
 
   destroy(): void {

@@ -1,6 +1,7 @@
 import type { AnyCanvas } from '../game/canvas.ts';
 import type { DuelResult, DuelTeamResult } from '../scenes/duelScene.ts';
 import type { SiegeResult } from '../scenes/siegeScene.ts';
+import type { TowerResult } from '../scenes/towerScene.ts';
 import { button, h, modal } from './dom.ts';
 
 function stickerCanvas(st: AnyCanvas): HTMLCanvasElement {
@@ -52,6 +53,60 @@ export function openVictory(r: DuelResult, again: () => void, menu: () => void):
     ),
     h('p', { class: 'help', style: 'font-size:1.1rem;margin-top:-.4em' }, 'Ihr habt toll geschrieben! Hier sind eure schönsten Zeichen:'),
     h('div', { class: 'teams' }, teamCol(a, r.winner === 'A'), teamCol(b, r.winner === 'B')),
+    h(
+      'div',
+      { class: 'actions', style: 'justify-content:center' },
+      button('Menü', () => {
+        m.close();
+        menu();
+      }, 'btn'),
+      button('Nochmal!', () => {
+        m.close();
+        again();
+      }, 'btn primary'),
+    ),
+  );
+  const m = modal(content);
+}
+
+export function openTowerResult(r: TowerResult, again: () => void, menu: () => void): void {
+  const winner = r.winner === null ? null : r.players[r.winner];
+  confetti(winner ? [winner.color, '#ffcf3d', '#ffffff'] : [...r.players.map((p) => p.color), '#ffcf3d']);
+  const ranking = r.players.map((p, i) => ({ p, i })).sort((a, b) => b.p.metres - a.p.metres);
+  const medals = ['🥇', '🥈', '🥉', '🏅'];
+  const minutes = Math.floor(r.seconds / 60);
+  const rows = h('div', { class: 'tower-ranking' });
+  ranking.forEach(({ p, i }) => {
+    // equal heights share the medal of the better place
+    const place = ranking.findIndex((o) => o.p.metres === p.metres);
+    rows.append(
+      h(
+        'div',
+        { class: 'tower-row', style: `border-color:${p.color};${i === r.winner ? 'background:#fffbe6' : ''}` },
+        h('div', { class: 'medal' }, medals[Math.min(place, medals.length - 1)]),
+        h(
+          'div',
+          { class: 'tower-info' },
+          h('h3', { style: `color:${p.color}` }, (i === r.winner ? '🏆 ' : '') + p.name),
+          h('div', { class: 'tower-bar' }, h('span', { style: `width:${Math.min(100, (p.metres / r.goal) * 100)}%;background:${p.color}` })),
+          h('div', { class: 'help' }, `${p.metres} m von ${r.goal} m · ✎ ${p.written} Zeichen · ${p.blocks} Bausteine`),
+          p.blocks ? h('div', { class: 'stars' }, '★'.repeat(p.avgStars), h('span', { class: 'off' }, '★'.repeat(5 - p.avgStars))) : null,
+        ),
+        p.best ? h('div', { class: 'trophy' }, h('b', null, '👑 Schönstes'), stickerCanvas(p.best.sticker), h('span', { class: 'help' }, `${p.best.score} Punkte`)) : null,
+      ),
+    );
+  });
+  const content = h(
+    'div',
+    { class: 'victory', style: 'min-width:min(860px,92vw)' },
+    h('div', { class: 'banner', style: winner ? `color:${winner.color}` : '' }, winner ? `Sieg für ${winner.name}!` : 'Unentschieden!'),
+    h(
+      'p',
+      { style: 'font-size:1.2rem;margin:.1em 0 .6em' },
+      r.clones ? `Die Aliens haben sich ${r.clones}× geklont und ${r.gags} lustige Pannen erlebt.` : `Zork hat alles allein geschafft – mit ${r.gags} lustigen Pannen.`,
+      ` Spielzeit: ${minutes ? minutes + ' Min ' : ''}${Math.floor(r.seconds % 60)} s.`,
+    ),
+    rows,
     h(
       'div',
       { class: 'actions', style: 'justify-content:center' },

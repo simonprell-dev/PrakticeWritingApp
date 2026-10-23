@@ -25,6 +25,8 @@ export interface ScoreInput {
   sizeRel?: number;
   /** distance of the base line to a ruled line in line-spacing units */
   baselineDev?: number;
+  /** school lines: how many bands the letter is off from where it belongs */
+  zoneDev?: number;
   mirrored: boolean;
   looksLike?: string;
   /** free writing: the best matching character was chosen, so legibility is judged more strictly */
@@ -126,17 +128,21 @@ export function combine(si: ScoreInput, strictness: Strictness): Combined {
   const pDots = si.expectedDots || si.dots ? (dotsOk ? 1 : 0.45) : undefined;
   const pSize = si.sizeRel !== undefined ? Math.exp(-Math.abs(Math.log(Math.max(0.05, si.sizeRel))) / 0.45) : undefined;
   const pBase = si.baselineDev !== undefined ? Math.exp(-si.baselineDev / 0.25) : undefined;
-  const pTerms = [pSlant, pAspect, pDots, pSize, pBase].filter((v): v is number => v !== undefined);
+  const pZone = si.zoneDev !== undefined ? Math.exp(-Math.max(0, si.zoneDev - 0.15) / 0.45) : undefined;
+  const pTerms = [pSlant, pAspect, pDots, pSize, pBase, pZone].filter((v): v is number => v !== undefined);
   const P = pTerms.reduce((a, b) => a + b, 0) / pTerms.length;
 
   let raw = hasCnn ? 0.35 * Lp + 0.35 * T + 0.15 * S + 0.15 * P : 0.25 * Lp + 0.45 * T + 0.15 * S + 0.15 * P;
   if (si.mirrored || si.looksLike) raw *= 0.6;
+  // writing within the school lines is a learning goal of its own: a letter a whole band off loses about a sixth
+  if (pZone !== undefined) raw *= 0.8 + 0.2 * pZone;
 
   const score = Math.round(Math.max(3, Math.min(100, applyCurve(raw, strictness))));
 
   let tip: TipId;
   if (si.mirrored) tip = 'spiegel';
   else if (si.looksLike) tip = 'anderes';
+  else if (pZone !== undefined && pZone < 0.5) tip = 'zone';
   else if (score >= 88) tip = 'super';
   else {
     const deficits: [TipId, number][] = [
@@ -147,6 +153,7 @@ export function combine(si: ScoreInput, strictness: Strictness): Combined {
       ['gerade', (1 - pSlant) * 0.9],
       ['groesse', pSize !== undefined ? (1 - pSize) * 0.8 : 0],
       ['linie', pBase !== undefined ? (1 - pBase) * 0.7 : 0],
+      ['zone', pZone !== undefined ? (1 - pZone) * 0.75 : 0],
     ];
     deficits.sort((a, b) => b[1] - a[1]);
     tip = deficits[0][0];
@@ -162,6 +169,7 @@ export const TIP_TEXT: Record<TipId, string> = {
   punkt: 'Punkte nicht vergessen!',
   groesse: 'Alle gleich groß schreiben.',
   linie: 'Auf der Linie sitzen!',
+  zone: 'Genau bis an die Linien schreiben!',
   anderes: 'Das sieht aus wie ein anderes Zeichen.',
   spiegel: 'Dreh mich um – ich bin gespiegelt!',
   super: 'Wunderschön!',

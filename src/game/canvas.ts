@@ -21,9 +21,10 @@ export function setCanvasFactory(f: Factory, path?: PathCtor): void {
   if (path) PathImpl = path;
 }
 
-export function makePath(): Path2D {
+/** an empty path, or one from SVG path data */
+export function makePath(d?: string): Path2D {
   if (!PathImpl) throw new Error('Path2D not available');
-  return new PathImpl();
+  return d === undefined ? new PathImpl() : new PathImpl(d);
 }
 
 export function makeCanvas(w: number, h: number): { canvas: AnyCanvas; ctx: Ctx } {

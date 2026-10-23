@@ -110,6 +110,18 @@ function rankFilter(src: Float32Array, w: number, h: number, r: number, isMax: b
   return out;
 }
 
+/** Max filter along the rows only (window 2r+1 wide, 1 high). */
+export function rowMaxFilter(src: Float32Array, w: number, h: number, r: number): Float32Array {
+  if (r <= 0) return src.slice();
+  const k = 2 * r + 1;
+  const len = Math.ceil((w + 2 * r) / k) * k;
+  const g = new Float32Array(len);
+  const hb = new Float32Array(len);
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) vhgw(src, out, y * w, 1, w, r, true, g, hb);
+  return out;
+}
+
 /** Square max filter (grey dilation) with radius r. */
 export function maxFilter(src: Float32Array, w: number, h: number, r: number): Float32Array {
   return rankFilter(src, w, h, r, true);

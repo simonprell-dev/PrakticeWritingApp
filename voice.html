@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Krakel &amp; Krone – Einsprechen</title>
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <style>
+      @font-face {
+        font-family: 'Fredoka';
+        src: url('/fonts/Fredoka.woff2') format('woff2');
+        font-weight: 300 700;
+      }
+      :root {
+        --ink: #3b2a5c;
+        --accent: #7c5cff;
+      }
+      body {
+        margin: 0;
+        font-family: 'Fredoka', system-ui, sans-serif;
+        color: var(--ink);
+        background: #fdf6ff;
+        display: grid;
+        grid-template-columns: minmax(260px, 360px) 1fr;
+        height: 100vh;
+      }
+      aside {
+        border-right: 3px solid var(--ink);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      aside header {
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      #list {
+        list-style: none;
+        margin: 0;
+        padding: 0 8px 12px;
+        overflow: auto;
+        font-size: 0.95rem;
+      }
+      #list li {
+        padding: 5px 8px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      #list li.ok::before {
+        content: '✓ ';
+        color: #1d8f4e;
+      }
+      #list li.now {
+        background: #ece6ff;
+        font-weight: 700;
+      }
+      main {
+        padding: 28px clamp(16px, 4vw, 60px);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      #who {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      #text {
+        font-size: clamp(2rem, 5vw, 3.6rem);
+        font-weight: 700;
+        line-height: 1.15;
+        min-height: 2.4em;
+      }
+      .meta {
+        color: #6c5a8f;
+      }
+      .bar {
+        height: 14px;
+        border-radius: 7px;
+        background: #e6def7;
+        overflow: hidden;
+      }
+      #level {
+        height: 100%;
+        width: 0;
+        background: #27c46b;
+        transition: width 0.05s;
+      }
+      .btns {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      button {
+        font: inherit;
+        font-weight: 700;
+        font-size: 1.15rem;
+        padding: 0.5em 1.1em;
+        border-radius: 999px;
+        border: 3px solid var(--ink);
+        background: #fff;
+        cursor: pointer;
+      }
+      #rec {
+        background: #ffcf3d;
+      }
+      body.rec #rec {
+        background: #ff5470;
+        color: #fff;
+      }
+      #status {
+        min-height: 1.5em;
+        font-weight: 600;
+      }
+      #done {
+        color: #1d8f4e;
+        font-weight: 700;
+      }
+      kbd {
+        border: 2px solid var(--ink);
+        border-radius: 6px;
+        padding: 0 6px;
+        font-family: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <aside>
+      <header>
+        <button id="pick">📁 Ordner wählen</button>
+        <span id="folder" class="meta">noch kein Ordner (Aufnahmen werden heruntergeladen)</span>
+        <label class="meta"><input type="checkbox" id="missing" /> nur fehlende zeigen</label>
+        <span id="count" class="meta"></span>
+      </header>
+      <ul id="list"></ul>
+    </aside>
+    <main>
+      <div class="meta" id="nr"></div>
+      <div id="who"></div>
+      <div id="text"></div>
+      <div class="meta" id="where"></div>
+      <div class="meta">Datei: <b id="file"></b> <span id="done"></span></div>
+      <div class="bar"><div id="level"></div></div>
+      <div class="btns">
+        <button id="prev">← Zurück</button>
+        <button id="rec">● Aufnehmen / Stopp</button>
+        <button id="play">▶ Anhören</button>
+        <button id="next">Weiter →</button>
+      </div>
+      <div id="status"></div>
+      <p class="meta">
+        <kbd>Leertaste</kbd> aufnehmen / stoppen · <kbd>Enter</kbd> anhören · <kbd>←</kbd> <kbd>→</kbd> vorige / nächste Zeile. Nach dem Stoppen
+        wird die Aufnahme abgespielt und gespeichert; Stille am Anfang und Ende wird abgeschnitten.
+      </p>
+    </main>
+    <script type="module" src="/src/lab/voiceRecorder.ts"></script>
+  </body>
+</html>

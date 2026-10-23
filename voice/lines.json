@@ -1,0 +1,1681 @@
+[
+ {
+  "id": "weiter-geht-s-1e4nx",
+  "text": "Weiter geht’s!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – restoreState"
+ },
+ {
+  "id": "die-tuerme-stehen-noch-baut-weiter-pjyx2",
+  "text": "Die Türme stehen noch – baut weiter!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – restoreState"
+ },
+ {
+  "id": "tuerme-bauen-p1es8",
+  "text": "Türme bauen!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "je-schoener-der-buchstabe-desto-hoeh-18q0l",
+  "text": "Je schöner der Buchstabe, desto höher der Baustein. Wer ist zuerst oben?",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "unentschieden-u6b4y",
+  "text": "Unentschieden!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "die-zeit-ist-um-alle-tuerme-sind-gle-wrs7p",
+  "text": "Die Zeit ist um – alle Türme sind gleich toll!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "sieg-fuer-h685a",
+  "text": "Sieg für",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Sieg für {Teamname}!"
+ },
+ {
+  "id": "die-zeit-ist-um-mit-u5ojs",
+  "text": "Die Zeit ist um – mit",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Die Zeit ist um – mit {Zahl} m der höchste Turm!"
+ },
+ {
+  "id": "m-der-hoechste-turm-1nqh0",
+  "text": "m der höchste Turm!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Die Zeit ist um – mit {Zahl} m der höchste Turm!"
+ },
+ {
+  "id": "zuerst-ueber-der-ziellinie-12qvp",
+  "text": "Zuerst über der Ziellinie –",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Zuerst über der Ziellinie – {Zahl} m hoch!"
+ },
+ {
+  "id": "diesen-zettel-kenne-ich-schon-19p26",
+  "text": "Diesen Zettel kenne ich schon!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – nach einem Foto"
+ },
+ {
+  "id": "zeichen-kenne-ich-schon-t0f2d",
+  "text": "Zeichen kenne ich schon!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – nach einem Foto",
+  "partOf": "{Zahl} Zeichen kenne ich schon!"
+ },
+ {
+  "id": "zeichen-konnte-ich-keinem-turm-zuord-1e4v9",
+  "text": "Zeichen konnte ich keinem Turm zuordnen. Stiftfarbe prüfen!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – nach einem Foto",
+  "partOf": "{Zahl} Zeichen konnte ich keinem Turm zuordnen. Stiftfarbe prüfen!"
+ },
+ {
+  "id": "ich-sehe-keine-buchstaben-legt-die-z-16e3e",
+  "text": "Ich sehe keine Buchstaben. Legt die Zettel unter die Kamera!",
+  "speaker": "erzaehler",
+  "where": "Türme bauen – nach einem Foto"
+ },
+ {
+  "id": "klasse-gegen-riesenburg-1d9k6",
+  "text": "Klasse gegen Riesenburg",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "schreibt-schoene-buchstaben-jeder-st-3brfe",
+  "text": "Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "{Teamname}: Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!"
+ },
+ {
+  "id": "mauer-1rqmf",
+  "text": "Mauer",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Mauer {Zahl} geschafft!"
+ },
+ {
+  "id": "geschafft-13yu2",
+  "text": "geschafft!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Mauer {Zahl} geschafft!"
+ },
+ {
+  "id": "noch-eine-mauer-bis-zum-riesen-1hxqq",
+  "text": "Noch eine Mauer bis zum Riesen!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "mauern-bis-zum-riesen-n3x26",
+  "text": "Mauern bis zum Riesen!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Noch {Zahl} Mauern bis zum Riesen!"
+ },
+ {
+  "id": "die-riesenburg-ist-erobert-1emyo",
+  "text": "Die Riesenburg ist erobert!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "hat-gewonnen-161fg",
+  "text": "hat gewonnen!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "{Teamname} hat gewonnen!"
+ },
+ {
+  "id": "die-zeit-ist-um-17vzb",
+  "text": "Die Zeit ist um!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "ihr-habt-jftcd",
+  "text": "Ihr habt",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Ihr habt {Zahl} von {Zahl} Mauern geschafft – super gekämpft!"
+ },
+ {
+  "id": "von-15nm4",
+  "text": "von",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Ihr habt {Zahl} von {Zahl} Mauern geschafft – super gekämpft!"
+ },
+ {
+  "id": "mauern-geschafft-super-gekaempft-1qr6i",
+  "text": "Mauern geschafft – super gekämpft!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Ihr habt {Zahl} von {Zahl} Mauern geschafft – super gekämpft!"
+ },
+ {
+  "id": "beim-naechsten-mal-schafft-ihr-die-e-mu4zm",
+  "text": "Beim nächsten Mal schafft ihr die erste Mauer!",
+  "speaker": "erzaehler",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "neues-blatt-erkannt-xe753",
+  "text": "Neues Blatt erkannt!",
+  "speaker": "erzaehler",
+  "where": "Meer, Weltraum, Savanne – nach einem Foto"
+ },
+ {
+  "id": "ich-habe-nichts-neues-gefunden-schre-14k86",
+  "text": "Ich habe nichts Neues gefunden. Schreib noch etwas!",
+  "speaker": "erzaehler",
+  "where": "Meer, Weltraum, Savanne – nach einem Foto"
+ },
+ {
+  "id": "ich-sehe-noch-keine-buchstaben-schre-10shh",
+  "text": "Ich sehe noch keine Buchstaben. Schreib etwas unter die Kamera!",
+  "speaker": "erzaehler",
+  "where": "Meer, Weltraum, Savanne – nach einem Foto"
+ },
+ {
+  "id": "so-schreibt-man-1ay1t",
+  "text": "So schreibt man",
+  "speaker": "erzaehler",
+  "where": "Meer, Weltraum, Savanne – Vorführung: so schreibt man den Buchstaben",
+  "partOf": "So schreibt man {das X}:"
+ },
+ {
+  "id": "ueberraschung-wer-1rodn",
+  "text": "Überraschung! Wer",
+  "speaker": "erzaehler",
+  "where": "Meer, Weltraum, Savanne – Überraschungsblase erscheint",
+  "partOf": "Überraschung! Wer {das X} schreibt, lässt die Blase platzen!"
+ },
+ {
+  "id": "schreibt-laesst-die-blase-platzen-xr1og",
+  "text": "schreibt, lässt die Blase platzen!",
+  "speaker": "erzaehler",
+  "where": "Meer, Weltraum, Savanne – Überraschungsblase erscheint",
+  "partOf": "Überraschung! Wer {das X} schreibt, lässt die Blase platzen!"
+ },
+ {
+  "id": "zeichen-konnte-ich-keinem-team-zuord-3b3pn",
+  "text": "Zeichen konnte ich keinem Team zuordnen. Stiftfarbe prüfen!",
+  "speaker": "erzaehler",
+  "where": "Team-Duell – nach einem Foto",
+  "partOf": "{Zahl} Zeichen konnte ich keinem Team zuordnen. Stiftfarbe prüfen!"
+ },
+ {
+  "id": "ich-sehe-keine-zettel-legt-sie-unter-c19mg",
+  "text": "Ich sehe keine Zettel. Legt sie unter die Kamera!",
+  "speaker": "erzaehler",
+  "where": "Team-Duell – nach einem Foto"
+ },
+ {
+  "id": "ein-neuer-fisch-3ac56",
+  "text": "Ein neuer Fisch!",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards"
+ },
+ {
+  "id": "neue-fische-1kkt7",
+  "text": "neue Fische!",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards",
+  "partOf": "{…} neue Fische!"
+ },
+ {
+  "id": "neue-farben-188zl",
+  "text": "Neue Farben!",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards"
+ },
+ {
+  "id": "kenne-ich-schon-xvosg",
+  "text": "kenne ich schon",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards",
+  "partOf": "{…} kenne ich schon"
+ },
+ {
+  "id": "noch-nicht-ausgemalt-5ynvq",
+  "text": "noch nicht ausgemalt",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards",
+  "partOf": "{…} noch nicht ausgemalt"
+ },
+ {
+  "id": "keine-fisch-karte-gefunden-7p2zu",
+  "text": "Keine Fisch-Karte gefunden",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards"
+ },
+ {
+  "id": "ich-sehe-keine-fisch-karte-liegt-sie-1p5lj",
+  "text": "Ich sehe keine Fisch-Karte. Liegt sie ganz im Bild, mit dem schwarzen Rahmen?",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards"
+ },
+ {
+  "id": "dieser-fisch-ist-noch-ganz-weiss-ers-lx1yu",
+  "text": "Dieser Fisch ist noch ganz weiß – erst bunt ausmalen!",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards"
+ },
+ {
+  "id": "diesen-fisch-kenne-ich-schon-leg-ein-1xcwz",
+  "text": "Diesen Fisch kenne ich schon! Leg eine neue Karte unter die Kamera.",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards"
+ },
+ {
+  "id": "ich-schaue-12km6",
+  "text": "Ich schaue",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto wird ausgewertet"
+ },
+ {
+  "id": "1-neues-zeichen-10cot",
+  "text": "1 neues Zeichen!",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet"
+ },
+ {
+  "id": "neue-zeichen-o7p3e",
+  "text": "neue Zeichen!",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet",
+  "partOf": "{…} neue Zeichen!"
+ },
+ {
+  "id": "neue-zeichen-16ey9",
+  "text": "neue Zeichen! (",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet",
+  "partOf": "{Zahl} neue Zeichen! ({…})"
+ },
+ {
+  "id": "spiegelschrift-zaehlt-nicht-19xuy",
+  "text": "Spiegelschrift zählt nicht!",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet"
+ },
+ {
+  "id": "nichts-neues-alles-schon-bekannt-1qwtd",
+  "text": "Nichts Neues – alles schon bekannt",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet"
+ },
+ {
+  "id": "nichts-gefunden-grp7a",
+  "text": "Nichts gefunden",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet"
+ },
+ {
+  "id": "die-kamera-wurde-getrennt-bitte-wied-1lgs2",
+  "text": "Die Kamera wurde getrennt. Bitte wieder anschließen.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – jederzeit"
+ },
+ {
+  "id": "diesen-spielstand-gibt-es-nicht-mehr-1a45o",
+  "text": "Diesen Spielstand gibt es nicht mehr.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – resume"
+ },
+ {
+  "id": "weiter-geht-s-1h6jk",
+  "text": "Weiter geht’s:",
+  "speaker": "erzaehler",
+  "where": "Hinweis – resume",
+  "partOf": "Weiter geht’s: {Teamname}"
+ },
+ {
+  "id": "zuerst-die-kamera-einrichten-ubl6l",
+  "text": "Zuerst die Kamera einrichten.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Farbe anlernen"
+ },
+ {
+  "id": "keine-kamera-bitte-oben-rechts-einri-1vqb3",
+  "text": "Keine Kamera – bitte oben rechts einrichten.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart"
+ },
+ {
+  "id": "schreib-buchstaben-oder-zahlen-und-d-137p3",
+  "text": "Schreib Buchstaben oder Zahlen und drücke „Fertig!“",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart"
+ },
+ {
+  "id": "schreibe-1tg8t",
+  "text": "Schreibe",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart beim Üben",
+  "partOf": "Schreibe {Zahl}× {das X} und drücke „Fertig!“"
+ },
+ {
+  "id": "und-druecke-fertig-munv3",
+  "text": "und drücke „Fertig!“",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart beim Üben",
+  "partOf": "Schreibe {Zahl}× {das X} und drücke „Fertig!“"
+ },
+ {
+  "id": "heute-ueben-wir-36ahi",
+  "text": "Heute üben wir",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart beim Üben",
+  "partOf": "Heute üben wir {Buchstaben}. Zuerst {Zahl}× {das X}!"
+ },
+ {
+  "id": "zuerst-1p7zw",
+  "text": ". Zuerst",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart beim Üben",
+  "partOf": "Heute üben wir {Buchstaben}. Zuerst {Zahl}× {das X}!"
+ },
+ {
+  "id": "ausgemalte-fisch-karte-unter-die-kam-lrd0j",
+  "text": "Ausgemalte Fisch-Karte unter die Kamera legen und „Fertig!“ drücken!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – startPaint"
+ },
+ {
+  "id": "alle-zettel-gelten-wieder-als-neu-1cvv3",
+  "text": "Alle Zettel gelten wieder als neu.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart Duell"
+ },
+ {
+  "id": "zettel-unter-die-kamera-legen-und-fe-3dzr4",
+  "text": "Zettel unter die Kamera legen und „Fertig!“ drücken!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart Duell"
+ },
+ {
+  "id": "alles-gilt-wieder-als-neu-1030g",
+  "text": "Alles gilt wieder als neu.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart Riesenburg"
+ },
+ {
+  "id": "super-1oby0",
+  "text": "Super,",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Übungsbuchstabe geschafft",
+  "partOf": "Super, {Zahl}× {das X} geschafft! Jetzt kommt {das X}."
+ },
+ {
+  "id": "geschafft-jetzt-kommt-1i92a",
+  "text": "geschafft! Jetzt kommt",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Übungsbuchstabe geschafft",
+  "partOf": "Super, {Zahl}× {das X} geschafft! Jetzt kommt {das X}."
+ },
+ {
+  "id": "super-alle-52zsb",
+  "text": "Super! Alle",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Übungsbuchstabe geschafft",
+  "partOf": "Super! Alle {Zahl} Buchstaben geschafft!"
+ },
+ {
+  "id": "buchstaben-geschafft-x5l6j",
+  "text": "Buchstaben geschafft!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Übungsbuchstabe geschafft",
+  "partOf": "Super! Alle {Zahl} Buchstaben geschafft!"
+ },
+ {
+  "id": "super-1nhz7",
+  "text": "Super!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Übungsbuchstabe geschafft",
+  "partOf": "Super! {Zahl}× {das X} geschafft!"
+ },
+ {
+  "id": "nochmal-von-vorn-oder-neue-buchstabe-chq97",
+  "text": "Nochmal von vorn oder neue Buchstaben aussuchen?",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Übungsbuchstabe geschafft"
+ },
+ {
+  "id": "willst-du-weiter-ueben-oder-einen-ne-ehaeq",
+  "text": "Willst du weiter üben oder einen neuen Buchstaben?",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Übungsbuchstabe geschafft"
+ },
+ {
+  "id": "keine-kamera-verbunden-1tk33",
+  "text": "Keine Kamera verbunden.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – beim Foto"
+ },
+ {
+  "id": "haende-weg-gleich-mache-ich-ein-foto-1wdbn",
+  "text": "Hände weg – gleich mache ich ein Foto!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – beim Foto"
+ },
+ {
+  "id": "ein-zeichen-ist-spiegelverkehrt-das-1tchp",
+  "text": "Ein Zeichen ist spiegelverkehrt – das zählt nicht. Andersherum schreiben!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – beim Foto"
+ },
+ {
+  "id": "zeichen-sind-spiegelverkehrt-das-zae-fvxdf",
+  "text": "Zeichen sind spiegelverkehrt – das zählt nicht. Andersherum schreiben!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – beim Foto",
+  "partOf": "{Zahl} Zeichen sind spiegelverkehrt – das zählt nicht. Andersherum schreiben!"
+ },
+ {
+  "id": "alle-karten-gelten-wieder-als-neu-1bero",
+  "text": "Alle Karten gelten wieder als neu.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Neues Blatt"
+ },
+ {
+  "id": "neues-blatt-alles-gilt-wieder-als-ne-1tikm",
+  "text": "Neues Blatt – alles gilt wieder als neu.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Neues Blatt"
+ },
+ {
+  "id": "automatisch-scannen-an-hoxyb",
+  "text": "Automatisch scannen: an",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Automatisch scannen"
+ },
+ {
+  "id": "automatisch-scannen-aus-1p7ds",
+  "text": "Automatisch scannen: aus",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Automatisch scannen"
+ },
+ {
+  "id": "ich-bin-am-schoensten-t0boa",
+  "text": "Ich bin am schönsten!",
+  "speaker": "wesen",
+  "where": "Meer, Weltraum, Savanne – nach einem Foto"
+ },
+ {
+  "id": "ich-sehe-aus-wie-1mef7",
+  "text": "Ich sehe aus wie",
+  "speaker": "wesen",
+  "where": "Meer, Weltraum, Savanne – nach einem Foto",
+  "partOf": "Ich sehe aus wie {das X}!"
+ },
+ {
+  "id": "juhu-du-hast-mich-befreit-16zde",
+  "text": "Juhu, du hast mich befreit!",
+  "speaker": "wesen",
+  "where": "Meer, Weltraum, Savanne – Überraschungsblase geplatzt"
+ },
+ {
+  "id": "hallo-ich-bin-1jrpd",
+  "text": "Hallo, ich bin",
+  "speaker": "wesen",
+  "where": "Mal-Aquarium – addPainted"
+ },
+ {
+  "id": "hallo-blubb-blubb-1u8uq",
+  "text": "Hallo! Blubb blubb!",
+  "speaker": "wesen",
+  "where": "Mal-Aquarium – addPainted"
+ },
+ {
+  "id": "juhu-neue-farben-tuomr",
+  "text": "Juhu, neue Farben!",
+  "speaker": "wesen",
+  "where": "Mal-Aquarium – recolour"
+ },
+ {
+  "id": "tschuess-21b0r",
+  "text": "Tschüss!",
+  "speaker": "wesen",
+  "where": "Mal-Aquarium – showCreature"
+ },
+ {
+  "id": "schau-dir-das-vorbild-genau-an-dbcag",
+  "text": "Schau dir das Vorbild genau an!",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "ganz-langsam-und-ruhig-schreiben-vp77q",
+  "text": "Ganz langsam und ruhig schreiben.",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "schoen-gerade-halten-9b8d2",
+  "text": "Schön gerade halten!",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "baeuche-schoen-zumachen-toe4a",
+  "text": "Bäuche schön zumachen!",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "punkte-nicht-vergessen-1bt92",
+  "text": "Punkte nicht vergessen!",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "alle-gleich-gross-schreiben-18wqd",
+  "text": "Alle gleich groß schreiben.",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "auf-der-linie-sitzen-1t6u0",
+  "text": "Auf der Linie sitzen!",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "genau-bis-an-die-linien-schreiben-10mi6",
+  "text": "Genau bis an die Linien schreiben!",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "das-sieht-aus-wie-ein-anderes-zeiche-7o4mx",
+  "text": "Das sieht aus wie ein anderes Zeichen.",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "dreh-mich-um-ich-bin-gespiegelt-pk45n",
+  "text": "Dreh mich um – ich bin gespiegelt!",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "wunderschoen-cpmko",
+  "text": "Wunderschön!",
+  "speaker": "wesen",
+  "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "ha-ha-1qm2c",
+  "text": "Ha … ha …",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „hatschi“"
+ },
+ {
+  "id": "hatschi-l3w21",
+  "text": "HATSCHI!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „hatschi“"
+ },
+ {
+  "id": "gerettet-u2ypj",
+  "text": "Gerettet!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „hatschi“"
+ },
+ {
+  "id": "juhuuu-13jka",
+  "text": "Juhuuu!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „looping“"
+ },
+ {
+  "id": "pizza-drehung-juzlg",
+  "text": "Pizza-Drehung!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „pizza“"
+ },
+ {
+  "id": "uff-so-viel-schoenheit-ist-schwer-1ggxd",
+  "text": "Uff! So viel Schönheit ist schwer!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „schwer“"
+ },
+ {
+  "id": "jo-jo-ugxrg",
+  "text": "Jo-jo!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „jojo“"
+ },
+ {
+  "id": "hmm-ist-das-der-richtige-turm-z8ov1",
+  "text": "Hmm … ist das der richtige Turm?",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „falscherTurm“"
+ },
+ {
+  "id": "ups-falscher-turm-1wp6k",
+  "text": "Ups! Falscher Turm!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „falscherTurm“"
+ },
+ {
+  "id": "uaaah-1x1yj",
+  "text": "Uaaah …",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „nickerchen“"
+ },
+ {
+  "id": "huch-ich-bin-wach-12bsq",
+  "text": "Huch! Ich bin wach!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „nickerchen“"
+ },
+ {
+  "id": "cheese-n4sy4",
+  "text": "Cheese!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „selfie“"
+ },
+ {
+  "id": "schoenes-foto-8g19d",
+  "text": "Schönes Foto!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „selfie“"
+ },
+ {
+  "id": "ganz-cool-bleiben-1ev53",
+  "text": "Ganz cool bleiben.",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „sonnenbrille“"
+ },
+ {
+  "id": "la-la-laaa-1yauf",
+  "text": "La-la-laaa!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „musik“"
+ },
+ {
+  "id": "hick-7q6wd",
+  "text": "Hick!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „schluckauf“"
+ },
+ {
+  "id": "links-rechts-links-1jzzt",
+  "text": "Links? Rechts? Links!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „zickzack“"
+ },
+ {
+  "id": "troet-platz-da-1kqdq",
+  "text": "Tröt! Platz da!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „hupe“"
+ },
+ {
+  "id": "och-noe-regen-yymrg",
+  "text": "Och nö, Regen!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „regenwolke“"
+ },
+ {
+  "id": "gut-dass-ich-einen-schirm-habe-1e83y",
+  "text": "Gut, dass ich einen Schirm habe!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „regenwolke“"
+ },
+ {
+  "id": "oh-ein-voegelchen-1r1zt",
+  "text": "Oh, ein Vögelchen!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „vogel“"
+ },
+ {
+  "id": "ooh-wie-huebsch-1l3ma",
+  "text": "Ooh, wie hübsch!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „schmetterling“"
+ },
+ {
+  "id": "was-fuer-ein-schoener-buchstabe-xfr2u",
+  "text": "Was für ein schöner Buchstabe!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „kuss“"
+ },
+ {
+  "id": "regenbogen-strahl-bgncc",
+  "text": "Regenbogen-Strahl!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „regenbogen“"
+ },
+ {
+  "id": "batterie-leer-iqgwg",
+  "text": "Batterie leer?!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „wackelkontakt“"
+ },
+ {
+  "id": "klopf-klopf-1xx4d",
+  "text": "Klopf, klopf!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „wackelkontakt“"
+ },
+ {
+  "id": "laeuft-wieder-i0n0q",
+  "text": "Läuft wieder!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „wackelkontakt“"
+ },
+ {
+  "id": "party-hut-fuer-dich-1qao8",
+  "text": "Party-Hut für dich!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „partyhut“"
+ },
+ {
+  "id": "kann-ich-auch-i929r",
+  "text": "Kann ich auch!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „jonglieren“"
+ },
+ {
+  "id": "turbo-3k498",
+  "text": "Turbo!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „turbo“"
+ },
+ {
+  "id": "teleport-jpo7z",
+  "text": "Teleport!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „teleport“"
+ },
+ {
+  "id": "tadaa-40ifi",
+  "text": "Tadaa!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „teleport“"
+ },
+ {
+  "id": "hoppla-andersrum-1orry",
+  "text": "Hoppla, andersrum!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „kopfstand“"
+ },
+ {
+  "id": "so-1yymq",
+  "text": "So!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „kopfstand“"
+ },
+ {
+  "id": "wo-ist-denn-bloss-4yrn3",
+  "text": "Wo ist denn bloß …?",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „landkarte“"
+ },
+ {
+  "id": "ah-da-lang-jqoyr",
+  "text": "Ah, da lang!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „landkarte“"
+ },
+ {
+  "id": "ups-kaugummi-1r9gk",
+  "text": "Ups, Kaugummi!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „kaugummi“"
+ },
+ {
+  "id": "mir-ist-schwindelig-oqqtn",
+  "text": "Mir ist schwindelig …",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „schwindelig“"
+ },
+ {
+  "id": "mmmh-sieht-lecker-aus-1qw2y",
+  "text": "Mmmh, sieht lecker aus …",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „naschen“"
+ },
+ {
+  "id": "baeh-schmeckt-nach-tinte-1sxha",
+  "text": "Bäh! Schmeckt nach Tinte!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „naschen“"
+ },
+ {
+  "id": "los-132zc",
+  "text": "Los,",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „fahne“",
+  "partOf": "Los, {Teamname}!"
+ },
+ {
+  "id": "ups-zu-klein-1uuve",
+  "text": "Ups, zu klein!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „schrumpfstrahl“"
+ },
+ {
+  "id": "schon-besser-k7hsi",
+  "text": "Schon besser.",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „schrumpfstrahl“"
+ },
+ {
+  "id": "eine-sternschnuppe-1gyx5",
+  "text": "Eine Sternschnuppe!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „sternschnuppe“"
+ },
+ {
+  "id": "ich-wuensch-mir-noch-mehr-schoene-bu-6s5sa",
+  "text": "Ich wünsch mir … noch mehr schöne Buchstaben!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „sternschnuppe“"
+ },
+ {
+  "id": "puff-hust-hust-lubeu",
+  "text": "Puff! Hust, hust!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „fehlzuendung“"
+ },
+ {
+  "id": "bitte-sehr-majestaet-1wbq0",
+  "text": "Bitte sehr, Majestät!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „verbeugung“"
+ },
+ {
+  "id": "ups-1m6tp",
+  "text": "Ups!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „bumm“"
+ },
+ {
+  "id": "haelt-bombenfest-11zav",
+  "text": "Hält bombenfest!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „bumm“"
+ },
+ {
+  "id": "boing-boing-1j61z",
+  "text": "Boing, boing!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „flummi“"
+ },
+ {
+  "id": "wackel-wackel-36yxx",
+  "text": "Wackel, wackel …",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „wackeln“"
+ },
+ {
+  "id": "puh-haelt-17lec",
+  "text": "Puh, hält!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „wackeln“"
+ },
+ {
+  "id": "erst-noch-polieren-1e6c5",
+  "text": "Erst noch polieren …",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „polieren“"
+ },
+ {
+  "id": "blitzblank-syexq",
+  "text": "Blitzblank!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „polieren“"
+ },
+ {
+  "id": "m-hoch-9si9k",
+  "text": "m hoch!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „massband“",
+  "partOf": "{Zahl} m hoch!"
+ },
+ {
+  "id": "noch-bh3du",
+  "text": "Noch",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „massband“",
+  "partOf": "Noch {Zahl} m bis zum Ziel!"
+ },
+ {
+  "id": "m-bis-zum-ziel-1soji",
+  "text": "m bis zum Ziel!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „massband“",
+  "partOf": "Noch {Zahl} m bis zum Ziel!"
+ },
+ {
+  "id": "ziel-erreicht-17s5f",
+  "text": "Ziel erreicht!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „massband“"
+ },
+ {
+  "id": "ein-bluemchen-fuer-dich-14a4y",
+  "text": "Ein Blümchen für dich!",
+  "speaker": "zork",
+  "where": "Türme bauen – lustige Panne „bluemchen“"
+ },
+ {
+  "id": "hihi-av6my",
+  "text": "Hihi …",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "hau-ruck-185qp",
+  "text": "Hau ruck!",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "grrr-1o92w",
+  "text": "Grrr …!",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "boing-der-turm-haelt-1ob28",
+  "text": "Boing! Der Turm hält!",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "neeein-mein-eis-15arq",
+  "text": "Neeein, mein Eis!",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "mmmh-eis-30k48",
+  "text": "Mmmh, Eis!",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "wiii-11k01",
+  "text": "Wiii!",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "putz-putz-1gki5",
+  "text": "Putz, putz …",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "hallo-klasse-c8y9u",
+  "text": "Hallo, Klasse!",
+  "speaker": "zork",
+  "where": "Türme bauen – Schabernack"
+ },
+ {
+  "id": "da-seid-ihr-ja-wieder-3y6d2",
+  "text": "Da seid ihr ja wieder!",
+  "speaker": "zork",
+  "where": "Türme bauen – restoreState"
+ },
+ {
+  "id": "hallo-ich-bin-zork-ich-baue-eure-tue-9ljml",
+  "text": "Hallo! Ich bin Zork. Ich baue eure Türme!",
+  "speaker": "zork",
+  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "ich-bin-zip-ich-helfe-u5mrq",
+  "text": "Ich bin Zip! Ich helfe!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "ich-bin-zap-ich-helfe-zi4lj",
+  "text": "Ich bin Zap! Ich helfe!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "ich-bin-zisch-ich-helfe-gyyhb",
+  "text": "Ich bin Zisch! Ich helfe!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "ich-bin-zuppi-ich-helfe-9hrv2",
+  "text": "Ich bin Zuppi! Ich helfe!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "ich-bin-zibbel-ich-helfe-j1pim",
+  "text": "Ich bin Zibbel! Ich helfe!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "ich-bin-zonk-ich-helfe-zwqi3",
+  "text": "Ich bin Zonk! Ich helfe!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "ich-bin-zappel-ich-helfe-tdyym",
+  "text": "Ich bin Zappel! Ich helfe!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "oh-arbeit-das-eis-muss-warten-wk8gj",
+  "text": "Oh, Arbeit! Das Eis muss warten.",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "huch-ich-komme-2kpvu",
+  "text": "Huch! Ich komme!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "oh-arbeit-vjzh5",
+  "text": "Oh, Arbeit!",
+  "speaker": "zork",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "hohoho-an-meiner-riesenburg-kommt-ke-5xlez",
+  "text": "Hohoho! An meiner Riesenburg kommt keiner vorbei!",
+  "speaker": "riese",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "grrr-jetzt-kommt-meine-allerletzte-m-nq3zw",
+  "text": "Grrr! Jetzt kommt meine allerletzte Mauer!",
+  "speaker": "riese",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "grrr-das-war-erst-mauer-8qvpm",
+  "text": "Grrr! Das war erst Mauer",
+  "speaker": "riese",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
+  "partOf": "Grrr! Das war erst Mauer {Zahl}!"
+ },
+ {
+  "id": "ihr-habt-gewonnen-so-schoene-buchsta-1fe9f",
+  "text": "Ihr habt gewonnen! So schöne Buchstaben habe ich noch nie gesehen!",
+  "speaker": "riese",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "puh-die-zeit-ist-um-meine-burg-steht-1s5ki",
+  "text": "Puh! Die Zeit ist um – meine Burg steht noch!",
+  "speaker": "riese",
+  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+ },
+ {
+  "id": "waechter-los-tgn3g",
+  "text": "Wächter, los!",
+  "speaker": "riese",
+  "where": "Riesenburg – Riese schickt Wächter"
+ },
+ {
+  "id": "haltet-sie-auf-1v3rg",
+  "text": "Haltet sie auf!",
+  "speaker": "riese",
+  "where": "Riesenburg – Riese schickt Wächter"
+ },
+ {
+  "id": "tintenkleckse-an-die-arbeit-x751w",
+  "text": "Tintenkleckse, an die Arbeit!",
+  "speaker": "riese",
+  "where": "Riesenburg – Riese schickt Wächter"
+ },
+ {
+  "id": "gegen-riese-rumpel-mauer-1pbzt",
+  "text": "gegen Riese Rumpel – Mauer",
+  "speaker": "riese",
+  "where": "Riesenburg – restoreState",
+  "partOf": "{Teamname} gegen Riese Rumpel – Mauer {…} von {Zahl}"
+ },
+ {
+  "id": "ihr-schon-wieder-hohoho-meine-burg-s-xo2vh",
+  "text": "Ihr schon wieder? Hohoho! Meine Burg steht noch!",
+  "speaker": "riese",
+  "where": "Riesenburg – restoreState"
+ },
+ {
+  "id": "andersrum-rpy69",
+  "text": "Andersrum!",
+  "speaker": "blase",
+  "where": "Meer, Weltraum, Savanne – nach einem Foto"
+ },
+ {
+  "id": "fast-nochmal-gofe0",
+  "text": "Fast! Nochmal!",
+  "speaker": "blase",
+  "where": "Meer, Weltraum, Savanne – nach einem Foto"
+ },
+ {
+  "id": "schreib-mich-1g1c3",
+  "text": "Schreib mich!",
+  "speaker": "blase",
+  "where": "Meer, Weltraum, Savanne – Überraschungsblase wartet"
+ },
+ {
+  "id": "2-m-14zy4",
+  "text": "+2 m",
+  "speaker": "ausruf",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "3-m-1qc3f",
+  "text": "+3 m",
+  "speaker": "ausruf",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "4-m-19elk",
+  "text": "+4 m",
+  "speaker": "ausruf",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "6-m-jsu7m",
+  "text": "+6 m",
+  "speaker": "ausruf",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "8-m-1t0w0",
+  "text": "+8 m",
+  "speaker": "ausruf",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "pfff-1wrqc",
+  "text": "Pfff?",
+  "speaker": "ausruf",
+  "where": "Türme bauen – während des Spiels"
+ },
+ {
+  "id": "befreit-1e6pp",
+  "text": "Befreit!",
+  "speaker": "ausruf",
+  "where": "Meer, Weltraum, Savanne – Überraschungsblase geplatzt"
+ },
+ {
+  "id": "puh-1h5im",
+  "text": "Puh!",
+  "speaker": "ausruf",
+  "where": "Team-Duell – eine Figur zerplatzt"
+ },
+ {
+  "id": "knautschi-1qcqg",
+  "text": "Knautschi",
+  "speaker": "ausruf",
+  "where": "Stufe über einem neuen Wesen"
+ },
+ {
+  "id": "wackelchen-emlvp",
+  "text": "Wackelchen",
+  "speaker": "ausruf",
+  "where": "Stufe über einem neuen Wesen"
+ },
+ {
+  "id": "freundlich-d3l3e",
+  "text": "Freundlich",
+  "speaker": "ausruf",
+  "where": "Stufe über einem neuen Wesen"
+ },
+ {
+  "id": "schick-eavzz",
+  "text": "Schick",
+  "speaker": "ausruf",
+  "where": "Stufe über einem neuen Wesen"
+ },
+ {
+  "id": "prachtstueck-142dw",
+  "text": "Prachtstück",
+  "speaker": "ausruf",
+  "where": "Stufe über einem neuen Wesen"
+ },
+ {
+  "id": "das-a-1el0s",
+  "text": "das A",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-b-1fezl",
+  "text": "das B",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-c-1f500",
+  "text": "das C",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-d-1dr1z",
+  "text": "das D",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-e-1dh2d",
+  "text": "das E",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-f-1eb17",
+  "text": "das F",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-g-1e11l",
+  "text": "das G",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-h-1cn3k",
+  "text": "das H",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-i-1cd3z",
+  "text": "das I",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-j-1d72s",
+  "text": "das J",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-k-1cx36",
+  "text": "das K",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-l-1bj56",
+  "text": "das L",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-m-1b95k",
+  "text": "das M",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-n-1c34d",
+  "text": "das N",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-o-1bt4r",
+  "text": "das O",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-p-1jau1",
+  "text": "das P",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-q-1j0uf",
+  "text": "das Q",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-r-1jut8",
+  "text": "das R",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-s-1jktn",
+  "text": "das S",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-t-1i6vm",
+  "text": "das T",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-u-1hww1",
+  "text": "das U",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-v-1iquu",
+  "text": "das V",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-w-1igv8",
+  "text": "das W",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-x-1h2x7",
+  "text": "das X",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-y-1gsxm",
+  "text": "das Y",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-z-1hmwf",
+  "text": "das Z",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-ae-e8guu",
+  "text": "das Ä",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-oe-j89pc",
+  "text": "das Ö",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-ue-ggdoe",
+  "text": "das Ü",
+  "speaker": "buchstaben",
+  "where": "Großbuchstaben"
+ },
+ {
+  "id": "das-a-1ngo2",
+  "text": "das a",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-b-1oamv",
+  "text": "das b",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-c-1o0na",
+  "text": "das c",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-d-1mmp9",
+  "text": "das d",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-e-1mcpo",
+  "text": "das e",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-f-1n6oh",
+  "text": "das f",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-g-1mwov",
+  "text": "das g",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-h-1liqv",
+  "text": "das h",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-i-1l8r9",
+  "text": "das i",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-j-1m2q2",
+  "text": "das j",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-k-1lsqg",
+  "text": "das k",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-l-1kesg",
+  "text": "das l",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-m-1k4su",
+  "text": "das m",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-n-1kyrn",
+  "text": "das n",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-o-1kos1",
+  "text": "das o",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-p-1s6hb",
+  "text": "das p",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-q-1rwhq",
+  "text": "das q",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-r-1sqgj",
+  "text": "das r",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-s-1sggx",
+  "text": "das s",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-t-1r2iw",
+  "text": "das t",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-u-1qsjb",
+  "text": "das u",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-v-1rmi4",
+  "text": "das v",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-w-1rcii",
+  "text": "das w",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-x-1pyki",
+  "text": "das x",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-y-1pokw",
+  "text": "das y",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-z-1qijp",
+  "text": "das z",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-ae-n4451",
+  "text": "das ä",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-oe-s3wzj",
+  "text": "das ö",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-ue-pc0yl",
+  "text": "das ü",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "das-ss-gqda3",
+  "text": "das ß",
+  "speaker": "buchstaben",
+  "where": "Kleinbuchstaben"
+ },
+ {
+  "id": "die-0-18gpv",
+  "text": "die 0",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-1-186q9",
+  "text": "die 1",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-2-17wqn",
+  "text": "die 2",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-3-17mr2",
+  "text": "die 3",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-4-19ko9",
+  "text": "die 4",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-5-19aoo",
+  "text": "die 5",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-6-190p2",
+  "text": "die 6",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-7-18qpg",
+  "text": "die 7",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-8-1aomo",
+  "text": "die 8",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ },
+ {
+  "id": "die-9-1aen2",
+  "text": "die 9",
+  "speaker": "buchstaben",
+  "where": "Zahlen"
+ }
+]

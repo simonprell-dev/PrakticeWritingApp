@@ -153,4 +153,68 @@ export const sfx = {
       tone(f, 0.07, { to: f * 2, gain: 0.12, delay: i * 0.09 });
     }
   },
+
+  // ---- Türme bauen: aliens, tractor beam, portal
+  /** tractor beam switches on */
+  beam() {
+    tone(320, 0.45, { type: 'sine', to: 760, gain: 0.1, attack: 0.05 });
+    tone(330, 0.45, { type: 'triangle', to: 790, gain: 0.05, delay: 0.03 });
+  },
+  /** a block lands on the tower; bigger blocks sound deeper */
+  thud(size = 1) {
+    tone(140 / Math.max(0.6, size), 0.16, { type: 'triangle', to: 60, gain: 0.3 });
+    noise(0.12, { freq: 400, q: 0.7, gain: 0.18 });
+  },
+  /** an alien clones itself */
+  clone() {
+    [660, 990, 1320, 1980].forEach((f, i) => tone(f, 0.12, { type: 'square', gain: 0.05, delay: i * 0.05 }));
+    tone(200, 0.3, { type: 'sine', to: 1200, gain: 0.08 });
+  },
+  /** something comes out of the portal */
+  portal() {
+    tone(220, 0.35, { type: 'sine', to: 660, gain: 0.08 });
+    noise(0.3, { freq: 1500, q: 2, gain: 0.05 });
+  },
+  sneeze() {
+    noise(0.12, { freq: 1200, q: 0.6, gain: 0.08 });
+    noise(0.25, { freq: 2600, q: 0.8, gain: 0.3, delay: 0.12 });
+  },
+  honk() {
+    tone(330, 0.22, { type: 'sawtooth', gain: 0.06 });
+    tone(415, 0.22, { type: 'square', gain: 0.04 });
+  },
+  beep() {
+    tone(1250, 0.09, { type: 'square', gain: 0.05 });
+  },
+  zap() {
+    tone(1800, 0.25, { type: 'sawtooth', to: 120, gain: 0.06 });
+  },
+  tune() {
+    [784, 880, 988, 784, 1175, 988].forEach((f, i) => tone(f, 0.16, { type: 'triangle', gain: 0.1, delay: i * 0.17 }));
+  },
+  hiccup() {
+    tone(500, 0.07, { type: 'square', to: 1100, gain: 0.07 });
+  },
+  chirp() {
+    tone(2600, 0.06, { type: 'sine', to: 3400, gain: 0.08 });
+    tone(2900, 0.07, { type: 'sine', to: 3800, gain: 0.08, delay: 0.1 });
+  },
+  kiss() {
+    tone(1400, 0.06, { type: 'sine', to: 600, gain: 0.12 });
+  },
+  yawn() {
+    tone(420, 0.7, { type: 'triangle', to: 220, gain: 0.08, attack: 0.15 });
+  },
+  backfire() {
+    noise(0.15, { freq: 220, q: 0.8, gain: 0.35 });
+    tone(90, 0.12, { type: 'square', to: 50, gain: 0.08 });
+  },
+  chomp() {
+    noise(0.05, { freq: 900, q: 1, gain: 0.2 });
+    noise(0.05, { freq: 800, q: 1, gain: 0.2, delay: 0.11 });
+  },
+  /** the ice cream scoop hits the ground */
+  splat() {
+    noise(0.18, { freq: 500, q: 0.6, gain: 0.25 });
+  },
 };

@@ -4,7 +4,7 @@ import { GlyphMemory } from '../../src/vision/dedup.ts';
 import { runScan } from '../../src/vision/pipeline.ts';
 import type { TeamCalib, VisionOptions } from '../../src/vision/types.ts';
 import { loadBank, loadRecognizer } from '../helpers/load.ts';
-import { makePage, type GlyphSpec, type PageSpec } from '../helpers/synth.ts';
+import { makePage, schoolWord, type GlyphSpec, type PageSpec, type SchoolLines } from '../helpers/synth.ts';
 
 const bank = loadBank();
 const rec = loadRecognizer();
@@ -128,6 +128,113 @@ describe('pipeline on synthetic pages', () => {
     const shifted = scan({ width: 1280, height: 640, glyphs: [...moved, { char: 'f', x: 140 + 35 + 5 * 130, y: 320, size: 90, pen: 7 }] }, {}, memory);
     expect(shifted.glyphs.length).toBe(6);
     expect(shifted.glyphs.filter((g) => g.isNew).map((g) => g.score.char)).toEqual(['f']);
+  });
+
+  it('practice mode: a surprise letter is scored as itself, the practice letter stays the practice letter', () => {
+    const page = (ch: string) => ({ width: 900, height: 500, glyphs: row(ch, 250, {}, 450) });
+    // without the surprise letter an m is just a poor B
+    const plain = scan(page('m'), { target: 'B' }).glyphs[0].score;
+    expect(plain.scoredAs).toBe('B');
+    expect(plain.score).toBeLessThan(35);
+    const surprise = scan(page('m'), { target: 'B', bonus: ['m'] }).glyphs[0].score;
+    expect(surprise.scoredAs).toBe('m');
+    expect(surprise.score).toBeGreaterThanOrEqual(60);
+    const b = scan(page('B'), { target: 'B', bonus: ['m'] }).glyphs[0].score;
+    expect(b.scoredAs).toBe('B');
+    expect(b.score).toBeGreaterThanOrEqual(60);
+  });
+
+  it('finds mirror writing; with "mirror writing does not count" it is rejected, correct letters never', () => {
+    const chars = 'SZNRFK247';
+    const page = (mirror: boolean, text = chars) => ({ width: 160 + text.length * 120, height: 400, glyphs: row(text, 200, { mirror }, 140, 120) });
+    const mirrored = scan(page(true), { noMirror: true }).glyphs;
+    expect(mirrored.length).toBe(chars.length);
+    expect(mirrored.filter((g) => g.score.rejected).length).toBeGreaterThanOrEqual(7);
+    // the intended letter is named, so the tip makes sense
+    expect(mirrored.filter((g) => g.score.rejected && g.score.char.toUpperCase() === chars[mirrored.indexOf(g)]).length).toBeGreaterThanOrEqual(6);
+    // correct letters – also b/d and p/q, whose mirror images are real letters – are never rejected
+    const normal = scan(page(false, chars + 'bdpqAa'), { noMirror: true }).glyphs;
+    expect(normal.filter((g) => g.score.rejected || g.score.mirrored)).toEqual([]);
+    // switch off: mirror writing counts, with fewer stars and the "turn me round" tip
+    const counted = scan(page(true)).glyphs;
+    expect(counted.filter((g) => g.score.rejected)).toEqual([]);
+    expect(counted.filter((g) => g.score.tip === 'spiegel').length).toBeGreaterThanOrEqual(7);
+  });
+
+  it('keeps writing on the same sheet: only the new glyphs go through the recognition', () => {
+    const memory = new GlyphMemory();
+    const glyphs = row('abcd', 300);
+    const first = scan({ width: 1280, height: 640, glyphs }, {}, memory);
+    expect(first.analyzed).toBe(4);
+    // the child writes two more letters, the paper moved a little
+    const moved = glyphs.map((g) => ({ ...g, x: g.x + 25, y: g.y + 15 }));
+    const more = [...moved, ...row('ef', 315, {}, 140 + 25 + 4 * 130)];
+    const second = scan({ width: 1280, height: 640, glyphs: more, seed: 3 }, {}, memory);
+    expect(second.glyphs.length).toBe(6);
+    expect(second.analyzed).toBe(2);
+    expect(second.glyphs.filter((g) => g.isNew).map((g) => g.score.char)).toEqual(['e', 'f']);
+    // known glyphs keep exactly the result of their first scan
+    expect(second.glyphs.filter((g) => !g.isNew).map((g) => g.score)).toEqual(first.glyphs.map((g) => g.score));
+    // a rescan without new handwriting needs no recognition at all
+    const third = scan({ width: 1280, height: 640, glyphs: more, seed: 4 }, {}, memory);
+    expect(third.analyzed).toBe(0);
+    expect(third.glyphs.filter((g) => g.isNew)).toHaveLength(0);
+  });
+
+  it('new letters are measured against the known letters of the sheet (upper/lower case)', () => {
+    const memory = new GlyphMemory();
+    const old: GlyphSpec[] = [
+      { char: 'n', x: 160, y: 380, size: 60, pen: 6 },
+      { char: 'a', x: 300, y: 380, size: 60, pen: 6 },
+    ];
+    scan({ width: 1100, height: 700, glyphs: old }, {}, memory);
+    const res = scan(
+      {
+        width: 1100,
+        height: 700,
+        glyphs: [...old, { char: 'u', x: 440, y: 380, size: 60, pen: 6 }, { char: 'U', x: 600, y: 362, size: 95, pen: 6 }],
+      },
+      {},
+      memory,
+    );
+    expect(res.analyzed).toBe(2);
+    expect(res.glyphs.map((g) => g.score.char).join('')).toBe('nauU');
+  });
+
+  describe('German school lines', () => {
+    const L1: SchoolLines = { kind: 1, mm: 6, top: 90, pitch: 21, color: [120, 140, 190], width: 2, band: [214, 238, 206] };
+    const L2: SchoolLines = { kind: 2, mm: 6, top: 80, pitch: 17, color: [120, 140, 190], width: 2, band: [250, 236, 200] };
+    const L3: SchoolLines = { kind: 3, mm: 6, top: 80, pitch: 12, color: [130, 150, 200], width: 2 };
+    const page = (L: SchoolLines, glyphs: GlyphSpec[]): PageSpec => ({ width: 1280, height: 720, glyphs, lineatur: L, seed: 3 });
+
+    it('reads the letters on every Lineatur, also with a coloured middle band', () => {
+      for (const [L, words] of [
+        [L1, ['Haus', 'Baum']],
+        [L2, ['Hund', 'Katze', 'Ofen']],
+        [L3, ['Hand', 'Zelt', 'Igel', 'Mond']],
+      ] as const) {
+        const res = scan(page(L, words.flatMap((w, i) => schoolWord(bank, L, i, w, 120))));
+        const want = words.join('');
+        expect(res.glyphs.length, `Lineatur ${L.kind}`).toBe(want.length);
+        const got = res.glyphs.map((g) => g.score.char.toLowerCase());
+        const correct = [...want.toLowerCase()].filter((c) => got.includes(c) || (c === 'o' && got.includes('0'))).length;
+        expect(correct, `Lineatur ${L.kind}: ${got.join('')}`).toBeGreaterThanOrEqual(want.length - 1);
+      }
+    });
+
+    it('letters that do not fit the bands score lower and get the line tip', () => {
+      const fit = scan(page(L1, schoolWord(bank, L1, 0, 'a', 400)), { target: 'a' }).glyphs[0].score;
+      const big = scan(page(L1, schoolWord(bank, L1, 0, 'a', 400, 2)), { target: 'a' }).glyphs[0].score;
+      expect(fit.score).toBeGreaterThan(big.score);
+      expect(big.tip).toBe('zone');
+    });
+
+    it('a single c or C is told apart by the bands it reaches', () => {
+      expect(scan(page(L2, schoolWord(bank, L2, 1, 'c', 500))).glyphs[0].score.char).toBe('c');
+      expect(scan(page(L2, schoolWord(bank, L2, 1, 'C', 500))).glyphs[0].score.char).toBe('C');
+      expect(scan(page(L3, schoolWord(bank, L3, 1, 's', 500))).glyphs[0].score.char).toBe('s');
+      expect(scan(page(L3, schoolWord(bank, L3, 1, 'S', 500))).glyphs[0].score.char).toBe('S');
+    });
   });
 
   it('sorts glyphs into teams by pen colour', () => {

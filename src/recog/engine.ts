@@ -1,12 +1,14 @@
 // Loads model + templates and runs scans. Used inside the workers (and in-thread as a fallback).
 // A scan can run in one go (scan) or in three phases spread over several workers:
 // segment (worker 0) -> analyze (all workers, glyphs in parallel) -> finish (worker 0).
-import { GlyphMemory } from '../vision/dedup.ts';
+import { findCards, type CardScan } from '../vision/cards.ts';
+import { GlyphMemory, type MemGlyph } from '../vision/dedup.ts';
 import {
   analyzeJobs,
   calibratePen,
   calibrateSlip,
   finishScan,
+  matchKnown,
   runScan,
   segmentFrame,
   type FrameSegmentation,
@@ -16,6 +18,11 @@ import type { RGBAImage, ScanResult, VisionOptions } from '../vision/types.ts';
 import { GlyphNet, type GlyphNetMeta } from './cnn.ts';
 import { Recognizer, type Analysis } from './recognizer.ts';
 import { TemplateBank, type TemplateMeta } from './templates.ts';
+
+export interface SavedMemory {
+  mode: 'sheet' | 'slips';
+  items: MemGlyph[];
+}
 
 export interface EngineInfo {
   hasModel: boolean;
@@ -91,14 +98,17 @@ export class Engine {
     return runScan(frame, opts, { recognizer: this.ready(), memory: this.memoryFor(opts) });
   }
 
-  /** phase 1: returns the glyph jobs, keeps the rest until finish() */
+  /** phase 1: returns the jobs of the glyphs that are not known yet, keeps the rest until finish() */
   segment(frame: RGBAImage, opts: VisionOptions): { id: number; jobs: GlyphJob[] } {
     const seg = segmentFrame(frame, opts);
+    const t0 = performance.now();
+    const jobs = matchKnown(seg, this.memoryFor(opts));
+    seg.timings.known = Math.round(performance.now() - t0);
     const id = this.seq++;
     this.pending.set(id, seg);
     // never keep more than a few unfinished scans
     for (const k of this.pending.keys()) if (k < id - 3) this.pending.delete(k);
-    return { id, jobs: seg.glyphs.map((g) => g.job) };
+    return { id, jobs };
   }
 
   /** phase 2: recognition and per-glyph scoring */
@@ -116,6 +126,24 @@ export class Engine {
 
   reset(): void {
     this.memory.reset();
+  }
+
+  /** the glyphs remembered so far (for a saved game), without the debug inputs */
+  exportMemory(): SavedMemory {
+    return {
+      mode: this.memory.mode,
+      items: this.memory.items.map((m) => ({ ...m, known: m.known && { ...m.known, analysis: { ...m.known.analysis, cnn: undefined } } })),
+    };
+  }
+
+  importMemory(m: SavedMemory): void {
+    this.memory = new GlyphMemory(m.mode);
+    this.memory.items = m.items;
+  }
+
+  /** Mal-Aquarium: the colouring cards in the frame (no model needed) */
+  cards(frame: RGBAImage): CardScan {
+    return findCards(frame);
   }
 
   calibrate(frame: RGBAImage, kind: 'pen' | 'slip') {

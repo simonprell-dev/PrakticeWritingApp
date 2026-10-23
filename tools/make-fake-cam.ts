@@ -69,3 +69,35 @@ for (let i = 0; i < 8; i++) {
 const duel = makePage(bank, { width: 1280, height: 720, noise: 4, seed: 9, slips, glyphs });
 writeFileSync(OUT + 'fakecam-duel.y4m', y4m(Array.from({ length: 8 }, () => duel)));
 console.log('wrote fake camera videos to', OUT);
+
+// Mal-Aquarium: three cut out colouring cards on a wooden table (two coloured, one still blank)
+{
+  const { paperPicture, photo, pose } = await import('../test/helpers/cardScene.ts');
+  const { CARD } = await import('../src/game/paint/fishCard.ts');
+  const looks = [
+    { fills: { body: '#ff8a2a', tail: '#ffd23c', dorsal: '#2f9bff', anal: '#2f9bff', pelvic: '#2f9bff', pectoral: '#ff4f8a' } },
+    { fills: { body: '#3fc45a', tail: '#9b5cff', dorsal: '#ffd23c', anal: '#ffd23c', pelvic: '#ffd23c', pectoral: '#ff9a3c', water: '#bfe6ff' } },
+    {},
+  ];
+  const W = 1280;
+  const H = 720;
+  let table: RGBAImage = { width: W, height: H, data: new Uint8ClampedArray(W * H * 4) };
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const grain = 10 * Math.sin(y * 0.05 + Math.sin(x * 0.01) * 3);
+      table.data.set([150 + grain, 112 + grain, 78 + grain, 255], (y * W + x) * 4);
+    }
+  }
+  const spots: [number, number, number][] = [
+    [230, 370, -8],
+    [640, 360, 5],
+    [1050, 375, -3],
+  ];
+  spots.forEach(([cx, cy, deg], i) => {
+    const pic = paperPicture('card', [looks[i]]);
+    const corners = pose(CARD.w + 2 * CARD.margin, CARD.h + 2 * CARD.margin, 3.6, cx, cy, deg, 0.03);
+    table = photo(pic, { width: W, height: H, table: [0, 0, 0], background: table, corners, noise: 5, texture: 0.3, seed: i + 1 });
+  });
+  writeFileSync(OUT + 'fakecam-paint.y4m', y4m(Array.from({ length: 8 }, () => table)));
+  console.log('wrote fakecam-paint.y4m');
+}

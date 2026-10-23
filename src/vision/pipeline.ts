@@ -1,12 +1,15 @@
-// Full scan: frame -> regions -> ink -> lines -> glyphs -> recognition/score -> team -> dedup.
+// Full scan: frame -> regions -> ink -> lines -> glyphs -> known glyphs -> recognition/score of the new ones.
+// Children keep writing on the same sheet: glyphs from earlier scans are recognised again only by their
+// position and thumbnail and keep their first result; only new handwriting goes through the recognition.
 import type { Analysis, GlyphFeatures, Recognizer } from '../recog/recognizer.ts';
 import { qualityFeatures } from '../recog/quality.ts';
 import { buildSkel } from '../recog/templates.ts';
 import type { Vec3 } from './color.ts';
-import { GlyphMemory, thumbnail, type MemGlyph } from './dedup.ts';
+import { GlyphMemory, thumbnail, type MatchResult, type MemGlyph } from './dedup.ts';
 import { clampBox, resizeRGBAToPlanes, sampleBilinear } from './image.ts';
-import { inkThresholds, normalisePlanes, type NormPlanes } from './ink.ts';
-import { removeRuledLines } from './lines.ts';
+import type { Zone } from '../recog/classes.ts';
+import { inkThresholds, normalisePlanes, shearShift, type NormPlanes } from './ink.ts';
+import { lineModel, removeRuledLines, type LineModel } from './lines.ts';
 import { close, strokeWidth } from './morphology.ts';
 import { aspect, CNN_SIZE, cutGlyph, toCnnInput, toQualityMask, toTemplateMask, type GlyphCrop } from './normalize.ts';
 import { detectRegions, type PaperRegion } from './paper.ts';
@@ -17,11 +20,11 @@ import type {
   Box,
   DebugLayers,
   Mask,
+  PlayerId,
   RGBAImage,
   RuledLine,
   ScanResult,
   ScannedGlyph,
-  TeamId,
   VisionOptions,
 } from './types.ts';
 
@@ -105,7 +108,9 @@ export interface GlyphJob {
   dots: number;
   bodyH: number;
   baselineDev?: number;
-  /** also evaluate the mirrored glyph (practice mode) */
+  /** position in the school lines (bands above/below the base line) */
+  zone?: Zone;
+  /** also evaluate the mirrored glyph (mirror writing check) */
   mirror: boolean;
 }
 
@@ -121,6 +126,7 @@ export function featuresOf(job: GlyphJob): GlyphFeatures {
     dots: job.dots,
     bodyH: job.bodyH,
     baselineDev: job.baselineDev,
+    zone: job.zone,
   };
 }
 
@@ -129,8 +135,10 @@ interface PatchGlyph {
   crop: RGBAImage;
   thumb: Uint8Array;
   box: Box;
+  /** the letter body without dots (detection coordinates) */
+  body: Box;
   regionId: number;
-  team?: TeamId;
+  team?: PlayerId;
   neutral: boolean;
   dots: number;
 }
@@ -144,6 +152,99 @@ function flipH(a: Float32Array, size: number): Float32Array {
 function smooth(a: number, b: number, v: number): number {
   const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
   return t * t * (3 - 2 * t);
+}
+
+/**
+ * The child's letter as a transparent cut-out for the creatures. Pencil and light pens come out pale on
+ * camera, so the ink is strengthened: its colour (absorption per channel) is scaled until the strongest
+ * strokes are deep, faint edge pixels take the letter's own colour, the opacity is measured against the
+ * letter's own strongest ink, and lines that are thin for the letter's size get a little bolder.
+ */
+function inkSticker(p: Patch, member: Uint8Array, idx: number[], bx: number, by: number, bw: number, bh: number): RGBAImage {
+  const { w } = p;
+  const ink = p.ink;
+  const absorb = (i: number, c: number) => Math.max(0, 1 - p.n[c][i]);
+  // strongest ink of this letter (90th percentile, robust against single dark specks)
+  const strength = idx.map((i) => ink[i]).sort((a, b) => a - b);
+  const top = strength[Math.floor(strength.length * 0.9)] ?? 0;
+  // the letter's colour: mean absorption of its strong pixels
+  const col = [0, 0, 0];
+  let cnt = 0;
+  for (const i of idx) {
+    if (ink[i] < top * 0.6) continue;
+    for (let c = 0; c < 3; c++) col[c] += absorb(i, c);
+    cnt++;
+  }
+  if (cnt) for (let c = 0; c < 3; c++) col[c] /= cnt;
+  const aMax = Math.max(col[0], col[1], col[2]);
+  // the strongest channel of the mean ink colour becomes 90 % absorption
+  const gain = aMax > 0.02 ? Math.min(4, Math.max(1, 0.9 / aMax)) : 1;
+
+  // stroke width ≈ 2 · area / outline length; aim for about a tenth of the letter size
+  let edge = 0;
+  for (let y = 0; y < bh; y++) {
+    for (let x = 0; x < bw; x++) {
+      const k = y * bw + x;
+      if (member[k] && (x === 0 || y === 0 || x === bw - 1 || y === bh - 1 || !member[k - 1] || !member[k + 1] || !member[k - bw] || !member[k + bw])) edge++;
+    }
+  }
+  const stroke = edge ? (2 * idx.length) / edge : 0;
+  const bold = Math.max(0, Math.min(2, Math.round((0.09 * Math.max(bw, bh) - stroke) / 2)));
+
+  // opacity next to the letter (one pixel of soft edge), then widened for thin lines
+  const alpha = new Float32Array(bw * bh);
+  for (let y = 0; y < bh; y++) {
+    for (let x = 0; x < bw; x++) {
+      let near = false;
+      for (let dy = -1; dy <= 1 && !near; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < bw && yy < bh && member[yy * bw + xx]) {
+            near = true;
+            break;
+          }
+        }
+      }
+      if (near) alpha[y * bw + x] = smooth(top * 0.08, top * 0.4, ink[(by + y) * w + bx + x]);
+    }
+  }
+  const wide = bold ? new Float32Array(bw * bh) : alpha;
+  if (bold) {
+    for (let y = 0; y < bh; y++) {
+      for (let x = 0; x < bw; x++) {
+        let m = 0;
+        for (let dy = -bold; dy <= bold; dy++) {
+          for (let dx = -bold; dx <= bold; dx++) {
+            const xx = x + dx;
+            const yy = y + dy;
+            // round pen: leave out the corners of the bigger square
+            if (xx < 0 || yy < 0 || xx >= bw || yy >= bh || dx * dx + dy * dy > bold * bold + 1) continue;
+            m = Math.max(m, alpha[yy * bw + xx]);
+          }
+        }
+        wide[y * bw + x] = m;
+      }
+    }
+  }
+
+  const sticker: RGBAImage = { width: bw, height: bh, data: new Uint8ClampedArray(bw * bh * 4) };
+  for (let y = 0; y < bh; y++) {
+    for (let x = 0; x < bw; x++) {
+      const k = y * bw + x;
+      if (!wide[k]) continue;
+      const i = (by + y) * w + bx + x;
+      const o = k * 4;
+      // core pixels keep their own (strengthened) colour, faint edges take the letter's colour
+      const own = smooth(top * 0.3, top * 0.75, ink[i]);
+      for (let c = 0; c < 3; c++) {
+        const a = Math.min(0.95, gain * ((1 - own) * col[c] + own * absorb(i, c)));
+        sticker.data[o + c] = Math.round(255 * (1 - a));
+      }
+      sticker.data[o + 3] = Math.round(255 * wide[k]);
+    }
+  }
+  return sticker;
 }
 
 function processPatch(
@@ -182,7 +283,7 @@ function processPatch(
       for (const ly of hLines) best = Math.min(best, Math.abs(bottom - (ly + cx * tanSkew)));
       baselineDev = best / spacing;
     }
-    const job: GlyphJob = { crop, dots: g.dots, bodyH: g.baseBox.h, baselineDev, mirror: !!opts.target };
+    const job: GlyphJob = { crop, dots: g.dots, bodyH: g.baseBox.h, baselineDev, mirror: true };
 
     // all pixels of the glyph (body + dots) for team colour, sticker and thumbnail
     const all = new Set([...g.baseLabels, ...g.dotLabels]);
@@ -202,30 +303,8 @@ function processPatch(
         }
       }
     }
-    const sticker: RGBAImage = { width: bw, height: bh, data: new Uint8ClampedArray(bw * bh * 4) };
-    for (let y = 0; y < bh; y++) {
-      for (let x = 0; x < bw; x++) {
-        let near = 0;
-        for (let dy = -1; dy <= 1 && !near; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            const xx = x + dx;
-            const yy = y + dy;
-            if (xx >= 0 && yy >= 0 && xx < bw && yy < bh && member[yy * bw + xx]) {
-              near = 1;
-              break;
-            }
-          }
-        }
-        if (!near) continue;
-        const i = (by + y) * w + bx + x;
-        const o = (y * bw + x) * 4;
-        sticker.data[o] = Math.min(255, p.n[0][i] * 235);
-        sticker.data[o + 1] = Math.min(255, p.n[1][i] * 235);
-        sticker.data[o + 2] = Math.min(255, p.n[2][i] * 235);
-        sticker.data[o + 3] = Math.round(255 * smooth(th.weak * 0.6, th.strong * 1.4, ink[i]));
-      }
-    }
-    let team: TeamId | undefined;
+    const sticker = inkSticker(p, member, idx, bx, by, bw, bh);
+    let team: PlayerId | undefined;
     let neutral = false;
     if (opts.team) {
       if (opts.team.by === 'slip') team = p.region.team;
@@ -241,6 +320,7 @@ function processPatch(
       crop: sticker,
       thumb: thumbnail(member, bw, bh),
       box: detBox(p, g.box),
+      body: detBox(p, g.baseBox),
       regionId: p.region.id,
       team,
       neutral,
@@ -248,6 +328,33 @@ function processPatch(
     });
   }
   return { glyphs: out, mask: lr.mask, sw: seg.strokeWidth || strokeWidth(lr.mask) };
+}
+
+/**
+ * Where every letter sits in the line system (school lines: bands; plain ruled paper: base line).
+ * Returns the glyphs in reading order along the writing rows (a g or p belongs to its row, too).
+ */
+function applyLines(glyphs: PatchGlyph[], m: LineModel, w: number): PatchGlyph[] {
+  const t = Math.tan(m.skew);
+  const row = new Map<PatchGlyph, number>();
+  for (const g of glyphs) {
+    const sh = shearShift(g.body.x + g.body.w / 2, w, t);
+    const top = g.body.y - sh;
+    const bottom = g.body.y + g.body.h - sh;
+    const nearest = (list: number[]) => list.reduce((best, l) => (Math.abs(bottom - l) < Math.abs(bottom - best) ? l : best), list[0]);
+    if (m.kind === 'plain') {
+      g.job.baselineDev = Math.abs(bottom - nearest(m.lines)) / m.unit;
+      continue;
+    }
+    // the base line of this letter's row lies below its top
+    const known = m.bases.filter((b) => b > top + 0.3 * m.unit);
+    const base = nearest(known.length ? known : m.lines);
+    g.job.zone = { top: (base - top) / m.unit, bottom: (bottom - base) / m.unit, ambiguous: !known.length };
+    g.job.baselineDev = undefined;
+    if (known.length) row.set(g, base);
+  }
+  if (row.size !== glyphs.length) return glyphs;
+  return [...glyphs].sort((a, b) => row.get(a)! - row.get(b)! || a.body.x - b.body.x);
 }
 
 export interface ScanDeps {
@@ -269,6 +376,8 @@ export interface FrameSegmentation {
   masks: { p: Patch; mask: Mask }[];
   ink: Float32Array;
   timings: Record<string, number>;
+  /** set by matchKnown(): which glyphs are known from earlier scans */
+  match?: MatchResult;
 }
 
 function timer() {
@@ -293,7 +402,9 @@ export function segmentFrame(frame: RGBAImage, opts: VisionOptions): FrameSegmen
   const planes = resizeRGBAToPlanes(frame, dw, dh);
   tm.lap('resize');
   let r = Math.max(4, Math.round(Math.max(dw, dh) / 107));
-  let np = normalisePlanes(planes, dw, dh, r);
+  // a written page may have school lines or a coloured middle band: look along the rows as well
+  const rows = opts.team?.by !== 'slip' && opts.ruled !== 'off';
+  let np = normalisePlanes(planes, dw, dh, r, rows);
   tm.lap('ink');
   const regions = detectRegions(planes, dw, dh, {
     mode: opts.team?.by === 'slip' ? 'slip-color' : 'page',
@@ -318,26 +429,49 @@ export function segmentFrame(frame: RGBAImage, opts: VisionOptions): FrameSegmen
     // very thick strokes (marker, zoomed camera): background radius must exceed the stroke
     if (attempt === 0 && maxSw > 1.2 * r) {
       r = Math.ceil(maxSw * 1.3);
-      np = normalisePlanes(planes, dw, dh, r);
+      np = normalisePlanes(planes, dw, dh, r, rows);
       continue;
     }
     break;
   }
   tm.lap('segment');
+  if (np.rows) {
+    const model = lineModel(np.rows.profile, np.rows.pad, np.rows.skew, opts.lineatur ?? 'auto', glyphs.map((g) => g.body.h));
+    if (model.kind !== 'none') glyphs = applyLines(glyphs, model, dw);
+    tm.lap('lines');
+  }
   return { frame: { width: frame.width, height: frame.height }, scale, dw, dh, regions, glyphs, lines, masks, ink: np.ink, timings: tm.timings };
+}
+
+/** a glyph needs the recognition unless an earlier scan already recognised it */
+function needsAnalysis(m: MatchResult, i: number): boolean {
+  return m.isNew[i] || !m.matched[i]?.known;
+}
+
+/**
+ * Phase 1b: finds the glyphs that are known from earlier scans (cheap: position + 16x16 thumbnail,
+ * the paper may have moved). Returns the jobs of the glyphs that still need the recognition.
+ */
+export function matchKnown(seg: FrameSegmentation, memory: GlyphMemory): GlyphJob[] {
+  seg.match = memory.match(seg.glyphs.map((g) => ({ box: g.box, thumb: g.thumb })));
+  const m = seg.match;
+  return seg.glyphs.filter((_, i) => needsAnalysis(m, i)).map((g) => g.job);
 }
 
 /** Phase 2 for a list of glyph jobs (any worker). */
 export function analyzeJobs(jobs: GlyphJob[], opts: VisionOptions, recognizer: Recognizer): Analysis[] {
   return jobs.map((job) => {
     const f = featuresOf(job);
-    const a = recognizer.analyze(f, { target: opts.target, strictness: opts.strictness, style: opts.style });
+    const a = recognizer.analyze(f, { target: opts.target, bonus: opts.bonus, strictness: opts.strictness, style: opts.style });
     if (opts.debug) a.cnn = f.cnn;
     return a;
   });
 }
 
-/** Phase 3: scan-wide scoring (size consistency, case), duplicates, result. */
+/**
+ * Phase 3: scan-wide scoring (size consistency, case), duplicates, result. `analyses` belong to the jobs
+ * returned by matchKnown(); known glyphs keep their stored result and are the context for the new ones.
+ */
 export function finishScan(
   seg: FrameSegmentation,
   analyses: Analysis[],
@@ -346,10 +480,29 @@ export function finishScan(
   extraTimings: Record<string, number> = {},
 ): ScanResult {
   const tm = timer();
-  const scores = deps.recognizer.finalize(analyses, { target: opts.target, strictness: opts.strictness, style: opts.style });
   const glyphs = seg.glyphs;
-  const mem: MemGlyph[] = glyphs.map((g) => ({ box: g.box, thumb: g.thumb }));
-  const match = deps.memory.match(mem);
+  // without matchKnown() the caller has analysed every glyph
+  const matchedBefore = !!seg.match;
+  const match = seg.match ?? deps.memory.match(glyphs.map((g) => ({ box: g.box, thumb: g.thumb })));
+  const fresh = glyphs.map((_, i) => !matchedBefore || needsAnalysis(match, i));
+  let k = 0;
+  // stored analyses are copied: the scan-wide scoring adjusts them
+  const all = glyphs.map((_, i) => (fresh[i] ? analyses[k++] : structuredClone(match.matched[i]!.known!.analysis)));
+  const scores = deps.recognizer.finalize(all, { target: opts.target, strictness: opts.strictness, style: opts.style, noMirror: opts.noMirror });
+  // the setting may have changed since a known glyph was scored
+  const final = glyphs.map((_, i) => {
+    const s = fresh[i] ? scores[i] : match.matched[i]!.known!.score;
+    return { ...s, rejected: (opts.noMirror && s.mirrored) || undefined };
+  });
+  const mem: MemGlyph[] = glyphs.map((g, i) => {
+    if (!fresh[i]) return { box: g.box, thumb: g.thumb };
+    const { cnn: _debugOnly, ...analysis } = all[i];
+    return { box: g.box, thumb: g.thumb, known: { analysis: structuredClone(analysis), score: final[i] } };
+  });
+  // a known glyph without a stored result (cannot happen in the app) gets it now
+  match.matched.forEach((m, i) => {
+    if (m && !m.known) m.known = mem[i].known;
+  });
   deps.memory.commit(mem, match);
   tm.lap('dedup');
   const out: ScannedGlyph[] = glyphs.map((g, i) => ({
@@ -359,7 +512,7 @@ export function finishScan(
     team: g.neutral ? undefined : g.team,
     dots: g.dots,
     crop: g.crop,
-    score: scores[i],
+    score: final[i],
     isNew: match.isNew[i],
   }));
   let debug: DebugLayers | undefined;
@@ -381,7 +534,7 @@ export function finishScan(
       ink: { width: dw, height: dh, data: seg.ink },
       mask: full,
       lines: seg.lines,
-      cnnInputs: analyses.map((x) => x.cnn ?? new Float32Array(784)),
+      cnnInputs: all.map((x) => x.cnn ?? new Float32Array(784)),
     };
   }
   const timings: Record<string, number> = { ...seg.timings, ...extraTimings, ...tm.timings };
@@ -397,21 +550,19 @@ export function finishScan(
     shift: match.shift,
     newSheet: match.newSheet,
     duplicates: out.filter((g) => !g.isNew).length,
+    analyzed: analyses.length,
     neutral: glyphs.filter((g) => g.neutral).length,
     timings,
     debug,
   };
 }
 
-/** All three phases in one thread (tests, lab, single worker). */
+/** All phases in one thread (tests, lab, single worker). */
 export function runScan(frame: RGBAImage, opts: VisionOptions, deps: ScanDeps): ScanResult {
   const seg = segmentFrame(frame, opts);
+  const jobs = matchKnown(seg, deps.memory);
   const t0 = now();
-  const analyses = analyzeJobs(
-    seg.glyphs.map((g) => g.job),
-    opts,
-    deps.recognizer,
-  );
+  const analyses = analyzeJobs(jobs, opts, deps.recognizer);
   return finishScan(seg, analyses, opts, deps, { recognize: Math.round(now() - t0) });
 }
 

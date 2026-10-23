@@ -1,6 +1,6 @@
 // Team classification by pen colour (ink absorption direction) or by slip colour.
 import { angleDeg, chroma, GREY_DIR, normalize3, type Vec3 } from './color.ts';
-import type { TeamCalib, TeamId } from './types.ts';
+import type { PlayerId, TeamCalib } from './types.ts';
 
 /** Mean absorption (1 - N_c) of the strongest ink pixels of a glyph. */
 export function absorptionOf(
@@ -26,7 +26,7 @@ export function absorptionOf(
 }
 
 export interface TeamDecision {
-  team?: TeamId;
+  team?: PlayerId;
   /** angle to the chosen team (degrees) */
   angle: number;
   /** the ink looks grey/black and no team uses a grey pen */
@@ -38,7 +38,7 @@ export function classifyPen(absorb: Vec3, calibs: TeamCalib[]): TeamDecision {
   const u = normalize3(absorb);
   const cands = calibs.map((c) => ({ team: c.team, a: angleDeg(u, normalize3(c.absorb)) }));
   const greyTeam = calibs.some((c) => angleDeg(normalize3(c.absorb), GREY_DIR) < 12);
-  if (!greyTeam) cands.push({ team: undefined as unknown as TeamId, a: angleDeg(u, GREY_DIR) + 2 });
+  if (!greyTeam) cands.push({ team: undefined as unknown as PlayerId, a: angleDeg(u, GREY_DIR) + 2 });
   cands.sort((x, y) => x.a - y.a);
   const best = cands[0];
   const second = cands[1];

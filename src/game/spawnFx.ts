@@ -10,7 +10,7 @@ import { clamp, ease, lerp, TAU } from './math.ts';
 import type { Particles } from './particles.ts';
 
 interface Flight {
-  glyph: ScannedGlyph;
+  glyph?: ScannedGlyph;
   sticker: AnyCanvas;
   from: { x: number; y: number; s: number };
   to: { x: number; y: number };
@@ -32,7 +32,18 @@ interface Polaroid {
   resultAt: number;
   closing: number;
   label: string;
-  boxes: { x: number; y: number; w: number; h: number; isNew: boolean; at: number; team?: string }[];
+  boxes: { x: number; y: number; w: number; h: number; isNew: boolean; at: number; team?: string; rejected?: boolean }[];
+}
+
+/** something found in the photo: a box in the polaroid, and maybe a sticker that flies into the scene */
+export interface FxItem {
+  /** detection coordinates */
+  box: { x: number; y: number; w: number; h: number };
+  isNew: boolean;
+  rejected?: boolean;
+  /** box colour */
+  team?: string;
+  fly?: { sticker: AnyCanvas; to: { x: number; y: number }; onLand: () => void; glyph?: ScannedGlyph };
 }
 
 export class SpawnFx {
@@ -41,6 +52,8 @@ export class SpawnFx {
   private particles: Particles;
   private flashT = -1;
   private worldW = 1920;
+  /** y of the polaroid (scenes with something important at the top move it down) */
+  top = 120;
 
   constructor(particles: Particles) {
     this.particles = particles;
@@ -53,7 +66,7 @@ export class SpawnFx {
   private layout(snap: Snapshot, worldW: number) {
     const w = Math.min(620, worldW * 0.36);
     const h = (w * snap.canvas.height) / snap.canvas.width;
-    return { x: worldW / 2 - w / 2, y: 120, w, h };
+    return { x: worldW / 2 - w / 2, y: this.top, w, h };
   }
 
   /** Phase 1: the photo was just taken. */
@@ -83,6 +96,31 @@ export class SpawnFx {
     onLand: (g: ScannedGlyph, i: number) => void,
     teamColor?: (g: ScannedGlyph) => string,
   ): void {
+    const newOnes = glyphs.filter((g) => g.isNew);
+    const valid = newOnes.filter((g) => !g.score.rejected).length;
+    const mirrored = newOnes.length - valid;
+    const known = glyphs.length - newOnes.length;
+    const fresh = valid === 1 ? '1 neues Zeichen!' : `${valid} neue Zeichen!`;
+    const extra = [mirrored ? `${mirrored} spiegelverkehrt` : '', known ? `${known} kenne ich schon` : ''].filter(Boolean).join(', ');
+    let label: string;
+    if (valid) label = extra ? `${fresh} (${extra})` : fresh;
+    else if (mirrored) label = 'Spiegelschrift zählt nicht!';
+    else label = known ? 'Nichts Neues – alles schon bekannt' : 'Nichts gefunden';
+    let k = 0;
+    const items = glyphs.map((g): FxItem => {
+      const item: FxItem = { box: g.box, isNew: g.isNew, rejected: g.score.rejected, team: teamColor?.(g) };
+      if (!g.isNew || g.score.rejected) return item;
+      const idx = k++;
+      const to = target(g, idx);
+      const st = stickers.get(g.id);
+      if (to && st) item.fly = { sticker: st, to, onLand: () => onLand(g, idx), glyph: g };
+      return item;
+    });
+    this.show(snap, worldW, label, items);
+  }
+
+  /** Phase 2 for anything found in the photo (glyphs, colouring cards): boxes in the polaroid, stickers fly in. */
+  show(snap: Snapshot, worldW: number, label: string, items: FxItem[]): void {
     let p = this.polaroid;
     if (!p || p.snap.canvas !== snap.canvas || p.closing >= 0) {
       this.capture(snap, worldW);
@@ -90,36 +128,33 @@ export class SpawnFx {
     }
     p.snap = snap;
     p.resultAt = p.t;
+    p.label = label;
     const sc = p.w / snap.detW;
-    const newOnes = glyphs.filter((g) => g.isNew);
-    p.label = newOnes.length ? (newOnes.length === 1 ? '1 neues Zeichen!' : `${newOnes.length} neue Zeichen!`) : 'Nichts Neues';
-    const stagger = clamp(2.4 / Math.max(1, newOnes.length), 0.06, 0.18);
+    const stagger = clamp(2.4 / Math.max(1, items.filter((i) => i.isNew).length), 0.06, 0.18);
     let k = 0;
     p.boxes = [];
-    glyphs.forEach((g) => {
-      const bx = p.x + g.box.x * sc;
-      const by = p.y + g.box.y * sc;
-      const bw = g.box.w * sc;
-      const bh = g.box.h * sc;
-      const at = p.resultAt + 0.04 + (g.isNew ? k : 0) * stagger * 0.5;
-      p.boxes.push({ x: bx, y: by, w: bw, h: bh, isNew: g.isNew, at, team: teamColor?.(g) });
-      if (!g.isNew) return;
+    for (const it of items) {
+      const bx = p.x + it.box.x * sc;
+      const by = p.y + it.box.y * sc;
+      const bw = it.box.w * sc;
+      const bh = it.box.h * sc;
+      const at = p.resultAt + 0.04 + (it.isNew ? k : 0) * stagger * 0.5;
+      p.boxes.push({ x: bx, y: by, w: bw, h: bh, isNew: it.isNew, at, team: it.team, rejected: it.rejected });
+      if (!it.isNew || it.rejected) continue;
       const idx = k++;
-      const to = target(g, idx);
-      const st = stickers.get(g.id);
-      if (!to || !st) return;
+      if (!it.fly) continue;
       this.flights.push({
-        glyph: g,
-        sticker: st,
+        glyph: it.fly.glyph,
+        sticker: it.fly.sticker,
         from: { x: bx + bw / 2, y: by + bh / 2, s: Math.max(bw, bh) },
-        to,
+        to: it.fly.to,
         delay: 0.08 + idx * stagger,
         t: 0,
         dur: 0.5,
         landed: false,
-        onLand: () => onLand(g, idx),
+        onLand: it.fly.onLand,
       });
-    });
+    }
   }
 
   update(dt: number): void {
@@ -213,11 +248,18 @@ export class SpawnFx {
         ctx.translate(b.x + b.w / 2, b.y + b.h / 2);
         ctx.scale(grow, grow);
         ctx.lineWidth = 3;
-        ctx.strokeStyle = b.isNew ? (b.team ?? '#ffcc00') : 'rgba(140,140,140,0.8)';
-        ctx.setLineDash(b.isNew ? [] : [5, 4]);
+        ctx.strokeStyle = b.rejected && b.isNew ? '#ff5470' : b.isNew ? (b.team ?? '#ffcc00') : 'rgba(140,140,140,0.8)';
+        ctx.setLineDash(b.isNew && !b.rejected ? [] : [5, 4]);
         ctx.beginPath();
         ctx.roundRect(-b.w / 2 - 4, -b.h / 2 - 4, b.w + 8, b.h + 8, 6);
         ctx.stroke();
+        if (b.rejected && b.isNew) {
+          // little mirror sign: the letter is the wrong way round
+          ctx.fillStyle = '#ff5470';
+          ctx.font = '700 18px Fredoka, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('⇄', 0, -b.h / 2 - 10);
+        }
         ctx.restore();
       }
       // caption on the white border

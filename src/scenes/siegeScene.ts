@@ -10,7 +10,9 @@ import type { DuelEvent, Fighter, SiegeStage, TeamStats } from '../game/duel/due
 import { clamp, ease, hsl, lerp, TAU } from '../game/math.ts';
 import { WORLD_H } from '../game/stage.ts';
 import type { ScanResult, TeamId } from '../vision/types.ts';
-import { DuelScene } from './duelScene.ts';
+import { COUNTDOWN_SECONDS, drawBanner, drawCountdown, type Banner } from './cinema.ts';
+import { DuelScene, type DuelSceneSave } from './duelScene.ts';
+import type { SceneSave } from './saved.ts';
 import type { SceneHost, Snapshot } from './scene.ts';
 
 export interface SiegeResult {
@@ -24,6 +26,13 @@ export interface SiegeResult {
   best?: { sticker: AnyCanvas; score: number; char: string };
   bravest?: { sticker: AnyCanvas; hits: number; char: string };
   seconds: number;
+}
+
+/** the Riesenburg in a saved game */
+export interface SiegeSceneSave extends DuelSceneSave {
+  wallsDown: number;
+  stars: number;
+  guardCount: number;
 }
 
 export const CLASS_COLOR = '#ff8a3d';
@@ -61,7 +70,7 @@ export class SiegeScene extends DuelScene {
   /** 0..1: the giant drops to the ground when his castle is gone */
   giantFall = 0;
   speech: { text: string; t: number; dur: number } | null = null;
-  banner: { title: string; sub: string; t: number; dur: number } | null = null;
+  banner: Banner | null = null;
   countdown = -1;
   burst: { wall: number; t: number } | null = null;
   guardT = 6;
@@ -362,7 +371,7 @@ export class SiegeScene extends DuelScene {
     }
     if (this.countdown >= 0) {
       this.countdown += dt;
-      if (this.countdown > 2.3) this.countdown = -1;
+      if (this.countdown > COUNTDOWN_SECONDS) this.countdown = -1;
     }
     if (this.burst) {
       this.burst.t += dt;
@@ -378,6 +387,46 @@ export class SiegeScene extends DuelScene {
     }
     this.shake = Math.max(0, this.shake - dt * 1.4);
     super.update(dt);
+  }
+
+  // ---------------------------------------------------------------- saved games
+
+  /** the guards count as team B: only the class's letters make a game worth keeping */
+  protected hasProgress(): boolean {
+    return this.sim.stats.A.written > 0;
+  }
+
+  protected summary(): string {
+    return `Mauer ${Math.min(this.walls.length, this.wallsDown + 1)} von ${this.walls.length}`;
+  }
+
+  async saveState(): Promise<SceneSave | null> {
+    if (this.seq && this.seq.name !== 'wall') return null;
+    const extra = { wallsDown: this.wallsDown, stars: this.stars, guardCount: this.guardCount };
+    const base = await super.saveState();
+    if (!base) return null;
+    const state: SiegeSceneSave = { ...(base.state as DuelSceneSave), ...extra };
+    return { state, summary: base.summary };
+  }
+
+  async restoreState(raw: unknown): Promise<void> {
+    const s = raw as SiegeSceneSave;
+    await super.restoreState(s);
+    this.wallsDown = s.wallsDown;
+    this.stars = s.stars;
+    this.guardCount = s.guardCount;
+    // saved while a wall was falling: the next one stands now
+    if (this.sim.stageCleared) this.sim.nextStage();
+    this.resetPile('B');
+    this.seq = null;
+    this.paused = false;
+    this.rise = 1;
+    this.giantPop = 1;
+    this.burst = null;
+    this.cam = this.home();
+    this.banner = { title: 'Weiter geht’s!', sub: `${this.className} gegen Riese Rumpel – Mauer ${this.sim.stage + 1} von ${this.walls.length}`, t: 0, dur: 2.6 };
+    this.setMood('laugh', 1.8);
+    this.say('Ihr schon wieder? Hohoho! Meine Burg steht noch!', 2.4);
   }
 
   private siegeResult(): SiegeResult {
@@ -589,8 +638,8 @@ export class SiegeScene extends DuelScene {
 
   protected renderOverlay(ctx: CanvasRenderingContext2D): void {
     super.renderOverlay(ctx);
-    this.drawBanner(ctx);
-    this.drawCountdown(ctx);
+    if (this.banner) drawBanner(ctx, this.W, this.banner, this.t);
+    drawCountdown(ctx, this.W, this.countdown);
   }
 
   private drawSpeech(ctx: CanvasRenderingContext2D): void {
@@ -621,73 +670,6 @@ export class SiegeScene extends DuelScene {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(sp.text, x + w / 2, y + h / 2 + 1, w - 30);
-    ctx.restore();
-  }
-
-  private drawBanner(ctx: CanvasRenderingContext2D): void {
-    const b = this.banner;
-    if (!b) return;
-    const pop = ease.outBack(clamp(b.t / 0.35));
-    const fade = clamp((b.dur - b.t) / 0.35);
-    const w = Math.min(1150, this.W - 160);
-    const h = 210;
-    const x = this.W / 2;
-    const y = 400;
-    ctx.save();
-    ctx.globalAlpha = fade;
-    ctx.translate(x, y);
-    ctx.scale(pop, pop);
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.strokeStyle = '#3b2a5c';
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.roundRect(-w / 2, -h / 2, w, h, 40);
-    ctx.fill();
-    ctx.stroke();
-    for (const sx of [-1, 1]) {
-      ctx.fillStyle = '#ffd84a';
-      ctx.strokeStyle = '#9a5b00';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      const cx = sx * (w / 2 - 70);
-      for (let i = 0; i < 10; i++) {
-        const a = -Math.PI / 2 + (i * Math.PI) / 5 + this.t;
-        const rr = i % 2 ? 18 : 40;
-        ctx.lineTo(cx + Math.cos(a) * rr, Math.sin(a) * rr - 20);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    }
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#7c5cff';
-    ctx.font = '700 70px Fredoka, system-ui, sans-serif';
-    ctx.fillText(b.title, 0, -12, w - 240);
-    ctx.fillStyle = '#3b2a5c';
-    ctx.font = '600 32px Fredoka, system-ui, sans-serif';
-    ctx.fillText(b.sub, 0, 55, w - 80);
-    ctx.restore();
-  }
-
-  private drawCountdown(ctx: CanvasRenderingContext2D): void {
-    if (this.countdown < 0) return;
-    const step = Math.min(3, Math.floor(this.countdown / 0.55));
-    const local = this.countdown - step * 0.55;
-    const text = ['3', '2', '1', 'Los!'][step];
-    const s = ease.outBack(clamp(local / 0.25)) * (step === 3 ? 1.1 : 1);
-    ctx.save();
-    ctx.globalAlpha = step === 3 ? clamp((2.3 - this.countdown) / 0.5) : 1;
-    ctx.translate(this.W / 2, 560);
-    ctx.scale(s, s);
-    ctx.font = `700 ${step === 3 ? 200 : 260}px Fredoka, system-ui, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineWidth = 18;
-    ctx.strokeStyle = '#3b2a5c';
-    ctx.lineJoin = 'round';
-    ctx.strokeText(text, 0, 0);
-    ctx.fillStyle = step === 3 ? '#ffd84a' : '#ffffff';
-    ctx.fillText(text, 0, 0);
     ctx.restore();
   }
 

@@ -12,7 +12,7 @@ import { HabitatScene } from '../src/scenes/habitat.ts';
 import { savanna } from '../src/scenes/savanna.ts';
 import type { SceneHost } from '../src/scenes/scene.ts';
 import { space } from '../src/scenes/space.ts';
-import type { ScannedGlyph, TeamId } from '../src/vision/types.ts';
+import type { PlayerId, ScannedGlyph, TeamId } from '../src/vision/types.ts';
 
 setCanvasFactory((w, h) => createCanvas(w, h) as unknown as AnyCanvas, Path2D as unknown as typeof globalThis.Path2D);
 const font = (f: string) => fileURLToPath(new URL(`../tools/train/fonts/${f}`, import.meta.url));
@@ -23,7 +23,7 @@ const out = process.argv[2] ?? fileURLToPath(new URL('../tools/train/out/', impo
 mkdirSync(out, { recursive: true });
 
 let id = 1;
-function glyph(ch: string, score: number, team?: TeamId, color = '#23236b'): ScannedGlyph {
+function glyph(ch: string, score: number, team?: PlayerId, color = '#23236b'): ScannedGlyph {
   const c = createCanvas(70, 80);
   const x = c.getContext('2d');
   x.fillStyle = color;
@@ -163,3 +163,159 @@ addClass('Y', 95);
 for (let i = 0; i < 40 * 30 && !siege.seq; i++) siege.update(1 / 30);
 stepSiege(3.6);
 siegeSnap('siege-8-victory.png');
+
+// ---- Türme bauen
+const { TowerScene } = await import('../src/scenes/towerScene.ts');
+const towerSettings = structuredClone(DEFAULTS);
+towerSettings.tower.count = 3;
+const tower = new TowerScene({ ...host, settings: towerSettings, finished: () => console.log('tower finished') }, W);
+const towerSnap = (name: string) => {
+  const dc = createCanvas(W, H);
+  tower.render(dc.getContext('2d') as unknown as CanvasRenderingContext2D);
+  writeFileSync(`${out}/${name}`, dc.toBuffer('image/png'));
+  console.log('wrote', name);
+};
+const stepTower = (sec: number) => {
+  for (let t = 0; t < sec; t += 1 / 30) tower.update(1 / 30);
+};
+const PEN = ['#d0303a', '#2a4fd0', '#2a8f3a'];
+const addTower = (p: number, ch: string, score: number) => {
+  const g = glyph(ch, score, (['A', 'B', 'C'] as const)[p], PEN[p]);
+  const cv = createCanvas(g.crop.width, g.crop.height);
+  const cx = cv.getContext('2d');
+  const d = cx.createImageData(g.crop.width, g.crop.height);
+  d.data.set(g.crop.data);
+  cx.putImageData(d, 0, 0);
+  tower.glyphs.set(g.id, { glyph: g, sticker: cv as unknown as AnyCanvas });
+  tower.sim.addBlock(p, score, g.id);
+};
+/** delivers one block with a given gag and takes pictures at gag times (0..1) */
+const gagShot = (gag: string, p: number, ch: string, score: number, at: number[]) => {
+  tower.sim.forceGag = gag;
+  addTower(p, ch, score);
+  const running = () => tower.sim.aliens.find((a) => a.job?.gag?.id === gag && a.job.gagT >= 0);
+  for (let i = 0; i < 30 * 15 && !running(); i++) tower.update(1 / 30);
+  tower.sim.forceGag = null;
+  const a = running();
+  if (!a) return console.log('gag did not start:', gag);
+  const dur = a.job!.gag!.dur;
+  let done = 0;
+  for (const u of at) {
+    stepTower(u * dur - done);
+    done = u * dur;
+    towerSnap(`tower-gag-${gag}-${Math.round(u * 100)}.png`);
+  }
+  stepTower(6);
+};
+stepTower(1.3);
+towerSnap('tower-1-intro.png');
+stepTower(1.5);
+towerSnap('tower-2-banner.png');
+stepTower(3.2);
+[...'AbC4eF'].forEach((ch, i) => addTower(i % 3, ch, [95, 60, 30, 80, 45, 20][i]));
+stepTower(0.9);
+towerSnap('tower-3-portal.png');
+stepTower(1.1);
+towerSnap('tower-4-carry.png');
+stepTower(8);
+towerSnap('tower-5-built.png');
+gagShot('hatschi', 0, 'K', 92, [0.2, 0.45]);
+gagShot('regenwolke', 1, 'm', 70, [0.7]);
+gagShot('vogel', 2, 'R', 85, [0.5]);
+gagShot('falscherTurm', 0, 'S', 65, [0.45]);
+gagShot('kaugummi', 1, 'p', 55, [0.6]);
+gagShot('massband', 2, 'T', 75, [0.4]);
+gagShot('sonnenbrille', 0, 'Z', 96, [0.5]);
+gagShot('landkarte', 1, 'h', 66, [0.3]);
+gagShot('bluemchen', 2, 'w', 60, [0.7]);
+// let them get up to mischief
+stepTower(9);
+towerSnap('tower-6-mischief.png');
+stepTower(5);
+towerSnap('tower-7-mischief.png');
+// finish: red tower goes over the line
+while (tower.sim.towers[0].metres < tower.sim.goal - 8) {
+  addTower(0, 'X', 95);
+  stepTower(4);
+}
+addTower(0, 'Y', 95);
+for (let i = 0; i < 30 * 20 && !tower.seq; i++) tower.update(1 / 30);
+stepTower(2.2);
+towerSnap('tower-8-victory.png');
+
+// eight teams side by side
+{
+  const eight = structuredClone(DEFAULTS);
+  eight.tower.count = 8;
+  const sc = new TowerScene({ ...host, settings: eight, finished: () => undefined }, W);
+  const step = (sec: number) => {
+    for (let t = 0; t < sec; t += 1 / 30) sc.update(1 / 30);
+  };
+  step(6.2);
+  const ids = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as const;
+  for (let round = 0; round < 3; round++)
+    ids.forEach((id, p) => {
+      const g = glyph('AbCdEfGh'[p], [95, 70, 45, 85, 60, 30, 90, 75][(p + round) % 8], id, '#3b2a5c');
+      const cv = createCanvas(g.crop.width, g.crop.height);
+      const cx = cv.getContext('2d');
+      const d = cx.createImageData(g.crop.width, g.crop.height);
+      d.data.set(g.crop.data);
+      cx.putImageData(d, 0, 0);
+      sc.glyphs.set(g.id, { glyph: g, sticker: cv as unknown as AnyCanvas });
+      sc.sim.addBlock(p, g.score.score, g.id);
+    });
+  step(30);
+  const dc = createCanvas(W, H);
+  sc.render(dc.getContext('2d') as unknown as CanvasRenderingContext2D);
+  writeFileSync(`${out}/tower-9-eight.png`, dc.toBuffer('image/png'));
+  console.log('wrote tower-9-eight.png');
+}
+
+// ---- practice mode: surprise letter in a bubble, written -> bursts, a creature hatches there
+GlobalFonts.registerFromPath(font('PlaywriteDEGrund.ttf'), 'Grundschrift');
+for (const def of [aquarium, space, savanna]) {
+  const practice = structuredClone(DEFAULTS);
+  practice.practice = { mode: 'ueben', targets: ['B'], count: 5, surprise: true };
+  const sc = new HabitatScene(def, { ...host, settings: practice }, W);
+  [...'BBB'].forEach((ch, i) => {
+    const g = glyph(ch, [90, 60, 75][i]);
+    const cv = createCanvas(g.crop.width, g.crop.height);
+    const cx = cv.getContext('2d');
+    const d = cx.createImageData(g.crop.width, g.crop.height);
+    d.data.set(g.crop.data);
+    cx.putImageData(d, 0, 0);
+    sc.addCreature(g, cv as unknown as AnyCanvas);
+  });
+  sc.wishIn = 0.1;
+  for (let t = 0; t < 2; t += 1 / 30) sc.update(1 / 30);
+  sc.wish!.char = 'm';
+  const shot = (name: string) => {
+    const dc = createCanvas(W, H);
+    sc.render(dc.getContext('2d') as unknown as CanvasRenderingContext2D);
+    writeFileSync(`${out}/${name}`, dc.toBuffer('image/png'));
+    console.log('wrote', name, 'wish', sc.wish?.char, 'freed', sc.wishesFreed);
+  };
+  shot(`wish-${def.id}-1.png`);
+  const m = glyph('m', 82);
+  m.score.scoredAs = 'm';
+  const snapCanvas = createCanvas(640, 360);
+  sc.handleScan(
+    { frameW: 1280, frameH: 720, scale: 1, regions: [], glyphs: [m], shift: { dx: 0, dy: 0 }, newSheet: false, duplicates: 0, analyzed: 1, neutral: 0, timings: {} },
+    { canvas: snapCanvas as unknown as AnyCanvas, detW: 1280, detH: 720 },
+  );
+  for (let t = 0; t < 2.3; t += 1 / 30) sc.update(1 / 30);
+  shot(`wish-${def.id}-2-freed.png`);
+}
+
+// ---- how a letter is written: the big demonstration in the middle of the writing
+{
+  const practice = structuredClone(DEFAULTS);
+  practice.practice = { mode: 'ueben', targets: ['B', 'a'], count: 5, surprise: true };
+  const sc = new HabitatScene(space, { ...host, settings: practice }, W);
+  sc.showDemo('B');
+  for (let t = 0; t < 2.2; t += 1 / 30) sc.update(1 / 30);
+  const dc = createCanvas(W, H);
+  sc.render(dc.getContext('2d') as unknown as CanvasRenderingContext2D);
+  writeFileSync(`${out}/demo-B.png`, dc.toBuffer('image/png'));
+  console.log('wrote demo-B.png');
+}

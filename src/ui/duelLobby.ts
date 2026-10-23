@@ -1,92 +1,120 @@
 // Team-Duell setup: names, colours (pen or slip), optional colour calibration, castle strength, time limit.
 import type { Settings, TeamSettings } from '../app/settings.ts';
-import { chroma, PEN_PRESETS, SLIP_PRESETS, type Vec3 } from '../vision/color.ts';
+import { PEN_PRESETS, SLIP_PRESETS, type Vec3 } from '../vision/color.ts';
+import { openColorPicker } from './colorPicker.ts';
 import { button, clear, h, modal, segmented } from './dom.ts';
 
-export interface LobbyDeps {
-  settings: Settings;
+export interface ColorDeps {
   save: () => void;
-  calibratePen: () => Promise<{ absorb: Vec3; pixels: number } | null>;
-  calibrateSlip: () => Promise<{ rgb: Vec3 } | null>;
+  /** a photo from the document camera to tap the colour in */
+  photo: () => Promise<HTMLCanvasElement | null>;
+}
+
+/** the colour a team is recognised by (calibrated or the preset) */
+export function teamValue(t: TeamSettings, by: 'pen' | 'slip'): Vec3 {
+  return by === 'pen' ? (t.penCalib ?? PEN_PRESETS[t.pen]?.absorb ?? PEN_PRESETS.rot.absorb) : (t.slipCalib ?? SLIP_PRESETS[t.slip]?.slip ?? SLIP_PRESETS.gelb.slip);
+}
+
+export interface LobbyDeps extends ColorDeps {
+  settings: Settings;
   start: () => void;
   openCamera: () => void;
+}
+
+/**
+ * One team (or tower): name, colour preset (pen or slip) and, optionally, the colour tapped in a photo
+ * of the real pens or slips. `others` are the other teams (for the "too similar" warning), `photoKey`
+ * the number key that takes the photo for this team.
+ */
+export function colorCard(
+  t: TeamSettings,
+  by: 'pen' | 'slip',
+  title: string,
+  fallbackName: string,
+  d: ColorDeps,
+  rerender: () => void,
+  others: TeamSettings[] = [],
+  photoKey?: number,
+): HTMLElement {
+  const name = h('input', { type: 'text', value: t.name, maxlength: '24' }) as HTMLInputElement;
+  name.addEventListener('input', () => {
+    t.name = name.value || fallbackName;
+    d.save();
+  });
+  const presets = by === 'pen' ? PEN_PRESETS : SLIP_PRESETS;
+  const current = by === 'pen' ? t.pen : t.slip;
+  const swatches = h('div', { class: 'row' });
+  for (const [key, p] of Object.entries(presets)) {
+    const b = button(
+      h('span', { style: `display:inline-block;width:1.3em;height:1.3em;border-radius:50%;background:${p.css};border:2px solid #3b2a5c` }),
+      () => {
+        if (by === 'pen') {
+          t.pen = key;
+          t.penCalib = undefined;
+        } else {
+          t.slip = key;
+          t.slipCalib = undefined;
+        }
+        d.save();
+        rerender();
+      },
+      `btn icon${key === current ? ' on' : ''}`,
+      p.label,
+    );
+    swatches.append(b);
+  }
+  const calibInfo = h('div', { class: 'help' });
+  const calibrated = by === 'pen' ? !!t.penCalib : !!t.slipCalib;
+  calibInfo.textContent = calibrated ? '✓ Farbe im Foto angelernt' : 'Noch nicht angelernt (Voreinstellung).';
+  const calBtn = button(
+    by === 'pen' ? '🎨 Stiftfarbe im Foto zeigen' : '🎨 Zettelfarbe im Foto zeigen',
+    () =>
+      openColorPicker({
+        kind: by,
+        name: t.name,
+        others: others.filter((o) => o !== t).map((o) => ({ name: o.name, value: teamValue(o, by) })),
+        photo: d.photo,
+        onPick: (v) => {
+          if (by === 'pen') t.penCalib = v;
+          else t.slipCalib = v;
+          d.save();
+          rerender();
+        },
+      }),
+    'btn small',
+  );
+  const pc = presets[current];
+  return h(
+    'div',
+    { class: 'team-col', style: `border-color:${pc?.css ?? '#3b2a5c'}` },
+    h(
+      'div',
+      { class: 'team-head' },
+      h('h3', null, title),
+      photoKey
+        ? h(
+            'span',
+            { class: 'photo-key', title: `Taste ${photoKey} (oder Team-Knopf ${photoKey}) macht sofort ein Foto – alle Zeichen darauf gehören zu diesem Team` },
+            '📷 Taste',
+            h('kbd', { style: `background:${pc?.css ?? '#3b2a5c'}` }, String(photoKey)),
+          )
+        : null,
+    ),
+    h('div', { class: 'row' }, name),
+    h('div', { class: 'help' }, by === 'pen' ? 'Stiftfarbe:' : 'Zettelfarbe:'),
+    swatches,
+    h('div', { class: 'row' }, calBtn),
+    calibInfo,
+  );
 }
 
 export function openDuelLobby(d: LobbyDeps): void {
   const s = d.settings.duel;
   const teamsBox = h('div', { class: 'teams' });
-
-  const teamCard = (t: TeamSettings) => {
-    const name = h('input', { type: 'text', value: t.name, maxlength: '24' }) as HTMLInputElement;
-    name.addEventListener('input', () => {
-      t.name = name.value || (t.id === 'A' ? 'Team A' : 'Team B');
-      d.save();
-    });
-    const presets = s.by === 'pen' ? PEN_PRESETS : SLIP_PRESETS;
-    const current = s.by === 'pen' ? t.pen : t.slip;
-    const swatches = h('div', { class: 'row' });
-    for (const [key, p] of Object.entries(presets)) {
-      const b = button(
-        h('span', { style: `display:inline-block;width:1.3em;height:1.3em;border-radius:50%;background:${p.css};border:2px solid #3b2a5c` }),
-        () => {
-          if (s.by === 'pen') {
-            t.pen = key;
-            t.penCalib = undefined;
-          } else {
-            t.slip = key;
-            t.slipCalib = undefined;
-          }
-          d.save();
-          render();
-        },
-        `btn icon${key === current ? ' on' : ''}`,
-        p.label,
-      );
-      swatches.append(b);
-    }
-    const calibInfo = h('div', { class: 'help' });
-    const calibrated = s.by === 'pen' ? !!t.penCalib : !!t.slipCalib;
-    calibInfo.textContent = calibrated ? '✓ Farbe mit der Kamera geprüft' : 'Farbe noch nicht geprüft (Voreinstellung).';
-    const calBtn = button(
-      '🎨 Farbe prüfen',
-      async () => {
-        calibInfo.textContent =
-          s.by === 'pen' ? 'Male mit dem Stift ein paar dicke Striche in die Bildmitte …' : 'Lege einen leeren Zettel in die Bildmitte …';
-        await new Promise((r) => setTimeout(r, 1800));
-        if (s.by === 'pen') {
-          const res = await d.calibratePen();
-          if (!res || res.pixels < 80) {
-            calibInfo.textContent = 'Ich sehe zu wenig Tinte in der Mitte. Bitte dicker malen und nochmal.';
-            return;
-          }
-          t.penCalib = res.absorb;
-          calibInfo.textContent = '✓ Stiftfarbe gemerkt!';
-        } else {
-          const res = await d.calibrateSlip();
-          if (!res) return;
-          t.slipCalib = chroma(res.rgb[0], res.rgb[1], res.rgb[2]);
-          calibInfo.textContent = '✓ Zettelfarbe gemerkt!';
-        }
-        d.save();
-      },
-      'btn small',
-    );
-    const pc = presets[current];
-    return h(
-      'div',
-      { class: 'team-col', style: `border-color:${pc?.css ?? '#3b2a5c'}` },
-      h('h3', null, t.id === 'A' ? 'Team links' : 'Team rechts'),
-      h('div', { class: 'row' }, name),
-      h('div', { class: 'help' }, s.by === 'pen' ? 'Stiftfarbe:' : 'Zettelfarbe:'),
-      swatches,
-      h('div', { class: 'row' }, calBtn),
-      calibInfo,
-    );
-  };
-
+  const card = (t: TeamSettings) => colorCard(t, s.by, t.id === 'A' ? 'Team links' : 'Team rechts', t.id === 'A' ? 'Team A' : 'Team B', d, render, s.teams, t.id === 'A' ? 1 : 2);
   const render = () => {
     clear(teamsBox);
-    teamsBox.append(teamCard(s.teams[0]), teamCard(s.teams[1]));
+    teamsBox.append(card(s.teams[0]), card(s.teams[1]));
   };
   render();
 

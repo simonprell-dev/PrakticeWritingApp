@@ -57,6 +57,23 @@ export function segmented<T extends string>(options: { value: T; label: string }
   return wrap;
 }
 
+/** a toggle switch (on/off) with its text, the whole thing is the tap target */
+export function toggle(label: string, on: boolean, onChange: (on: boolean) => void): HTMLElement {
+  const b = button(
+    [h('span', { class: 'switch-track' }, h('span', { class: 'switch-knob' })), h('span', null, label)],
+    () => {
+      on = !on;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-checked', String(on));
+      onChange(on);
+    },
+    `switch${on ? ' on' : ''}`,
+  );
+  b.setAttribute('role', 'switch');
+  b.setAttribute('aria-checked', String(on));
+  return b;
+}
+
 export function modal(content: HTMLElement, onClose?: () => void, cls = ''): { el: HTMLElement; close: () => void } {
   const back = h('div', { class: `modal-back ${cls}` });
   const box = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' }, content);

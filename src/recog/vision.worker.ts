@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import type { GlyphJob } from '../vision/pipeline.ts';
 import type { RGBAImage, ScanResult, VisionOptions } from '../vision/types.ts';
-import { Engine } from './engine.ts';
+import { Engine, type SavedMemory } from './engine.ts';
 import type { Analysis } from './recognizer.ts';
 
 export type WorkerRequest =
@@ -11,6 +11,9 @@ export type WorkerRequest =
   | { id: number; type: 'analyze'; jobs: GlyphJob[]; opts: VisionOptions }
   | { id: number; type: 'finish'; scanId: number; analyses: Analysis[]; opts: VisionOptions; timings: Record<string, number> }
   | { id: number; type: 'reset' }
+  | { id: number; type: 'memory-get' }
+  | { id: number; type: 'memory-set'; memory: SavedMemory }
+  | { id: number; type: 'cards'; frame: RGBAImage }
   | { id: number; type: 'calibrate'; frame: RGBAImage; kind: 'pen' | 'slip' };
 
 const engine = new Engine();
@@ -43,6 +46,14 @@ scope.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     } else if (msg.type === 'reset') {
       engine.reset();
       scope.postMessage({ id: msg.id, ok: true, value: null });
+    } else if (msg.type === 'memory-get') {
+      scope.postMessage({ id: msg.id, ok: true, value: engine.exportMemory() });
+    } else if (msg.type === 'memory-set') {
+      engine.importMemory(msg.memory);
+      scope.postMessage({ id: msg.id, ok: true, value: null });
+    } else if (msg.type === 'cards') {
+      const res = engine.cards(msg.frame);
+      scope.postMessage({ id: msg.id, ok: true, value: res }, res.cards.map((c) => c.image.data.buffer as ArrayBuffer));
     } else if (msg.type === 'calibrate') {
       scope.postMessage({ id: msg.id, ok: true, value: engine.calibrate(msg.frame, msg.kind) });
     }

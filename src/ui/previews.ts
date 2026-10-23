@@ -4,12 +4,16 @@ import { alienSprite } from '../game/creatures/alien.ts';
 import { bubbleSprite } from '../game/creatures/bubble.ts';
 import { fighterSprite } from '../game/creatures/duelFigure.ts';
 import { fishSprite } from '../game/creatures/fish.ts';
+import { paintedFishSprite } from '../game/creatures/paintedFish.ts';
+import { cardImage, drawCard, type CardLook } from '../game/paint/cardArt.ts';
 import { drawGiant } from '../game/creatures/giant.ts';
+import { drawBeam, drawPortal, drawUfo } from '../game/creatures/ufo.ts';
 import { inkGuardSprite } from '../game/creatures/inkGuard.ts';
 import { makeGenome, type Archetype, type Genome } from '../game/creatures/genome.ts';
 import { animalSprite } from '../game/creatures/savanna.ts';
 import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
 import { TAU } from '../game/math.ts';
+import { blockWidth, drawBlock } from '../game/tower/towerArt.ts';
 import { tierOf } from '../recog/score.ts';
 
 export function letterSticker(ch: string, color = '#2b2b7a', size = 90): AnyCanvas {
@@ -39,7 +43,12 @@ function genome(score: number, seed: number, a: Archetype, hue?: number, variant
   return g;
 }
 
-export function tilePreview(kind: 'meer' | 'weltraum' | 'savanne' | 'duell' | 'riesenburg', canvas: HTMLCanvasElement): void {
+export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'duell' | 'riesenburg' | 'tuerme' | 'malen';
+
+const PAINTED: CardLook = { fills: { body: '#ff9a3c', tail: '#ff5f8f', dorsal: '#4fb3ff', anal: '#4fb3ff', pelvic: '#4fb3ff', pectoral: '#ffd84a' } };
+const PAINTED_2: CardLook = { fills: { body: '#8f6bff', tail: '#7ccf6b', dorsal: '#ffd84a', anal: '#ffd84a', pelvic: '#ffd84a', pectoral: '#ff6fd8' } };
+
+export function tilePreview(kind: TileKind, canvas: HTMLCanvasElement): void {
   const W = 480;
   const H = 360;
   canvas.width = W;
@@ -89,6 +98,67 @@ export function tilePreview(kind: 'meer' | 'weltraum' | 'savanne' | 'duell' | 'r
     ctx.fill();
     draw(ctx, animalSprite(genome(70, 2, 'animal', undefined, 2), letterSticker('7')), 110, 200, 0.6);
     draw(ctx, animalSprite(genome(96, 4, 'animal', undefined, 0), letterSticker('L')), 300, 250, 0.75);
+  } else if (kind === 'tuerme') {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#1d1450');
+    g.addColorStop(0.55, '#7a58cc');
+    g.addColorStop(0.79, '#ffc1c9');
+    g.addColorStop(0.8, '#86d66e');
+    g.addColorStop(1, '#4f9e57');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < 40; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${0.4 + ((i * 37) % 60) / 100})`;
+      ctx.beginPath();
+      ctx.arc((i * 131) % W, (i * 71) % 170, 1.2, 0, TAU);
+      ctx.fill();
+    }
+    drawPortal(ctx, 240, 52, 34, 0.7, 1);
+    const ground = 288;
+    const tower = (x: number, blocks: [number, number, string][], color: string, hue: number) => {
+      let y = ground;
+      for (const [h, stars, ch] of blocks) {
+        ctx.save();
+        ctx.translate(x, y - h / 2);
+        ctx.scale(0.5, 0.5);
+        drawBlock(ctx, { w: blockWidth(stars), h: h * 2, hue, stars, sticker: letterSticker(ch, color), deco: [], seed: ch.charCodeAt(0), t: 0 });
+        ctx.restore();
+        y -= h;
+      }
+    };
+    tower(
+      95,
+      [
+        [58, 5, 'A'],
+        [36, 3, 'b'],
+        [22, 2, '3'],
+      ],
+      '#c2252f',
+      358,
+    );
+    tower(
+      385,
+      [
+        [44, 4, 'K'],
+        [26, 2, 'm'],
+      ],
+      '#1f45c4',
+      222,
+    );
+    // Zork brings an "R" with the tractor beam
+    const bx = 245;
+    const by = 205;
+    drawBeam(ctx, bx, 150, by - 26, 100, 1, 0.4);
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.scale(0.5, 0.5);
+    drawBlock(ctx, { w: blockWidth(5), h: 104, hue: 140, stars: 5, sticker: letterSticker('R', '#1d7a35'), deco: [], seed: 3, t: 0 });
+    ctx.restore();
+    ctx.save();
+    ctx.translate(bx, 140);
+    ctx.scale(0.62, 0.62);
+    drawUfo(ctx, { hue: 105, face: 'grin', t: 0.3, boss: true });
+    ctx.restore();
   } else if (kind === 'riesenburg') {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#8fb8ff');
@@ -121,6 +191,38 @@ export function tilePreview(kind: 'meer' | 'weltraum' | 'savanne' | 'duell' | 'r
     drawGiant(ctx as never, 400, 135, 0.3, 'laugh', 0.3);
     draw(ctx, inkGuardSprite(28, 3), 200, 270, 1, -1);
     draw(ctx, fighterSprite(genome(95, 9, 'fighter', 25), letterSticker('K'), 40), 95, 285, 1);
+  } else if (kind === 'malen') {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#8fe3f3');
+    g.addColorStop(1, '#1d6fa8');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#f2d9a2';
+    ctx.fillRect(0, H - 34, W, 34);
+    for (let i = 0; i < 7; i++) ctx.drawImage(bubbleSprite(5 + (i % 4) * 3, i * 30) as CanvasImageSource, 250 + i * 30, 30 + ((i * 97) % 250));
+    // the coloured card lies on the left, its fish swims on the right
+    ctx.save();
+    ctx.translate(30, 150);
+    ctx.rotate(-0.12);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(6, 8, 188, 176);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-6, -6, 200, 188);
+    drawCard(ctx, 2, PAINTED);
+    ctx.restore();
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([4, 12]);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(190, 140);
+    ctx.quadraticCurveTo(240, 40, 300, 95);
+    ctx.stroke();
+    ctx.restore();
+    const fish = paintedFishSprite(cardImage(PAINTED), 1.35);
+    draw(ctx, fish, 360, 150, 1);
+    draw(ctx, paintedFishSprite(cardImage(PAINTED_2), 0.9), 400, 285, 1, -1);
   } else {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#9fd8ff');

@@ -11,6 +11,8 @@ export interface LegalInfo {
   address: string;
   email: string;
   phone: string;
+  /** the operator's own website, linked in the imprint */
+  website: string;
   dpo: string;
   authority: string;
   supervision: string;
@@ -28,6 +30,7 @@ const FALLBACK: LegalInfo = {
   address: '[Anschrift]',
   email: '[E-Mail-Adresse]',
   phone: '',
+  website: '',
   dpo: '',
   authority: '',
   supervision: '',
@@ -76,6 +79,9 @@ const mail = (addr: string) => (addr.includes('@') ? h('a', { href: `mailto:${ad
 
 const ext = (href: string, text = href) => h('a', { href, target: '_blank', rel: 'noopener noreferrer' }, text);
 
+/** "https://prelldynamics.de/" -> "prelldynamics.de" */
+const bareUrl = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
 function section(title: string, ...body: (Node | string | null)[]): HTMLElement {
   return h('section', null, h('h3', null, title), ...body);
 }
@@ -110,6 +116,9 @@ function operatorBlock(info: LegalInfo): HTMLElement {
     mail(info.email),
     info.phone ? h('br') : null,
     info.phone ? `Telefon: ${info.phone}` : null,
+    info.website ? h('br') : null,
+    info.website ? 'Website: ' : null,
+    info.website ? ext(info.website, bareUrl(info.website)) : null,
   );
 }
 
@@ -136,6 +145,26 @@ function impressum(info: LegalInfo): HTMLElement {
       p(
         'Krakel & Krone ist ein Lern- und Motivationsspiel für das Schreibenlernen. Die vergebenen Sterne und Stufen sind ein Spiel und keine Leistungsbewertung.',
       ),
+      info.website ? p('Mehr Projekte gibt es auf ', ext(info.website, bareUrl(info.website)), '.') : null,
+    ),
+    section('Verbraucherstreitbeilegung', p('Der Anbieter ist nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.')),
+    section(
+      'Haftung für Inhalte',
+      p(
+        'Die Inhalte dieser Website wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte – auch für die Bewertung der Handschrift durch die automatische Erkennung – wird keine Gewähr übernommen. Als Diensteanbieter ist der Anbieter für eigene Inhalte nach den allgemeinen Gesetzen verantwortlich. Eine Verpflichtung, übermittelte oder gespeicherte fremde Informationen zu überwachen, besteht nicht. Sobald Rechtsverletzungen bekannt werden, werden die betreffenden Inhalte umgehend entfernt.',
+      ),
+    ),
+    section(
+      'Haftung für Links',
+      p(
+        'Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte der Anbieter keinen Einfluss hat. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft; rechtswidrige Inhalte waren nicht erkennbar. Werden Rechtsverletzungen bekannt, werden derartige Links umgehend entfernt.',
+      ),
+    ),
+    section(
+      'Urheberrecht',
+      p(
+        'Das Spiel – insbesondere Programm, Grafiken, Figuren und Texte – unterliegt dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechts bedürfen der vorherigen schriftlichen Zustimmung des Anbieters. Die Kopiervorlage des Mal-Aquariums darf für den Unterricht und zu Hause ausgedruckt und kopiert werden. Inhalte Dritter (Schriftarten, Trainingsdaten der Handschrift-Erkennung) stehen unter ihren eigenen Lizenzen, siehe Lizenzhinweise.',
+      ),
     ),
     section('Datenschutz und Lizenzen', p('Siehe Datenschutzerklärung und Lizenzhinweise (Links unten).')),
   );
@@ -152,6 +181,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
       'Das Wichtigste in Kürze',
       list([
         ['Die Kamerabilder werden ', h('b', null, 'ausschließlich auf Ihrem Gerät'), ' im Browser ausgewertet. Sie werden weder an uns noch an Dritte übertragen und nicht gespeichert.'],
+        ['Spielstände (ausgeschnittene Buchstaben, ausgemalte Bilder) werden nur in Ihrem Browser gespeichert und lassen sich jederzeit löschen.'],
         ['Es gibt keine Benutzerkonten, keine Cookies, kein Tracking, keine Werbung und keine Analysedienste.'],
         ['Es werden keine externen Dienste eingebunden – auch Schriftarten und Programmteile kommen ausschließlich von unserem eigenen Server.'],
         ['Beim Aufruf der Website verarbeitet unser Hosting-Anbieter technisch notwendige Verbindungsdaten (z. B. Ihre IP-Adresse).'],
@@ -162,11 +192,12 @@ function datenschutz(info: LegalInfo): HTMLElement {
     section(
       `${info.dpo ? '3' : '2'}. Kamera und Handschrift`,
       p(
-        'Damit aus geschriebenen Buchstaben und Zahlen Spielfiguren werden, nimmt die App nach Ihrer Freigabe Bilder der Kamera (z. B. einer Dokumentenkamera) auf und wertet sie direkt im Browser aus (Erkennen der Zeichen, spielerische Bewertung, Ausschneiden der Zeichen für die Spielfiguren).',
+        'Damit aus geschriebenen Buchstaben und Zahlen Spielfiguren werden, nimmt die App nach Ihrer Freigabe Bilder der Kamera (z. B. einer Dokumentenkamera) auf und wertet sie direkt im Browser aus (Erkennen der Zeichen, spielerische Bewertung, Ausschneiden der Zeichen für die Spielfiguren). Im „Mal-Aquarium“ erkennt die App ausgemalte Fisch-Karten und schneidet den Fisch (mit dem darauf geschriebenen Fischnamen) als Spielfigur aus.',
       ),
       list([
         ['Die Verarbeitung findet vollständig auf dem verwendeten Gerät statt. Wir als Anbieter erhalten keinen Zugriff auf Bilder oder Ergebnisse.'],
-        ['Bilder und ausgeschnittene Zeichen liegen nur im Arbeitsspeicher, solange das Spiel läuft, und werden beim Verlassen oder Neuladen verworfen.'],
+        ['Die Kamerafotos liegen nur im Arbeitsspeicher und werden nach der Auswertung verworfen.'],
+        ['Ausgeschnittene Zeichen und ausgemalte Fisch-Karten gehören zum Spielstand: Sie werden in Ihrem Browser gespeichert, damit ein Spiel später weitergehen kann (siehe „Speicherung auf Ihrem Gerät“).'],
         ['Es findet keine Gesichtserkennung und keine Identifizierung von Personen statt. Bitte richten Sie die Kamera so aus, dass nur das Papier zu sehen ist.'],
         ['Die Bewertung ist ein Spiel zur Motivation. Es findet keine automatisierte Entscheidung im Sinne von Art. 22 DSGVO statt.'],
         ['Den Kamerazugriff können Sie jederzeit in den Einstellungen Ihres Browsers widerrufen.'],
@@ -180,10 +211,14 @@ function datenschutz(info: LegalInfo): HTMLElement {
           h('b', null, 'Local Storage: '),
           'Ihre Einstellungen (z. B. gewählte Kamera, Bildausschnitt, Strenge, Teamnamen und -farben, Übungsbuchstabe). Diese Daten verlassen Ihr Gerät nicht. Bitte tragen Sie als Teamnamen keine Namen von Kindern ein.',
         ],
+        [
+          h('b', null, 'IndexedDB (Spielstände): '),
+          'das letzte Spiel jeder Spielart (nur solange „Letztes Spiel merken“ eingeschaltet ist) und die Spiele, die Sie unter einem Namen speichern. Ein Spielstand enthält die ausgeschnittenen Buchstaben bzw. ausgemalten Fische, ihre Bewertung, ein kleines Vorschaubild des Spiels und die Spieleinstellungen – keine Kamerafotos. Spielstände verlassen Ihr Gerät nicht. Laden Sie einen Spielstand als Datei herunter, liegt diese Datei nur bei Ihnen.',
+        ],
         [h('b', null, 'Service Worker / Cache: '), 'Programmdateien der App, damit sie auch ohne Internetverbindung funktioniert.'],
       ]),
       p(
-        'Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG: Die Speicherung ist unbedingt erforderlich, um die von Ihnen ausdrücklich gewünschten Funktionen bereitzustellen. Sie können die Daten jederzeit löschen – über „Einstellungen → Alles zurücksetzen“ oder indem Sie die Websitedaten in Ihrem Browser löschen.',
+        'Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG: Die Speicherung ist unbedingt erforderlich, um die von Ihnen ausdrücklich gewünschten Funktionen bereitzustellen (Einstellungen behalten, ein Spiel fortsetzen). Sie können die Daten jederzeit löschen – einzelne Spielstände unter „📂 Spielstände“, alle über „Einstellungen → Alle Spielstände löschen“ bzw. „Alles zurücksetzen“, oder indem Sie die Websitedaten in Ihrem Browser löschen. Das automatische Merken lässt sich in den Einstellungen ausschalten.',
       ),
     ),
     section(

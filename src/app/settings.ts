@@ -1,10 +1,10 @@
 // App settings, persisted in localStorage (only on this device, nothing personal).
-import type { PenPreset, Rotation, Strictness, TeamId } from '../vision/types.ts';
+import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
 
 export type HabitatId = 'meer' | 'weltraum' | 'savanne';
 
 export interface TeamSettings {
-  id: TeamId;
+  id: PlayerId;
   name: string;
   /** preset key in PEN_PRESETS or SLIP_PRESETS */
   pen: string;
@@ -26,23 +26,32 @@ export interface Settings {
   };
   recog: {
     pen: PenPreset;
-    ruled: 'auto' | 'on' | 'off';
+    /** German school lines: Lineatur 1/2 (four lines), 3 (two lines), plain ruled or blank paper */
+    lineatur: 'auto' | 'L1' | 'L2' | 'L3' | 'liniert' | 'blanko';
     strictness: Strictness;
     style: 'beide' | 'druck' | 'grund';
     autoScan: boolean;
     /** seconds of stillness before an automatic scan */
     autoDelay: number;
+    /** mirror writing does not count as a letter */
+    noMirror: boolean;
   };
   game: {
     maxCreatures: number;
     sound: boolean;
     volume: number;
     habitat: HabitatId;
+    /** keep the last game of every mode (to continue it later) */
+    autosave: boolean;
   };
   practice: {
     mode: 'frei' | 'ueben';
-    target: string;
+    /** letters to practise, one after the other */
+    targets: string[];
+    /** how often each letter */
     count: number;
+    /** now and then a surprise letter floats in the scene; writing it frees a creature */
+    surprise: boolean;
   };
   duel: {
     by: 'pen' | 'slip';
@@ -57,15 +66,25 @@ export interface Settings {
     /** minutes, 0 = no limit */
     timeLimit: number;
   };
+  tower: {
+    by: 'pen' | 'slip';
+    /** number of towers (2–8); the first ones of players[] take part */
+    count: number;
+    players: TeamSettings[];
+    /** height of the finish line */
+    goal: 'klein' | 'mittel' | 'gross';
+    /** minutes, 0 = no limit */
+    timeLimit: number;
+  };
   firstRunDone: boolean;
 }
 
 export const DEFAULTS: Settings = {
   version: 1,
   camera: { rotation: 0, mirror: false },
-  recog: { pen: 'auto', ruled: 'auto', strictness: 'mittel', style: 'beide', autoScan: false, autoDelay: 1.5 },
-  game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer' },
-  practice: { mode: 'frei', target: 'A', count: 5 },
+  recog: { pen: 'auto', lineatur: 'auto', strictness: 'mittel', style: 'beide', autoScan: false, autoDelay: 1.5, noMirror: false },
+  game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: true },
+  practice: { mode: 'frei', targets: ['A'], count: 5, surprise: true },
   duel: {
     by: 'pen',
     teams: [
@@ -76,6 +95,22 @@ export const DEFAULTS: Settings = {
     timeLimit: 0,
   },
   siege: { className: 'Unsere Klasse', size: 'mittel', timeLimit: 0 },
+  tower: {
+    by: 'pen',
+    count: 2,
+    players: [
+      { id: 'A', name: 'Rote Raketen', pen: 'rot', slip: 'rosa' },
+      { id: 'B', name: 'Blaue Blitze', pen: 'blau', slip: 'hellblau' },
+      { id: 'C', name: 'Grüne Geckos', pen: 'gruen', slip: 'gruen' },
+      { id: 'D', name: 'Lila Lamas', pen: 'lila', slip: 'gelb' },
+      { id: 'E', name: 'Orange Otter', pen: 'orange', slip: 'orange' },
+      { id: 'F', name: 'Pinke Pinguine', pen: 'pink', slip: 'lila' },
+      { id: 'G', name: 'Türkise Tiger', pen: 'tuerkis', slip: 'blau' },
+      { id: 'H', name: 'Braune Bären', pen: 'braun', slip: 'rot' },
+    ],
+    goal: 'mittel',
+    timeLimit: 0,
+  },
   firstRunDone: false,
 };
 
@@ -99,6 +134,19 @@ export function loadSettings(): Settings {
     const parsed = JSON.parse(raw);
     const s = merge(structuredClone(DEFAULTS), parsed);
     if (!Array.isArray(s.duel.teams) || s.duel.teams.length !== 2) s.duel.teams = structuredClone(DEFAULTS.duel.teams);
+    if (!Array.isArray(s.tower.players) || !s.tower.players.length) s.tower.players = structuredClone(DEFAULTS.tower.players);
+    // older versions had four towers: keep those teams, add the new ones
+    s.tower.players = DEFAULTS.tower.players.map((d, i) => ({ ...structuredClone(d), ...s.tower.players[i], id: d.id }));
+    s.tower.count = Math.min(8, Math.max(2, Math.round(Number(s.tower.count)) || 2));
+    // older versions only knew "ruled: on/off"
+    const oldRuled = (parsed.recog as { ruled?: unknown } | undefined)?.ruled;
+    if (!parsed.recog?.lineatur && oldRuled === 'off') s.recog.lineatur = 'blanko';
+    delete (s.recog as { ruled?: unknown }).ruled;
+    // older versions practised a single letter
+    const oldTarget = (parsed.practice as { target?: unknown } | undefined)?.target;
+    if (!Array.isArray(parsed.practice?.targets)) s.practice.targets = typeof oldTarget === 'string' ? [oldTarget] : [...DEFAULTS.practice.targets];
+    if (!s.practice.targets.length) s.practice.targets = [...DEFAULTS.practice.targets];
+    delete (s.practice as { target?: unknown }).target;
     return s;
   } catch {
     return structuredClone(DEFAULTS);

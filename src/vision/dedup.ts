@@ -1,15 +1,26 @@
-// Remembers glyphs of previous scans so only new handwriting spawns creatures.
+// Remembers glyphs of previous scans so only new handwriting spawns creatures – and only new
+// handwriting is recognised: a known glyph keeps the result of the scan it first appeared in.
 // The paper may move between scans: the shift is found by voting over matched glyph pairs.
-import type { Box } from './types.ts';
+import type { Analysis } from '../recog/recognizer.ts';
+import type { Box, GlyphScore } from './types.ts';
+
+/** recognition result of a glyph, stored when it was new */
+export interface KnownResult {
+  analysis: Analysis;
+  score: GlyphScore;
+}
 
 export interface MemGlyph {
   box: Box;
   /** 16x16 binary thumbnail */
   thumb: Uint8Array;
+  known?: KnownResult;
 }
 
 export interface MatchResult {
   isNew: boolean[];
+  /** the remembered glyph each current glyph matched (null for new glyphs) */
+  matched: (MemGlyph | null)[];
   shift: { dx: number; dy: number };
   newSheet: boolean;
 }
@@ -90,9 +101,8 @@ export class GlyphMemory {
 
   match(glyphs: MemGlyph[]): MatchResult {
     const n = glyphs.length;
-    if (!this.items.length || !n) {
-      return { isNew: glyphs.map(() => true), shift: { dx: 0, dy: 0 }, newSheet: false };
-    }
+    const allNew = (newSheet: boolean): MatchResult => ({ isNew: glyphs.map(() => true), matched: glyphs.map(() => null), shift: { dx: 0, dy: 0 }, newSheet });
+    if (!this.items.length || !n) return allNew(false);
     const minDice = this.mode === 'slips' ? 0.8 : 0.62;
     const minIou = this.mode === 'slips' ? 0.55 : 0.35;
     const H = median(glyphs.map((g) => g.box.h)) || 20;
@@ -123,7 +133,7 @@ export class GlyphMemory {
       shift = { dx: best.dx / best.n, dy: best.dy / best.n };
     }
     const usedOld = new Set<number>();
-    const isNew = glyphs.map((g) => {
+    const matched = glyphs.map((g) => {
       for (let i = 0; i < this.items.length; i++) {
         if (usedOld.has(i)) continue;
         const o = this.items[i];
@@ -131,17 +141,17 @@ export class GlyphMemory {
         if (iou(ob, g.box) < minIou) continue;
         if (softDice(o.thumb, g.thumb) < minDice) continue;
         usedOld.add(i);
-        return false;
+        return o;
       }
-      return true;
+      return null;
     });
     const matchedOld = usedOld.size;
     const newSheet = this.mode === 'sheet' && this.items.length >= 3 && n >= 3 && matchedOld / this.items.length < 0.3 && matchedOld / n < 0.3;
-    if (newSheet) return { isNew: glyphs.map(() => true), shift: { dx: 0, dy: 0 }, newSheet };
-    return { isNew, shift, newSheet };
+    if (newSheet) return allNew(true);
+    return { isNew: matched.map((m) => !m), matched, shift, newSheet };
   }
 
-  /** Stores the current scan: old glyphs follow the paper shift, new ones are added. */
+  /** Stores the current scan: old glyphs follow the paper shift, new ones are added (with their result). */
   commit(glyphs: MemGlyph[], res: MatchResult): void {
     if (res.newSheet) this.items = [];
     else {
@@ -150,7 +160,10 @@ export class GlyphMemory {
       }
     }
     glyphs.forEach((g, i) => {
-      if (res.isNew[i] || res.newSheet) this.items.push(g);
+      const old = res.matched[i];
+      // a known glyph follows the paper exactly; it keeps its first thumbnail and result
+      if (old) old.box = g.box;
+      else this.items.push(g);
     });
     if (this.items.length > 400) this.items.splice(0, this.items.length - 400);
   }

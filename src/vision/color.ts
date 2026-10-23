@@ -28,6 +28,9 @@ export const PEN_PRESETS: Record<string, { label: string; absorb: Vec3; css: str
   gruen: { label: 'Grün', absorb: normalize3([0.72, 0.25, 0.66]), css: '#30a46c' },
   lila: { label: 'Lila', absorb: normalize3([0.5, 0.8, 0.3]), css: '#8e4ec6' },
   orange: { label: 'Orange', absorb: normalize3([0.05, 0.45, 0.85]), css: '#f76b15' },
+  pink: { label: 'Pink', absorb: normalize3([0.1, 0.8, 0.3]), css: '#e93d82' },
+  tuerkis: { label: 'Türkis', absorb: normalize3([0.85, 0.2, 0.35]), css: '#12a594' },
+  braun: { label: 'Braun', absorb: normalize3([0.35, 0.65, 0.9]), css: '#8d5a3b' },
   schwarz: { label: 'Schwarz', absorb: [...GREY_DIR], css: '#2b2b2b' },
 };
 
@@ -39,4 +42,7 @@ export const SLIP_PRESETS: Record<string, { label: string; slip: Vec3; css: stri
   gruen: { label: 'Grün', slip: [0.3, 0.405, 0.85], css: '#9be39b' },
   orange: { label: 'Orange', slip: [0.46, 0.33, 0.95], css: '#ffb366' },
   weiss: { label: 'Weiß', slip: [0.333, 0.333, 0.95], css: '#ffffff' },
+  lila: { label: 'Lila', slip: [0.33, 0.27, 0.93], css: '#c9a6f5' },
+  rot: { label: 'Rot', slip: [0.53, 0.235, 0.9], css: '#f26b6b' },
+  blau: { label: 'Blau', slip: [0.19, 0.32, 0.9], css: '#6aa5f2' },
 };

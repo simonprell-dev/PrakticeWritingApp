@@ -1,0 +1,204 @@
+// The colouring card of the "Mal-Aquarium": a fish to colour in, inside a thick black frame; six cards fit
+// on an A4 sheet. Pure geometry in millimetres, shared by the print sheet, the card detection in the worker
+// and the sprite of the painted fish.
+
+export type Pt = [number, number];
+
+/** one card: outer edge of the black frame = (0, 0) .. (w, h); white margin up to the cut line */
+export const CARD = { w: 94, h: 88, frame: 2.6, margin: 3 } as const;
+
+/** A4 portrait, 2 × 3 cards, cut lines between them */
+export const SHEET = { w: 210, h: 297, cols: 2, rows: 3 } as const;
+
+/** texture resolution of a scanned card (px per mm) */
+export const CARD_PX = 5;
+
+/** the fish is drawn in its own units (100 × 76, facing right) and placed on the card with this transform */
+export const FISH_TO_CARD = { s: 0.82, x: 6, y: 12 } as const;
+
+/**
+ * The fish, back to front. Outline parts are closed shapes; the tail and the fins tuck under the body.
+ * Inner lines divide the body into areas to colour.
+ */
+export const FISH = {
+  tail: 'M 34 33 C 26 27 16 17 4 11 C 8 23 12 31 13 38 C 12 45 8 53 4 65 C 16 59 26 49 34 43 Z',
+  dorsal: 'M 72 18 C 66 7 54 1 41 3 C 46 9 47 15 46 23 Z',
+  anal: 'M 43 58 C 39 64 34 68 28 68 C 31 64 33 59 34 53 Z',
+  pelvic: 'M 65 61 C 61 68 55 72 47 73 C 50 69 52 65 53 62 Z',
+  body: 'M 30 30 C 40 15 62 10 78 16 C 90 21 97 31 97 39 C 97 49 88 58 74 62 C 58 66 40 61 30 46 C 28 42 28 34 30 30 Z',
+  pectoral: 'M 66 45 C 60 46 53 51 52 57 C 58 57 65 53 68 48 Z',
+  lines: [
+    // gill and two stripes
+    'M 79 22 C 73 30 73 47 79 56',
+    'M 61 14 C 56 26 56 49 61 63',
+    'M 45 20 C 41 31 41 48 45 58',
+    // fin rays
+    'M 25 33 L 13 22',
+    'M 25 38 L 15 38',
+    'M 25 43 L 13 54',
+  ],
+  mouth: 'M 89.5 46 Q 92.5 48.5 95.5 45.5',
+  eye: { x: 85, y: 32, r: 5.4 },
+  pupil: { x: 86.3, y: 32.6, r: 2.5 },
+  /** where the tail turns when it wags */
+  joint: { x: 31, y: 38 },
+  /** bounding box of the whole fish (fish units) */
+  box: { x0: 3, y0: 1.5, x1: 98.5, y1: 74.5 },
+} as const;
+
+/** order in which the parts are drawn (the tail is a sprite of its own) */
+export const BODY_PARTS = ['dorsal', 'anal', 'pelvic', 'body', 'pectoral'] as const;
+export const OUTLINE_PARTS = ['tail', ...BODY_PARTS] as const;
+export type FishPart = (typeof OUTLINE_PARTS)[number];
+
+/** line widths in mm */
+export const LINE = { outline: 1.1, inner: 0.6, frameDash: 0.35 } as const;
+
+/** texts and the line for the fish's name (card mm) */
+export const LABELS = {
+  hint: { text: 'Mal mich bunt an!', x: CARD.w - 6, y: 8.6, size: 3.4 },
+  name: { text: 'Mein Fisch heißt:', x: 6, y: 80.5, size: 3.6 },
+  line: { x0: 38, x1: CARD.w - 6, y: 81.5 },
+  /** area cut out to show the name in the game */
+  nameBox: { x: 39, y: 73.5, w: CARD.w - 43.5, h: 11 },
+} as const;
+
+export function fishToCard(x: number, y: number): Pt {
+  return [FISH_TO_CARD.x + x * FISH_TO_CARD.s, FISH_TO_CARD.y + y * FISH_TO_CARD.s];
+}
+
+/** top-left corners (mm) of the six cards on the sheet; the cut lines run around each cell */
+export function sheetLayout(): { cells: { x: number; y: number }[]; cellW: number; cellH: number; x0: number; y0: number } {
+  const cellW = CARD.w + 2 * CARD.margin;
+  const cellH = CARD.h + 2 * CARD.margin;
+  const x0 = (SHEET.w - SHEET.cols * cellW) / 2;
+  const y0 = (SHEET.h - SHEET.rows * cellH) / 2;
+  const cells: { x: number; y: number }[] = [];
+  for (let r = 0; r < SHEET.rows; r++) for (let c = 0; c < SHEET.cols; c++) cells.push({ x: x0 + c * cellW + CARD.margin, y: y0 + r * cellH + CARD.margin });
+  return { cells, cellW, cellH, x0, y0 };
+}
+
+// ---------------------------------------------------------------- path helpers (no DOM)
+
+/** Flattens an absolute SVG path (M, L, C, Q, Z) into polylines. */
+export function flatten(d: string, steps = 12): Pt[][] {
+  const tok = d.match(/[MLCQZ]|-?\d*\.?\d+/g) ?? [];
+  const out: Pt[][] = [];
+  let cur: Pt[] = [];
+  let p: Pt = [0, 0];
+  let start: Pt = [0, 0];
+  let i = 0;
+  const num = () => Number(tok[i++]);
+  while (i < tok.length) {
+    const cmd = tok[i++];
+    if (cmd === 'M') {
+      if (cur.length > 1) out.push(cur);
+      p = [num(), num()];
+      start = p;
+      cur = [p];
+    } else if (cmd === 'L') {
+      p = [num(), num()];
+      cur.push(p);
+    } else if (cmd === 'C') {
+      const a: Pt = [num(), num()];
+      const b: Pt = [num(), num()];
+      const e: Pt = [num(), num()];
+      for (let k = 1; k <= steps; k++) {
+        const t = k / steps;
+        const u = 1 - t;
+        cur.push([
+          u * u * u * p[0] + 3 * u * u * t * a[0] + 3 * u * t * t * b[0] + t * t * t * e[0],
+          u * u * u * p[1] + 3 * u * u * t * a[1] + 3 * u * t * t * b[1] + t * t * t * e[1],
+        ]);
+      }
+      p = e;
+    } else if (cmd === 'Q') {
+      const a: Pt = [num(), num()];
+      const e: Pt = [num(), num()];
+      for (let k = 1; k <= steps; k++) {
+        const t = k / steps;
+        const u = 1 - t;
+        cur.push([u * u * p[0] + 2 * u * t * a[0] + t * t * e[0], u * u * p[1] + 2 * u * t * a[1] + t * t * e[1]]);
+      }
+      p = e;
+    } else if (cmd === 'Z') {
+      cur.push(start);
+      p = start;
+    } else break;
+  }
+  if (cur.length > 1) out.push(cur);
+  return out;
+}
+
+export function insidePolygon(poly: Pt[], x: number, y: number): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i];
+    const [xj, yj] = poly[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+let partPolys: Record<FishPart, Pt[]> | null = null;
+
+/** the outline parts as polygons in fish units */
+export function partPolygons(): Record<FishPart, Pt[]> {
+  if (!partPolys) {
+    const out = {} as Record<FishPart, Pt[]>;
+    for (const k of OUTLINE_PARTS) out[k] = flatten(FISH[k])[0];
+    partPolys = out;
+  }
+  return partPolys;
+}
+
+/** true when the point (fish units) is on the fish */
+export function onFish(x: number, y: number): boolean {
+  const polys = partPolygons();
+  for (const k of OUTLINE_PARTS) if (insidePolygon(polys[k], x, y)) return true;
+  return false;
+}
+
+export interface LineSample {
+  /** card mm */
+  x: number;
+  y: number;
+  /** unit normal */
+  nx: number;
+  ny: number;
+}
+
+/**
+ * Points every `step` mm along the visible printed lines of the fish (silhouette and inner lines), with
+ * their normals, in card mm. The detection looks for them to find out which way up a card lies.
+ */
+export function lineSamples(step = 1): LineSample[] {
+  const out: LineSample[] = [];
+  const add = (poly: Pt[], visible: (x: number, y: number) => boolean) => {
+    for (let i = 1; i < poly.length; i++) {
+      const [ax, ay] = fishToCard(poly[i - 1][0], poly[i - 1][1]);
+      const [bx, by] = fishToCard(poly[i][0], poly[i][1]);
+      const len = Math.hypot(bx - ax, by - ay);
+      if (len < 1e-6) continue;
+      const nx = -(by - ay) / len;
+      const ny = (bx - ax) / len;
+      const n = Math.max(1, Math.round(len / step));
+      for (let k = 0; k < n; k++) {
+        const t = (k + 0.5) / n;
+        const x = ax + (bx - ax) * t;
+        const y = ay + (by - ay) * t;
+        const fx = (x - FISH_TO_CARD.x) / FISH_TO_CARD.s;
+        const fy = (y - FISH_TO_CARD.y) / FISH_TO_CARD.s;
+        if (visible(fx, fy)) out.push({ x, y, nx, ny });
+      }
+    }
+  };
+  const polys = partPolygons();
+  // the parts behind the body are only visible outside of it
+  OUTLINE_PARTS.forEach((k, i) => {
+    const front = OUTLINE_PARTS.slice(i + 1).filter((f) => f !== 'pectoral' || k !== 'body');
+    add(polys[k], (x, y) => !front.some((f) => insidePolygon(polys[f], x, y)));
+  });
+  for (const d of FISH.lines) for (const poly of flatten(d)) add(poly, () => true);
+  return out;
+}

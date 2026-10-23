@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { baseOf, expectedDots, groupOf, withArticle } from '../../src/recog/classes.ts';
+import { baseOf, expectedDots, groupOf, surprisePool, withArticle } from '../../src/recog/classes.ts';
 import { combine, type ScoreInput } from '../../src/recog/score.ts';
 import { matchSkel } from '../../src/recog/templates.ts';
 import { hasModel, loadBank, loadNet } from '../helpers/load.ts';
@@ -45,6 +45,20 @@ describe('German helpers', () => {
     expect(baseOf('ä')).toBe('a');
     expect(expectedDots('Ü')).toBe(2);
     expect(expectedDots('i')).toBe(1);
+  });
+
+  it('surprise letters: same kind as the practice letter, never confusable with it', () => {
+    const upper = surprisePool('B');
+    expect(upper).toContain('M');
+    expect(upper).not.toContain('B');
+    expect(upper.every((c) => c >= 'A' && c <= 'Z')).toBe(true);
+    // no umlauts or ß: they differ from other letters only by their dots
+    expect(surprisePool('a').some((c) => 'äöüß'.includes(c))).toBe(false);
+    // o, O and 0 look the same: never a surprise "0" while practising the O
+    expect(surprisePool('O')).not.toContain('0');
+    expect(surprisePool('3').every((c) => c >= '0' && c <= '9' && c !== '3')).toBe(true);
+    // the umlaut target excludes its base letter
+    expect(surprisePool('Ä')).not.toContain('A');
   });
 });
 

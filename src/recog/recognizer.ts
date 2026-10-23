@@ -1,6 +1,6 @@
 // Recognises glyphs (CNN + templates) and scores them.
 import type { GlyphScore, Strictness, TemplateStyle } from '../vision/types.ts';
-import { baseOf, CHARSET, expectedDots, groupOf, GROUPS, UMLAUTS } from './classes.ts';
+import { baseOf, CHARSET, expectedDots, groupOf, GROUPS, UMLAUTS, zoneDeviation, type Zone } from './classes.ts';
 import type { GlyphNet } from './cnn.ts';
 import type { QualityFeatures } from './quality.ts';
 import { combine, type ScoreInput } from './score.ts';
@@ -18,16 +18,28 @@ export interface GlyphFeatures {
   /** body height in detection px */
   bodyH: number;
   baselineDev?: number;
+  /** position in the school lines */
+  zone?: Zone;
 }
 
 export interface ScoreOptions {
   target?: string;
+  /** practice mode: surprise letters that may be written instead of the target */
+  bonus?: string[];
   strictness: Strictness;
   style: 'beide' | TemplateStyle;
+  /** mirror writing is not a letter (setting): the glyph is marked as rejected */
+  noMirror?: boolean;
 }
 
 /** Characters whose mirror image is the same character, so a mirror check makes no sense. */
 const SYMMETRIC = new Set('AHIMOTUVWXYilmnouvwx08');
+/** Letters whose mirror image is another letter: written that way they are that letter. */
+const MIRROR_TWIN: Record<string, string> = { b: 'd', d: 'b', p: 'q', q: 'p' };
+/** free writing: how much better the mirror image has to be to call it mirror writing (score, template distance) */
+const MIRROR_MARGIN = 0.1;
+const MIRROR_FIT = 0.8;
+const MIRROR_FIT_STRONG = 0.6;
 
 /** Result of the per-glyph analysis (serialisable, can come from another worker). */
 export interface Analysis {
@@ -38,6 +50,8 @@ export interface Analysis {
   normH: number;
   bodyH: number;
   top3?: { char: string; p: number }[];
+  /** position in the school lines */
+  zone?: Zone;
   /** CNN input (debug view only) */
   cnn?: Float32Array;
 }
@@ -117,7 +131,7 @@ export class Recognizer {
     let charOut: string;
 
     if (opts.target) {
-      const target = opts.target;
+      const target = this.chooseTarget(f, gp, opts);
       scoredBase = baseOf(target);
       const grp = groupOf(scoredBase);
       match = this.bestMatch(f.skel, grp, opts.style);
@@ -194,6 +208,30 @@ export class Recognizer {
       if (f.dots >= 2 && UMLAUTS[ch]) charOut = UMLAUTS[ch];
       if (f.dots >= 2 && (ch === 'o' || ch === '0' || ch === 'O')) charOut = 'ö';
       if (f.dots === 1 && (ch === 'l' || ch === 'I' || ch === '1')) charOut = 'i';
+      // mirror writing: the mirror image is a clearly better character than the glyph itself (CNN and
+      // template together, as above) and its template fits clearly closer. The CNN alone is not enough:
+      // it also reads a mirrored S as a 2 and a mirrored 3 as an E. A mirrored b is a d, a real letter:
+      // b/d and p/q stay what they look like.
+      if (gp && f.cnnMirror && this.net) {
+        const pm = this.net.probs(f.cnnMirror);
+        const [mg, mp] = [...this.groupProbs(pm).entries()].sort((a, b) => b[1] - a[1])[0];
+        let mch = mg[0];
+        for (const c of mg) if ((pm[CHARSET.indexOf(c)] ?? 0) > (pm[CHARSET.indexOf(mch)] ?? 0)) mch = c;
+        const twin = MIRROR_TWIN[mch];
+        if (mp > 0.5 && mg !== bestGroup && !SYMMETRIC.has(mch) && !(twin && bestGroup.includes(twin))) {
+          const mm = this.bestMatch(f.skel, mg, opts.style, true);
+          const sm = 0.55 * mp + 0.45 * similarity(mm?.D ?? Infinity);
+          // clearly better overall – or as good, and the mirrored template fits much closer
+          const better = sm > bestScore + MIRROR_MARGIN || (sm >= bestScore - 0.02 && !!mm && !!bestM && mm.D < bestM.D * MIRROR_FIT_STRONG);
+          if (mm && bestM && mm.D < bestM.D * MIRROR_FIT && better) {
+            mirrored = true;
+            scoredBase = mch;
+            charOut = mch;
+            L = mp;
+            match = mm;
+          }
+        }
+      }
     }
 
     const tpl = match?.template ?? this.bank.forChar(scoredBase)[0] ?? this.bank.templates[0];
@@ -216,13 +254,46 @@ export class Recognizer {
       aspectG: f.aspect,
       aspectT: tpl.aspect,
       dots: f.dots,
-      expectedDots: expectedDots(opts.target ?? charOut),
+      expectedDots: expectedDots(charOut),
       baselineDev: f.baselineDev,
+      zoneDev: f.zone ? zoneDeviation(charOut, f.zone) : undefined,
       mirrored,
       looksLike,
       free: !opts.target,
     };
-    return { char: charOut, scoredAs: opts.target ?? charOut, input, normH: f.bodyH / heightUnits, bodyH: f.bodyH, top3 };
+    return { char: charOut, scoredAs: charOut, input, normH: f.bodyH / heightUnits, bodyH: f.bodyH, top3, zone: f.zone };
+  }
+
+  /**
+   * Practice mode: the glyph is scored against the practice letter – or against a surprise letter when it
+   * clearly is that one (more probable than the practice letter), so it gets a fair score.
+   */
+  private chooseTarget(f: GlyphFeatures, gp: Map<string, number> | null, opts: ScoreOptions): string {
+    const target = opts.target!;
+    if (!opts.bonus?.length) return target;
+    const tg = groupOf(baseOf(target));
+    let best = target;
+    if (gp) {
+      let bestP = gp.get(tg) ?? 0;
+      for (const b of opts.bonus) {
+        const p = gp.get(groupOf(baseOf(b))) ?? 0;
+        if (p > bestP && p > 0.35) {
+          best = b;
+          bestP = p;
+        }
+      }
+      return best;
+    }
+    // template-only: the clearly closer skeleton decides
+    let bestD = this.bestMatch(f.skel, tg, opts.style)?.D ?? Infinity;
+    for (const b of opts.bonus) {
+      const d = this.bestMatch(f.skel, groupOf(baseOf(b)), opts.style)?.D ?? Infinity;
+      if (d < bestD * 0.8) {
+        best = b;
+        bestD = d;
+      }
+    }
+    return best;
   }
 
   /** Coarse ranking of all characters by unshifted chamfer distance (template-only mode). */
@@ -254,6 +325,15 @@ export class Recognizer {
     }
     // free writing: c/C, o/O, s/S, u/U ... are told apart by their height, measured in x-heights
     // of the unambiguous letters of the same scan (font metrics of the templates)
+    // with school lines the band a letter reaches decides: c/C, o/O, s/S ... (also for a single letter)
+    if (!opts.target) {
+      for (const a of an) {
+        const pair = CASE_PAIRS.get(a.char) ?? UMLAUT_CASE[a.char];
+        if (!pair || !a.zone) continue;
+        a.char = zoneDeviation(pair[0], a.zone) <= zoneDeviation(pair[1], a.zone) ? pair[0] : pair[1];
+        a.scoredAs = a.char;
+      }
+    }
     if (!opts.target && an.length >= 2) {
       const units = (ch: string) => {
         const t = this.bank.forChar(baseOf(ch))[0];
@@ -265,7 +345,7 @@ export class Recognizer {
         const xh = ref[ref.length >> 1];
         for (const a of an) {
           const pair = CASE_PAIRS.get(a.char) ?? UMLAUT_CASE[a.char];
-          if (!pair) continue;
+          if (!pair || a.zone) continue;
           const dLo = Math.abs(Math.log(a.bodyH / units(pair[0]) / xh));
           const dUp = Math.abs(Math.log(a.bodyH / units(pair[1]) / xh));
           a.char = dLo <= dUp ? pair[0] : pair[1];
@@ -273,6 +353,7 @@ export class Recognizer {
         }
       }
     }
+    for (const a of an) if (a.zone) a.input.zoneDev = zoneDeviation(a.scoredAs, a.zone);
     return an.map((a) => {
       const c = combine(a.input, opts.strictness);
       return {
@@ -283,6 +364,8 @@ export class Recognizer {
         scoredAs: a.scoredAs,
         tip: c.tip,
         looksLike: a.input.looksLike,
+        mirrored: a.input.mirrored || undefined,
+        rejected: (opts.noMirror && a.input.mirrored) || undefined,
         top3: a.top3,
         raw: c.raw,
       };

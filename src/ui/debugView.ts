@@ -75,7 +75,7 @@ export function showDebug(res: ScanResult): void {
   panel = h(
     'div',
     { class: 'debug-panel' },
-    h('div', null, button('×', () => panel?.remove(), 'btn small'), ` Zeiten: ${JSON.stringify(res.timings)}`),
+    h('div', null, button('×', () => panel?.remove(), 'btn small'), ` Ausgewertet: ${res.analyzed} von ${res.glyphs.length} (die anderen kenne ich schon) · Zeiten: ${JSON.stringify(res.timings)}`),
     cv,
     table,
   );

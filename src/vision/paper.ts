@@ -6,7 +6,7 @@ import { mask as newMask, resizeArea } from './image.ts';
 import { close, erode, fillHoles, open } from './morphology.ts';
 import { maxFilter } from './filters.ts';
 import { otsu } from './threshold.ts';
-import type { Box, Mask, TeamCalib, TeamId } from './types.ts';
+import type { Box, Mask, PlayerId, TeamCalib } from './types.ts';
 
 export interface PaperRegion {
   id: number;
@@ -20,7 +20,7 @@ export interface PaperRegion {
   /** upright size of the region (detection px) */
   rw: number;
   rh: number;
-  team?: TeamId;
+  team?: PlayerId;
   /** region membership at low resolution */
   lowMask: Mask;
   lowScale: number;
@@ -116,7 +116,7 @@ function cleanup(m: Mask): Mask {
   return fillHoles(open(close(m, 2), 1));
 }
 
-function regionsFromMask(m: Mask, scale: number, team: TeamId | undefined, idStart: number): PaperRegion[] {
+function regionsFromMask(m: Mask, scale: number, team: PlayerId | undefined, idStart: number): PaperRegion[] {
   const { labels, comps } = label(m, true);
   const total = m.width * m.height;
   const out: PaperRegion[] = [];
