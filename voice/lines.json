@@ -502,6 +502,12 @@
   "where": "Hinweis – Neues Blatt"
  },
  {
+  "id": "automatisch-geht-nur-mit-einer-kamer-hwsqc",
+  "text": "Automatisch geht nur mit einer Kamera, die fest steht.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Automatisch scannen"
+ },
+ {
   "id": "automatisch-scannen-an-hoxyb",
   "text": "Automatisch scannen: an",
   "speaker": "erzaehler",

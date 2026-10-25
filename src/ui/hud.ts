@@ -10,6 +10,8 @@ export interface HudDeps {
   title: string;
   settings: Settings;
   camera: Camera;
+  /** phone or tablet in the hand: no live camera picture, no automatic scans */
+  handheld?: boolean;
   practice: boolean;
   onScan: () => void;
   onMenu: () => void;
@@ -81,7 +83,7 @@ export class Hud {
       this.raf = requestAnimationFrame(this.animate);
     }
     this.goLabel = h('span', null, 'Fertig!');
-    this.go = button([h('span', { class: 'spin' }), '✓ ', this.goLabel], d.onScan, 'btn primary go-btn', 'Scannen (Leertaste)');
+    this.go = button([h('span', { class: 'spin' }), h('span', { class: 'go-icon' }), this.goLabel], d.onScan, 'btn primary go-btn', 'Foto machen (Leertaste)');
     this.counter = h('div', { class: 'counter' });
     this.root = h(
       'div',
@@ -127,15 +129,23 @@ export class Hud {
         this.counter,
       ),
     );
+    this.setHandheld(!!d.handheld);
     parent.append(this.root);
     this.timer = window.setInterval(() => this.drawCam(), 100);
     window.addEventListener('pointermove', this.wake);
     window.addEventListener('pointerdown', this.wake);
   }
 
+  /** a camera in the hand: "Fertig!" opens the viewfinder, there is no live picture */
+  setHandheld(on: boolean): void {
+    this.d.handheld = on;
+    this.root.classList.toggle('handheld', on);
+  }
+
   private drawCam(): void {
     this.idle += 0.1;
     if (this.idle > 6) this.root.classList.add('idle-fade');
+    if (this.d.handheld) return;
     const cam = this.d.camera;
     if (!cam.ready()) return;
     const s = this.d.settings.camera;

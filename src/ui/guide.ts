@@ -15,10 +15,16 @@ function teachers(): HTMLElement {
     null,
     h('h3', null, 'Was Sie brauchen'),
     list(
-      'Laptop mit Chrome oder Edge, Beamer oder großer Bildschirm',
+      'Laptop mit Chrome oder Edge, Beamer oder großer Bildschirm – oder für kleine Gruppen einfach ein Tablet',
       'Dokumentenkamera (eine Webcam geht auch) – Licht der Kamera einschalten',
       'Filzstift oder weicher Bleistift (B/2B)',
       'Papier: Heftseiten mit Lineatur 1, 2 oder 3, normal liniert, kariert oder blanko',
+    ),
+    h('h3', null, 'Mit Handy oder Tablet'),
+    list(
+      'Die App läuft direkt auf dem Gerät. „📷 Fertig!“ öffnet die Kamera: Gerät übers Blatt halten, bis alles im Rahmen ist, und auf den runden Knopf tippen.',
+      'Die Kamera ist nur an, solange der Sucher offen ist. Quer gehalten ist das Spiel am größten.',
+      'Umschalten zwischen fester Kamera und Handy/Tablet: „Kamera einrichten“ oder „So spielt ihr“ auf der Startseite.',
     ),
     h('h3', null, 'Einmal einrichten'),
     list(
@@ -85,7 +91,8 @@ function parents(): HTMLElement {
   return h(
     'div',
     null,
-    p('Zu Hause genügt ein Laptop mit Webcam. Stellen Sie ihn so, dass die Kamera auf das Blatt schaut – zum Beispiel aufgeklappt hinter einem Bücherstapel – und richten Sie unter „Kamera einrichten“ den Ausschnitt ein.'),
+    p('Zu Hause geht es am einfachsten mit einem Handy oder Tablet: Ihr Kind schreibt oder malt, tippt auf „📷 Fertig!“, hält das Gerät übers Blatt und drückt auf den runden Knopf. Das Wesen erscheint dann direkt auf dem Gerät.'),
+    p('Es geht auch mit einem Laptop und seiner Webcam: so hinstellen, dass die Kamera auf das Blatt schaut – zum Beispiel aufgeklappt hinter einem Bücherstapel – und unter „Kamera einrichten“ den Ausschnitt einstellen.'),
     h('h3', null, 'So macht es Spaß'),
     list(
       'Lieber kurz und oft: zehn Minuten reichen.',
@@ -121,6 +128,7 @@ function keys(): HTMLElement {
     h('h3', null, 'Mit Touch (Tablet, Touch-Bildschirm, Whiteboard)'),
     list(
       'Alles hat auch einen Knopf: „Fertig!“, Team-Knöpfe, Neues Blatt, Automatik (👁), Speichern (💾), Vollbild (⛶), Menü (⌂).',
+      'Auf Handy und Tablet öffnet „📷 Fertig!“ den Kamera-Sucher; der runde Knopf macht das Foto, ✕ bricht ab.',
       'Ein Wesen antippen zeigt das Zeichen groß mit Tipp – im Mal-Aquarium den Fisch mit seinem Namen.',
       'Die kleine Schreib-Vorlage oben antippen zeigt die große Vorführung.',
       'Teamfarben werden im Foto angetippt.',

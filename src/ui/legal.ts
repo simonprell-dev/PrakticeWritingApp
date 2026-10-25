@@ -200,6 +200,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
         ['Ausgeschnittene Zeichen und ausgemalte Fisch-Karten gehören zum Spielstand: Sie werden in Ihrem Browser gespeichert, damit ein Spiel später weitergehen kann (siehe „Speicherung auf Ihrem Gerät“).'],
         ['Es findet keine Gesichtserkennung und keine Identifizierung von Personen statt. Bitte richten Sie die Kamera so aus, dass nur das Papier zu sehen ist.'],
         ['Die Bewertung ist ein Spiel zur Motivation. Es findet keine automatisierte Entscheidung im Sinne von Art. 22 DSGVO statt.'],
+        ['Auf Handy und Tablet startet die Kamera erst, wenn ein Foto gemacht wird (Sucher), und geht kurz danach wieder aus.'],
         ['Den Kamerazugriff können Sie jederzeit in den Einstellungen Ihres Browsers widerrufen.'],
         ['Auf der Labor-Seite geladene Fotos werden ebenfalls nur lokal verarbeitet; „Aufnahme speichern“ legt eine Datei nur auf Ihrem Gerät ab.'],
       ]),

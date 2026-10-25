@@ -1,5 +1,6 @@
 // End-to-end check in a real Chrome with a fake camera (Y4M from tools/make-fake-cam.ts).
-// Usage: npm run build && node tools/make-fake-cam.ts && node tools/e2e.ts [saves]   ("saves": only the Mal-Aquarium and saved games)
+// Usage: npm run build && node tools/make-fake-cam.ts && node tools/e2e.ts [saves|mobile]
+// ("saves": only the Mal-Aquarium and saved games, "mobile": only phones and tablets)
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -111,7 +112,9 @@ await run('fakecam-sheet.y4m', async (page) => {
   await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle0' });
   await sleep(2500);
   await page.screenshot({ path: OUT + 'e2e-1-first-run.png' });
-  // first run opens the camera wizard: make a test scan
+  // first run opens the camera wizard: a document camera, make a test scan
+  await clickText(page, '.cam-mode .seg-btn', 'Kamera steht fest');
+  await sleep(1500);
   await clickText(page, '.modal button', 'Testscan');
   await sleep(2500);
   await page.screenshot({ path: OUT + 'e2e-2-camera-setup.png' });
@@ -156,6 +159,7 @@ await run('fakecam-duel.y4m', async (page) => {
   await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('buchstaben-zoo.settings') || '{}');
     s.firstRunDone = true;
+    s.camera = { ...s.camera, mode: 'fest' };
     localStorage.setItem('buchstaben-zoo.settings', JSON.stringify(s));
   });
   await page.reload({ waitUntil: 'networkidle0' });
@@ -218,6 +222,7 @@ await run('fakecam-sheet.y4m', async (page) => {
   await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('buchstaben-zoo.settings') || '{}');
     s.firstRunDone = true;
+    s.camera = { ...s.camera, mode: 'fest' };
     localStorage.setItem('buchstaben-zoo.settings', JSON.stringify(s));
   });
   await page.reload({ waitUntil: 'networkidle0' });
@@ -329,6 +334,7 @@ await run('fakecam-duel.y4m', async (page) => {
   await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('buchstaben-zoo.settings') || '{}');
     s.firstRunDone = true;
+    s.camera = { ...s.camera, mode: 'fest' };
     localStorage.setItem('buchstaben-zoo.settings', JSON.stringify(s));
   });
   await page.reload({ waitUntil: 'networkidle0' });
@@ -397,6 +403,7 @@ await run('fakecam-sheet.y4m', async (page) => {
   await page.evaluate(() => {
     const s = JSON.parse(localStorage.getItem('buchstaben-zoo.settings') || '{}');
     s.firstRunDone = true;
+    s.camera = { ...s.camera, mode: 'fest' };
     localStorage.setItem('buchstaben-zoo.settings', JSON.stringify(s));
   });
   await page.reload({ waitUntil: 'networkidle0' });
@@ -431,13 +438,14 @@ await run('fakecam-sheet.y4m', async (page) => {
 });
 
 /** the start screen without the first-run camera wizard */
-const startPage = async (page: Page) => {
+const startPage = async (page: Page, mode: 'fest' | 'hand' = 'fest') => {
   await page.goto(`http://localhost:${PORT}/?e2e`, { waitUntil: 'networkidle0' });
-  await page.evaluate(() => {
+  await page.evaluate((mode) => {
     const s = JSON.parse(localStorage.getItem('buchstaben-zoo.settings') || '{}');
     s.firstRunDone = true;
+    s.camera = { ...s.camera, mode };
     localStorage.setItem('buchstaben-zoo.settings', JSON.stringify(s));
-  });
+  }, mode);
   await page.reload({ waitUntil: 'networkidle0' });
   await sleep(1500);
 };
@@ -570,6 +578,76 @@ await run(
     await page.screenshot({ path: OUT + 'e2e-37-tower-continued.png' });
   },
   'saves',
+);
+
+// phones and tablets: the camera is held in the hand, every photo goes through the viewfinder
+const PHONE_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36';
+await run(
+  'fakecam-sheet.y4m',
+  async (page) => {
+    await page.setUserAgent(PHONE_UA);
+    await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+    await page.goto(`http://localhost:${PORT}/?e2e`, { waitUntil: 'networkidle0' });
+    await sleep(2000);
+    // first start on a phone: the camera wizard starts in the "in der Hand" mode
+    console.log('phone first run:', await page.evaluate(() => document.querySelector('.cam-mode .seg-btn.on')?.textContent));
+    await page.screenshot({ path: OUT + 'e2e-38-phone-wizard.png' });
+    await clickText(page, '.modal button', 'Fertig');
+    await sleep(800);
+    await page.screenshot({ path: OUT + 'e2e-39-phone-start.png' });
+    await page.evaluate(() => document.querySelector('.howto')?.scrollIntoView());
+    await sleep(300);
+    await page.screenshot({ path: OUT + 'e2e-40-phone-howto.png' });
+    await page.evaluate(() => document.querySelector('.tiles')?.scrollIntoView());
+    await clickText(page, '.tile', 'Meer');
+    await sleep(1500);
+    await page.screenshot({ path: OUT + 'e2e-41-phone-sea.png' });
+    console.log('camera off before the photo:', await page.evaluate(() => !(window as unknown as { __app?: { camera: { stream: unknown } } }).__app?.camera.stream));
+    await page.evaluate(() => (document.querySelector('.go-btn') as HTMLElement).click());
+    await sleep(2000);
+    await page.screenshot({ path: OUT + 'e2e-42-phone-viewfinder.png' });
+    console.log('viewfinder open:', await page.evaluate(() => !!document.querySelector('.viewfinder')));
+    await page.evaluate(() => (document.querySelector('.vf-shutter') as HTMLElement).click());
+    await sleep(6500);
+    console.log('phone: creatures after one photo', await living(page), 'viewfinder closed:', await page.evaluate(() => !document.querySelector('.viewfinder')));
+    await page.screenshot({ path: OUT + 'e2e-43-phone-creatures.png' });
+    // turned sideways
+    await page.setViewport({ width: 844, height: 390, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+    await sleep(900);
+    await page.screenshot({ path: OUT + 'e2e-44-phone-landscape.png' });
+    await page.evaluate(() => (document.querySelector('.go-btn') as HTMLElement).click());
+    await sleep(1500);
+    await page.screenshot({ path: OUT + 'e2e-45-phone-landscape-viewfinder.png' });
+    await page.keyboard.press('Escape');
+    await sleep(600);
+    console.log('viewfinder cancelled:', await page.evaluate(() => !document.querySelector('.viewfinder')), 'creatures', await living(page));
+    // a tablet: the Mal-Aquarium through the viewfinder
+    await page.setViewport({ width: 1180, height: 820, isMobile: true, hasTouch: true, deviceScaleFactor: 1.5 });
+    await toMenu(page);
+    await sleep(500);
+    await page.screenshot({ path: OUT + 'e2e-46-tablet-start.png' });
+  },
+  'mobile',
+);
+await run(
+  'fakecam-paint.y4m',
+  async (page) => {
+    await page.setUserAgent(PHONE_UA.replace('Pixel 8', 'SM-X710').replace(' Mobile', ''));
+    await page.setViewport({ width: 1180, height: 820, isMobile: true, hasTouch: true, deviceScaleFactor: 1.5 });
+    await startPage(page, 'hand');
+    await clickText(page, '.tile', 'Mal-Aquarium');
+    await sleep(700);
+    await clickText(page, '.modal button', "Los geht's");
+    await sleep(1500);
+    await page.evaluate(() => (document.querySelector('.go-btn') as HTMLElement).click());
+    await sleep(2000);
+    await page.screenshot({ path: OUT + 'e2e-47-tablet-paint-viewfinder.png' });
+    await page.evaluate(() => (document.querySelector('.vf-shutter') as HTMLElement).click());
+    await sleep(5000);
+    console.log('tablet: painted fish', await living(page));
+    await page.screenshot({ path: OUT + 'e2e-48-tablet-paint.png' });
+  },
+  'mobile',
 );
 
 server.kill();

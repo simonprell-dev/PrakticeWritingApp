@@ -61,12 +61,22 @@ Auf dem Bauch jedes Wesens klebt das echte Zeichen des Kindes.
 - Laptop mit Chrome oder Edge
 - Beamer
 - USB-Dokumentenkamera (jede Webcam geht auch)
+- oder einfach ein **Handy oder Tablet** (siehe unten)
+
+Auf der Startseite zeigt der Bereich **„So spielt ihr“** mit kleinen Animationen die Varianten: Dokumentenkamera und Beamer, Handy oder Tablet, und (kommt bald) Tablet mit Spiegel wie beim Osmo. „So spielen“ stellt die Kamera passend ein.
 
 **Erster Start:** Der Kamera-Assistent öffnet sich von selbst. Dort:
 1. Die Kamera auswählen. Dokumentenkameras werden automatisch bevorzugt.
 2. „Drehen“ drücken, bis die Schrift aufrecht steht.
 3. Einen Rahmen um das Blatt ziehen.
 4. „Testscan“ ausprobieren.
+
+**Mit Handy oder Tablet**
+- Auf Handy und Tablet stellt sich die App von selbst auf **„Handy/Tablet in der Hand“** ein (umschaltbar im Kamera-Assistenten).
+- Das Spiel läuft direkt auf dem Gerät. Wer auf **„📷 Fertig!“** tippt, öffnet den Sucher mit der Rückkamera: das Gerät übers Blatt halten, bis alles im Rahmen ist, und auf den runden Knopf tippen (oder Leertaste). Von mehreren Bildern wird das schärfste genommen, damit ein Wackeln beim Auslösen nicht stört.
+- Die Kamera ist nur an, solange der Sucher offen ist, und geht 20 Sekunden nach dem letzten Foto aus. Hat das Gerät ein Licht, schaltet 🔦 es ein.
+- Quer gehalten ist das Spiel am größten. Hochkant passt es mit Rändern oben und unten ganz aufs Display.
+- Alle Spielarten gehen so, auch das Mal-Aquarium und die Teams (Team-Knöpfe). Automatisch scannen gibt es nur mit fest stehender Kamera.
 
 **Scannen**
 - Mit dem Knopf **„Fertig!“** oder **Enter**: Das Foto wird sofort ausgelöst.
@@ -199,7 +209,7 @@ node tools/preview-creatures.ts  # Vorschau aller Wesen als PNG
 node tools/preview-scenes.ts     # Vorschau aller Szenen als PNG
 node tools/preview-strokes.ts    # alle Schreibvorlagen mit Strichreihenfolge als PNG
 node tools/preview-paint.ts      # Malvorlage, ausgemalte Karte und der Fisch daraus als PNG
-node tools/make-fake-cam.ts && npm run build && node tools/e2e.ts   # End-to-End im echten Chrome (nur Mal-Aquarium und Spielstände: … tools/e2e.ts saves)
+node tools/make-fake-cam.ts && npm run build && node tools/e2e.ts   # End-to-End im echten Chrome (Teile: … tools/e2e.ts saves | mobile)
 ```
 
 ### Stimmen einsprechen (optional)

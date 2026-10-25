@@ -1,9 +1,10 @@
-// Camera wizard: choose the camera, rotate/mirror, drag the region of interest, test scan.
-import type { Settings } from '../app/settings.ts';
+// Camera wizard: fixed camera or phone/tablet in the hand; choose the camera, rotate/mirror, drag the region
+// of interest (fixed camera only), test scan.
+import type { CameraMode, Settings } from '../app/settings.ts';
 import { Camera, CameraError } from '../camera/camera.ts';
 import { TIER_LABEL } from '../recog/score.ts';
 import type { ScanResult } from '../vision/types.ts';
-import { button, h, modal } from './dom.ts';
+import { button, h, modal, segmented } from './dom.ts';
 
 export interface CameraSetupDeps {
   camera: Camera;
@@ -11,6 +12,10 @@ export interface CameraSetupDeps {
   save: () => void;
   testScan: () => Promise<ScanResult | null>;
   reopen: (deviceId?: string) => Promise<void>;
+  /** fixed camera or in the hand (the app closes the camera; the wizard starts it again) */
+  setMode: (mode: CameraMode) => void;
+  /** the settings a photo is taken with (a camera in the hand is never turned or cut) */
+  camConfig: () => Settings['camera'];
 }
 
 type Roi = { x: number; y: number; w: number; h: number };
@@ -72,6 +77,7 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
   };
   overlay.addEventListener('pointerdown', (e) => {
+    if (cam.mode === 'hand') return;
     const p = toNorm(e);
     const roi = cam.roi ?? { x: 0, y: 0, w: 1, h: 1 };
     const near = (ax: number, ay: number) => Math.hypot(p.x - ax, p.y - ay) < 0.05;
@@ -127,7 +133,11 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     const W = overlay.width;
     const H = overlay.height;
     c.clearRect(0, 0, W, H);
-    const r = cam.roi ?? { x: 0, y: 0, w: 1, h: 1 };
+    const r = (cam.mode === 'hand' ? undefined : cam.roi) ?? { x: 0, y: 0, w: 1, h: 1 };
+    if (cam.mode === 'hand') {
+      drawScan(c, W, H, r);
+      return;
+    }
     c.fillStyle = 'rgba(20,10,40,0.55)';
     c.fillRect(0, 0, W, H);
     c.clearRect(r.x * W, r.y * H, r.w * W, r.h * H);
@@ -145,6 +155,11 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
       c.arc(x * W, y * H, 9, 0, Math.PI * 2);
       c.fill();
     }
+    drawScan(c, W, H, r);
+  };
+
+  /** the letters of the last test scan, with their score */
+  const drawScan = (c: CanvasRenderingContext2D, W: number, H: number, r: Roi) => {
     if (lastScan && performance.now() < lastScan.until) {
       const res = lastScan.res;
       const sx = (r.w * W) / (res.frameW / res.scale);
@@ -167,14 +182,72 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
   };
 
   const loop = () => {
-    if (d.camera.preview(view, cam, 680)) drawOverlay();
+    if (d.camera.preview(view, d.camConfig(), 680)) drawOverlay();
     raf = requestAnimationFrame(loop);
   };
+
+  // a phone or tablet: no turning, no frame to drag, just how the photos work
+  const fixedOnly = h(
+    'div',
+    null,
+    h(
+      'div',
+      { class: 'row' },
+      button('⟳ Drehen', () => {
+        cam.rotation = ((cam.rotation + 90) % 360) as Settings['camera']['rotation'];
+        cam.roi = undefined;
+        d.save();
+      }, 'btn small'),
+      button('⇋ Spiegeln', () => {
+        cam.mirror = !cam.mirror;
+        d.save();
+      }, 'btn small'),
+      button('▢ Ganzes Bild', () => {
+        cam.roi = undefined;
+        d.save();
+      }, 'btn small'),
+    ),
+    h('p', { class: 'help' }, 'Ziehe im Bild einen Rahmen um das Blatt. Nur dort wird gesucht. Die Schrift sollte aufrecht zu sehen sein – sonst „Drehen“.'),
+  );
+  const handOnly = h(
+    'div',
+    { class: 'hand-help' },
+    h('p', null, h('b', null, 'So geht es mit Handy oder Tablet: '), 'Beim Spielen auf „Fertig!“ tippen – dann geht die Kamera auf. Das Gerät ruhig über das Blatt halten, bis alles im Rahmen ist, und auf den runden Knopf tippen.'),
+    h('p', { class: 'help' }, 'Die Kamera ist nur an, solange der Sucher offen ist. Am besten das Gerät quer halten: dann ist das Spiel am größten.'),
+  );
+  const tips = h('ul', { class: 'help', style: 'padding-left:1.2em;margin:0' });
+  const showMode = () => {
+    fixedOnly.style.display = cam.mode === 'hand' ? 'none' : '';
+    handOnly.style.display = cam.mode === 'hand' ? '' : 'none';
+    tips.replaceChildren(
+      ...(cam.mode === 'hand'
+        ? ['Gutes Licht, kein Schatten vom Gerät auf dem Blatt (🔦 hilft)', 'Das Blatt flach hinlegen', 'Beim Auslösen kurz ganz still halten', 'Datenschutz: nur das Papier fotografieren, keine Gesichter']
+        : ['Filzstift oder weicher Bleistift (B/2B)', 'Licht der Dokumentenkamera einschalten, Schatten vermeiden', 'Zwischen den Buchstaben etwas Platz lassen', 'Bei Zetteln: dunkle Unterlage hilft', 'Datenschutz: nur das Papier filmen, keine Gesichter']
+      ).map((t) => h('li', null, t)),
+    );
+  };
+  const modeSwitch = segmented(
+    [
+      { value: 'fest', label: '📽️ Kamera steht fest' },
+      { value: 'hand', label: '📱 Handy/Tablet in der Hand' },
+    ],
+    cam.mode,
+    (v: CameraMode) => {
+      d.setMode(v);
+      lastScan = null;
+      showMode();
+      if (!msg.isConnected) wrap.prepend(msg);
+      msg.textContent = 'Kamera wird gestartet …';
+      void start(undefined);
+    },
+    'cam-mode',
+  );
 
   const content = h(
     'div',
     null,
     h('h2', null, '📷 Kamera einrichten'),
+    h('div', { class: 'row' }, modeSwitch),
     h(
       'div',
       { class: 'cam-setup' },
@@ -183,24 +256,8 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
         'div',
         null,
         h('div', { class: 'row' }, h('label', { style: 'min-width:auto' }, 'Kamera'), select),
-        h(
-          'div',
-          { class: 'row' },
-          button('⟳ Drehen', () => {
-            cam.rotation = ((cam.rotation + 90) % 360) as Settings['camera']['rotation'];
-            cam.roi = undefined;
-            d.save();
-          }, 'btn small'),
-          button('⇋ Spiegeln', () => {
-            cam.mirror = !cam.mirror;
-            d.save();
-          }, 'btn small'),
-          button('▢ Ganzes Bild', () => {
-            cam.roi = undefined;
-            d.save();
-          }, 'btn small'),
-        ),
-        h('p', { class: 'help' }, 'Ziehe im Bild einen Rahmen um das Blatt. Nur dort wird gesucht. Die Schrift sollte aufrecht zu sehen sein – sonst „Drehen“.'),
+        handOnly,
+        fixedOnly,
         h(
           'div',
           { class: 'row' },
@@ -217,19 +274,12 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
         ),
         info,
         h('h3', null, 'Tipps für gute Erkennung'),
-        h(
-          'ul',
-          { class: 'help', style: 'padding-left:1.2em;margin:0' },
-          h('li', null, 'Filzstift oder weicher Bleistift (B/2B)'),
-          h('li', null, 'Licht der Dokumentenkamera einschalten, Schatten vermeiden'),
-          h('li', null, 'Zwischen den Buchstaben etwas Platz lassen'),
-          h('li', null, 'Bei Zetteln: dunkle Unterlage hilft'),
-          h('li', null, 'Datenschutz: nur das Papier filmen, keine Gesichter'),
-        ),
+        tips,
       ),
     ),
     h('div', { class: 'actions' }, button('Fertig', () => m.close(), 'btn primary')),
   );
+  showMode();
   const m = modal(content, () => {
     cancelAnimationFrame(raf);
     d.save();

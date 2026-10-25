@@ -705,6 +705,10 @@ input[type='range'] {
     grid-template-columns: 1fr;
   }
 }
+/* the preview may shrink below its 680 px picture on phones */
+.cam-setup > * {
+  min-width: 0;
+}
 .cam-view {
   position: relative;
   background: #1d1630;
@@ -1388,5 +1392,624 @@ input[type='range'] {
     display: block;
     width: 210mm;
     height: 296.5mm;
+  }
+}
+
+/* ---------- phone or tablet in the hand ---------- */
+.go-icon::before {
+  content: '✓ ';
+}
+.hud.handheld .go-icon::before {
+  content: '📷 ';
+}
+.hud.handheld .camthumb,
+.hud.handheld .auto-btn {
+  display: none;
+}
+.cam-mode {
+  flex-wrap: wrap;
+}
+.hand-help {
+  background: var(--accent-soft);
+  border-radius: 18px;
+  padding: 2px 14px;
+  margin: 8px 0;
+}
+
+/* the viewfinder: the camera picture over the whole screen, a frame to aim, one big shutter */
+.modal-back.viewfinder-back {
+  padding: 0;
+  background: #000;
+  z-index: 60;
+}
+.viewfinder {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: #fff;
+}
+.vf-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+.vf-guide {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 50px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  /* room left between the title bar (top) and the hint and shutter (bottom) */
+  --h: calc(100vh - 330px);
+  height: min(var(--h), 112vw);
+  width: min(86vw, calc(var(--h) * 0.75));
+}
+.vf-guide.card {
+  height: min(var(--h), 80vw);
+  width: min(86vw, calc(var(--h) * 1.07));
+}
+@media (orientation: landscape) {
+  .vf-guide {
+    height: var(--h);
+    width: min(88vw, calc(var(--h) * 1.34));
+  }
+}
+.vf-guide i {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border: 6px solid #ffcf3d;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
+}
+.vf-guide i:nth-child(1) {
+  left: 0;
+  top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-top-left-radius: 18px;
+}
+.vf-guide i:nth-child(2) {
+  right: 0;
+  top: 0;
+  border-left: 0;
+  border-bottom: 0;
+  border-top-right-radius: 18px;
+}
+.vf-guide i:nth-child(3) {
+  left: 0;
+  bottom: 0;
+  border-right: 0;
+  border-top: 0;
+  border-bottom-left-radius: 18px;
+}
+.vf-guide i:nth-child(4) {
+  right: 0;
+  bottom: 0;
+  border-left: 0;
+  border-top: 0;
+  border-bottom-right-radius: 18px;
+}
+.vf-top {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.vf-title {
+  flex: 1;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-shadow: 0 2px 4px #000;
+}
+.vf-top .btn.icon {
+  flex: none;
+}
+.vf-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 104px);
+  transform: translateX(-50%);
+  width: min(560px, 90vw);
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: rgba(30, 20, 60, 0.72);
+  border-radius: 16px;
+  padding: 8px 14px;
+}
+.vf-shutter {
+  position: absolute;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 6px solid #fff;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+}
+.vf-shutter .vf-dot {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: #ffcf3d;
+  transition: transform 0.1s;
+}
+.vf-shutter:active .vf-dot {
+  transform: scale(0.85);
+}
+.vf-shutter:disabled {
+  opacity: 0.45;
+}
+/* landscape phones: the shutter sits on the right like in a camera app, the hint under the title */
+@media (orientation: landscape) and (max-height: 600px) {
+  .vf-guide,
+  .vf-guide.card {
+    --h: calc(100vh - 140px);
+    top: calc(50% + 46px);
+    height: var(--h);
+    width: min(calc(100vw - 250px), calc(var(--h) * 1.34));
+  }
+  .vf-shutter {
+    left: auto;
+    right: max(18px, env(safe-area-inset-right));
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+  }
+  .vf-hint {
+    top: 58px;
+    bottom: auto;
+    font-size: 0.9rem;
+    padding: 4px 12px;
+    width: calc(100vw - 260px);
+  }
+}
+.vf-msg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 88vw);
+  text-align: center;
+  font-size: 1.15rem;
+  background: rgba(30, 20, 60, 0.85);
+  border-radius: 20px;
+  padding: 14px 18px;
+}
+.vf-msg p {
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+.vf-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+.vf-flash.on {
+  animation: vf-flash 0.25s ease-out;
+}
+@keyframes vf-flash {
+  0% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- small screens (phones) ---------- */
+@media (max-width: 700px), (max-height: 560px) {
+  .hud-top {
+    top: max(8px, env(safe-area-inset-top));
+    left: 8px;
+    right: 8px;
+    gap: 8px;
+  }
+  .hud-title {
+    font-size: 1rem;
+    padding: 0.25em 0.8em;
+    border-width: 2px;
+  }
+  .task {
+    font-size: 1rem;
+    padding: 0.15em 0.7em;
+    border-width: 2px;
+    border-radius: 20px;
+  }
+  .hud .btn.icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    font-size: 1.15rem;
+  }
+  .hud-buttons {
+    flex-direction: row;
+  }
+  .hud-bottom {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    gap: 10px;
+  }
+  .go-btn {
+    font-size: 1.45rem;
+    border-width: 3px;
+    box-shadow: 0 5px 0 var(--ink);
+  }
+  .side-btns {
+    left: 8px;
+  }
+  .counter {
+    right: 8px;
+    font-size: 1rem;
+    padding: 0.2em 0.8em;
+    border-width: 2px;
+  }
+  .logo {
+    font-size: clamp(2rem, 9vw, 3rem);
+  }
+}
+/* upright phones: the buttons stack in the band below the game */
+@media (max-width: 560px) {
+  .hud-bottom {
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 8px;
+  }
+  .side-btns,
+  .counter {
+    position: static;
+  }
+}
+
+/* ---------- "So spielt ihr" on the start screen ---------- */
+.howto {
+  width: min(1240px, 100%);
+  text-align: center;
+}
+.howto h2 {
+  margin: 0.4em 0 0.6em;
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+}
+.howto-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(12px, 2vw, 26px);
+}
+@media (max-width: 900px) {
+  .howto-cards {
+    grid-template-columns: 1fr;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+}
+.howto-card {
+  position: relative;
+  background: var(--card);
+  border: 4px solid var(--ink);
+  border-radius: 30px;
+  box-shadow: 0 6px 0 var(--ink);
+  padding: 12px 16px 16px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.howto-card.active {
+  border-color: var(--good);
+  box-shadow: 0 6px 0 var(--good);
+}
+.howto-card.soon {
+  border-style: dashed;
+  box-shadow: 0 6px 0 rgba(59, 42, 92, 0.35);
+}
+.howto-card.soon .howto-art {
+  filter: saturate(0.85);
+}
+.howto-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.howto-card h3 {
+  margin: 6px 0 0;
+  font-size: 1.25rem;
+}
+.howto-who {
+  margin: 0;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.howto-card ol {
+  margin: 6px 0 10px;
+  padding-left: 1.3em;
+  line-height: 1.4;
+  flex: 1;
+}
+.howto-card .btn {
+  align-self: flex-start;
+}
+.soon-badge {
+  position: absolute;
+  top: -14px;
+  right: 18px;
+  background: var(--warn);
+  color: #fff;
+  font-weight: 700;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.15em 0.8em;
+  transform: rotate(4deg);
+  z-index: 1;
+}
+.soon-badge.on {
+  background: var(--good);
+  transform: rotate(-2deg);
+}
+
+/* the three animations, 7 s each; what grows or pops does so around its own box */
+.ht1-flash,
+.ht1-creature,
+.ht2-creature,
+.ht3-creature {
+  transform-box: fill-box;
+}
+.ht1-write,
+.ht3-write {
+  stroke-dasharray: 1 1;
+  animation: ht-write 7s infinite;
+}
+@keyframes ht-write {
+  0%,
+  5% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  30%,
+  90% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  97%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+.ht1-pencil,
+.ht3-pencil {
+  animation: ht-pencil 7s infinite;
+}
+@keyframes ht-pencil {
+  0% {
+    transform: translate(-14px, -4px);
+    opacity: 1;
+  }
+  10% {
+    transform: translate(-8px, 2px);
+  }
+  18% {
+    transform: translate(-2px, -6px);
+  }
+  26% {
+    transform: translate(2px, 0);
+    opacity: 1;
+  }
+  32%,
+  96% {
+    transform: translate(16px, -10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-14px, -4px);
+    opacity: 1;
+  }
+}
+.ht1-light {
+  opacity: 0.35;
+  animation: ht1-light 7s infinite;
+}
+@keyframes ht1-light {
+  0%,
+  33% {
+    opacity: 0.35;
+  }
+  37% {
+    opacity: 0.95;
+  }
+  46%,
+  100% {
+    opacity: 0.35;
+  }
+}
+.ht1-flash {
+  transform-origin: 50% 50%;
+  opacity: 0;
+  animation: ht-flash 7s infinite;
+}
+@keyframes ht-flash {
+  0%,
+  34% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  37% {
+    opacity: 1;
+    transform: scale(2.6);
+  }
+  44%,
+  100% {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+.ht1-signal {
+  animation:
+    ht-flow 0.7s linear infinite,
+    ht1-signal 7s infinite;
+}
+@keyframes ht-flow {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+@keyframes ht1-signal {
+  0%,
+  38% {
+    opacity: 0.15;
+  }
+  42%,
+  56% {
+    opacity: 1;
+  }
+  64%,
+  100% {
+    opacity: 0.15;
+  }
+}
+.ht1-creature,
+.ht3-creature {
+  transform-origin: 50% 100%;
+  animation: ht-pop 7s infinite;
+}
+@keyframes ht-pop {
+  0%,
+  50% {
+    transform: scale(0);
+  }
+  56% {
+    transform: scale(1.18, 0.9);
+  }
+  60% {
+    transform: scale(0.95, 1.06);
+  }
+  64% {
+    transform: scale(1) translateY(0);
+  }
+  72% {
+    transform: scale(1) translateY(-6%);
+  }
+  80% {
+    transform: scale(1) translateY(0);
+  }
+  88% {
+    transform: scale(1) translateY(-6%);
+  }
+  93% {
+    transform: scale(1);
+  }
+  99%,
+  100% {
+    transform: scale(0);
+  }
+}
+/* the phone: slides over the sheet, flash, slides aside and shows the creature */
+.ht2-phone {
+  transform-box: view-box;
+  transform-origin: 122px 100px;
+  animation: ht2-phone 7s infinite;
+}
+@keyframes ht2-phone {
+  0% {
+    transform: translate(190px, 40px) rotate(14deg);
+  }
+  20%,
+  46% {
+    transform: translate(0, 0) rotate(0);
+  }
+  60%,
+  90% {
+    transform: translate(122px, 4px) rotate(-4deg);
+  }
+  100% {
+    transform: translate(190px, 40px) rotate(14deg);
+  }
+}
+.ht2-vf {
+  animation: ht2-vf 7s infinite;
+}
+@keyframes ht2-vf {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  52%,
+  100% {
+    opacity: 0;
+  }
+}
+.ht2-game {
+  animation: ht2-game 7s infinite;
+}
+@keyframes ht2-game {
+  0%,
+  48% {
+    opacity: 0;
+  }
+  52%,
+  100% {
+    opacity: 1;
+  }
+}
+.ht2-flash {
+  opacity: 0;
+  animation: ht2-flash 7s infinite;
+}
+@keyframes ht2-flash {
+  0%,
+  38% {
+    opacity: 0;
+  }
+  41% {
+    opacity: 0.95;
+  }
+  48%,
+  100% {
+    opacity: 0;
+  }
+}
+.ht2-creature {
+  transform-origin: 50% 100%;
+  animation: ht-pop 7s infinite;
+}
+.ht3-cone {
+  opacity: 0.3;
+  animation: ht3-cone 2.4s ease-in-out infinite;
+}
+@keyframes ht3-cone {
+  50% {
+    opacity: 0.55;
+  }
+}
+.ht3-rays {
+  animation: ht-flow 0.9s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ht *,
+  .ht2-phone {
+    animation: none !important;
+  }
+  .ht2-phone {
+    transform: translate(122px, 4px) rotate(-4deg);
+  }
+  .ht2-vf,
+  .ht2-flash,
+  .ht1-flash,
+  .ht1-pencil,
+  .ht3-pencil {
+    opacity: 0;
   }
 }

@@ -1,7 +1,8 @@
 import type { SaveMeta } from '../app/saves.ts';
-import type { HabitatId, Settings } from '../app/settings.ts';
+import type { CameraMode, HabitatId, Settings } from '../app/settings.ts';
 import { button, h, segmented } from './dom.ts';
 import { openGuide } from './guide.ts';
+import { howtoSection } from './howto.ts';
 import { legalLinks, legalWarning } from './legal.ts';
 import { continueBanner } from './savesPanel.ts';
 import { tilePreview, type TileKind } from './previews.ts';
@@ -9,7 +10,9 @@ import { tilePreview, type TileKind } from './previews.ts';
 export interface StartDeps {
   settings: Settings;
   save: () => void;
-  camera: () => { ok: boolean; label: string };
+  camera: () => { ok: boolean; label: string; handheld: boolean };
+  /** "So spielt ihr": switches between a fixed camera and a phone or tablet, then opens the camera setup */
+  setCameraMode: (mode: CameraMode) => void;
   openCamera: () => void;
   openSettings: () => void;
   openPicker: (done: () => void) => void;
@@ -80,7 +83,9 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
   };
   const cam = d.camera();
   const short = cam.label.length > 32 ? cam.label.slice(0, 30) + '…' : cam.label;
-  const camChip = button(cam.ok ? `📷 ${short}` : '📷 Kamera einrichten', d.openCamera, `btn small cam-chip ${cam.ok ? 'ok' : 'bad'}`, cam.label);
+  const camChip = cam.handheld
+    ? button('📱 Kamera: Handy/Tablet', d.openCamera, 'btn small cam-chip ok', 'Kamera einrichten')
+    : button(cam.ok ? `📷 ${short}` : '📷 Kamera einrichten', d.openCamera, `btn small cam-chip ${cam.ok ? 'ok' : 'bad'}`, cam.label);
 
   // "Weiterspielen" appears as soon as the saved games are read
   const cont = h('div', { class: 'continue-row' });
@@ -107,6 +112,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         tile('tuerme', '🏗️ Türme bauen', 'Bis zu 8 Teams, Aliens helfen', d.openTowers),
         tile('malen', '🎨 Mal-Aquarium', 'Fische ausmalen – sie schwimmen los', d.openPaint),
       ),
+      howtoSection({ mode: s.camera.mode, choose: d.setCameraMode }),
       h(
         'div',
         { class: 'footer' },

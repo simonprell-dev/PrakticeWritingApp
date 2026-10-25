@@ -1,6 +1,6 @@
 // Wires camera -> vision worker -> scenes and owns the screens (start, game, duel), and keeps the games
 // (the last game of every mode automatically, others under a name or as a file).
-import { Camera, CameraError } from '../camera/camera.ts';
+import { Camera, CameraError, type Grab } from '../camera/camera.ts';
 import { AutoScan, MotionProbe } from '../camera/motion.ts';
 import { setSound, sfx, unlockAudio } from '../game/audio.ts';
 import { Loop } from '../game/loop.ts';
@@ -31,6 +31,7 @@ import { renderStart } from '../ui/startScreen.ts';
 import { openTargetPicker } from '../ui/targetPicker.ts';
 import { toast } from '../ui/toast.ts';
 import { openSiegeLobby } from '../ui/siegeLobby.ts';
+import { openViewfinder } from '../ui/viewfinder.ts';
 import { openTowerLobby } from '../ui/towerLobby.ts';
 import { confetti, openSiegeResult, openTowerResult, openVictory } from '../ui/victoryScreen.ts';
 import { PEN_PRESETS, SLIP_PRESETS } from '../vision/color.ts';
@@ -38,7 +39,7 @@ import { DETECT_SIZE } from '../vision/constants.ts';
 import type { PlayerId, ScanResult, VisionOptions } from '../vision/types.ts';
 import { packTyped, unpackTyped } from './imageCodec.ts';
 import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSaves, loadSave, MODES, newSaveId, putSave, readSaveFile, type GameMode, type SaveGame } from './saves.ts';
-import { loadSettings, saveSettings, type HabitatId, type Settings } from './settings.ts';
+import { loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
 
 const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna };
 /** the paper setting as the recognition sees it: Lineatur 1 and 2 have the same four-line shape */
@@ -46,6 +47,9 @@ const LINEATUR = { auto: 'auto', L1: 'school4', L2: 'school4', L3: 'school2', li
 const DEBUG = new URLSearchParams(location.search).has('debug');
 
 type Mode = { kind: 'start' } | { kind: 'habitat'; id: HabitatId } | { kind: 'paint' } | { kind: 'duel' } | { kind: 'siege' } | { kind: 'tower' };
+
+/** a phone camera goes off this long after the last photo (battery; the next photo starts faster before) */
+const HAND_CAMERA_OFF = 20_000;
 
 /** keep the running game every so often, and soon after something new happened */
 const AUTOSAVE_EVERY = 30_000;
@@ -70,6 +74,7 @@ export class App {
   /** a saved game is being loaded into the scene: it does not move yet */
   frozen = false;
   private saveSoon = 0;
+  private cameraOff = 0;
   private saveEvery = 0;
   private saving: Promise<void> | null = null;
 
@@ -116,7 +121,7 @@ export class App {
       if (document.visibilityState === 'hidden') void this.autosave();
     });
     navigator.mediaDevices?.addEventListener?.('devicechange', () => {
-      if (!this.camera.ready() && this.settings.camera.deviceId) void this.openCamera(this.settings.camera.deviceId).catch(() => undefined);
+      if (!this.handheld && !this.camera.ready() && this.settings.camera.deviceId) void this.openCamera(this.settings.camera.deviceId).catch(() => undefined);
     });
     this.showStart();
     void this.boot();
@@ -142,12 +147,77 @@ export class App {
       this.cameraSetup();
       return;
     }
-    try {
-      await this.openCamera(this.settings.camera.deviceId);
-    } catch {
-      /* the start screen shows the camera status */
+    // a phone or tablet only starts its camera for a photo
+    if (!this.handheld) {
+      try {
+        await this.openCamera(this.settings.camera.deviceId);
+      } catch {
+        /* the start screen shows the camera status */
+      }
     }
     if (this.mode.kind === 'start') this.showStart();
+  }
+
+  /** the camera is held in the hand (phone, tablet): photos through the viewfinder */
+  get handheld(): boolean {
+    return this.settings.camera.mode === 'hand';
+  }
+
+  /** the camera settings a photo is taken with: a camera in the hand is never turned or cut */
+  private camConfig(): Settings['camera'] {
+    const c = this.settings.camera;
+    return c.mode === 'hand' ? { ...c, rotation: 0, mirror: false, roi: undefined } : c;
+  }
+
+  /** automatic scans need a camera that stands still */
+  private autoAllowed(): boolean {
+    return this.settings.recog.autoScan && !this.handheld;
+  }
+
+  /**
+   * A photo: a fixed camera takes it right away, a phone or tablet opens the viewfinder first.
+   * Null when the viewfinder was closed without a photo.
+   */
+  private async photo(maxSide: number, what: { title: string; hint: string; frame?: 'sheet' | 'card' }): Promise<Grab | null> {
+    if (!this.handheld) return this.camera.grab(this.camConfig(), 2, maxSide);
+    clearTimeout(this.cameraOff);
+    const g = await openViewfinder({
+      camera: this.camera,
+      open: () => this.openCamera(this.settings.camera.deviceId),
+      grab: () => this.camera.grab(this.camConfig(), 4, maxSide, true),
+      ...what,
+    });
+    this.cameraOff = window.setTimeout(() => {
+      if (this.handheld && !document.querySelector('.cam-setup')) this.camera.close();
+    }, HAND_CAMERA_OFF);
+    return g;
+  }
+
+  /** what the viewfinder asks for */
+  private photoText(team?: PlayerId): { title: string; hint: string; frame?: 'sheet' | 'card' } {
+    if (this.scene instanceof PaintScene) return { title: 'Fisch-Karte fotografieren', hint: 'Die ganze Karte mit dem schwarzen Rahmen ins Bild, dann auf den runden Knopf.', frame: 'card' };
+    const name = team ? this.teamKeys().find((t) => t.id === team)?.name : undefined;
+    return {
+      title: name ? `Foto für ${name}` : 'Foto machen',
+      hint: 'Alle Buchstaben in den Rahmen, dann auf den runden Knopf.',
+    };
+  }
+
+  /** fixed camera <-> camera in the hand (from the start screen or the camera wizard) */
+  setCameraMode(mode: CameraMode): void {
+    if (this.settings.camera.mode === mode) return;
+    this.settings.camera.mode = mode;
+    // the other kind of camera: let the app choose again (document camera, or the back camera)
+    this.settings.camera.deviceId = undefined;
+    this.settings.camera.label = undefined;
+    this.save();
+    this.camera.close();
+    if (this.mode.kind !== 'start') {
+      this.hud?.setHandheld(this.handheld);
+      if (this.handheld) this.probe.stop();
+      else this.probe.start();
+      this.auto.setEnabled(this.autoAllowed());
+    }
   }
 
   save(): void {
@@ -156,7 +226,7 @@ export class App {
   }
 
   async openCamera(deviceId?: string): Promise<void> {
-    await this.camera.open(deviceId);
+    await this.camera.open(deviceId, this.handheld);
     this.settings.camera.deviceId = this.camera.deviceId;
     this.settings.camera.label = this.camera.label;
     this.save();
@@ -170,6 +240,7 @@ export class App {
       ctx.fillStyle = '#fdf6ff';
       ctx.fillRect(0, 0, this.stage.worldW, 1080);
     }
+    this.stage.end();
   }
 
   // ---------------------------------------------------------------- screens
@@ -181,7 +252,11 @@ export class App {
     renderStart(this.ui, {
       settings: this.settings,
       save: () => this.save(),
-      camera: () => ({ ok: this.camera.ready(), label: this.camera.label || this.settings.camera.label || 'Kamera' }),
+      camera: () => ({ ok: this.handheld || this.camera.ready(), label: this.camera.label || this.settings.camera.label || 'Kamera', handheld: this.handheld }),
+      setCameraMode: (mode) => {
+        this.setCameraMode(mode);
+        this.cameraSetup();
+      },
       openCamera: () => this.cameraSetup(),
       openSettings: () => this.openSettingsPanel(),
       openPicker: (done) => openTargetPicker(this.settings, () => {
@@ -395,11 +470,12 @@ export class App {
     return {
       save: () => this.save(),
       photo: async () => {
-        if (!this.camera.ready()) {
+        if (!this.handheld && !this.camera.ready()) {
           toast('Zuerst die Kamera einrichten.', 'warn');
           return null;
         }
-        return (await this.camera.grab(this.settings.camera, 2)).snapshot;
+        const g = await this.photo(DETECT_SIZE, { title: 'Farbe zeigen', hint: 'Einen Zettel oder ein Wort in der Farbe des Teams ins Bild halten.' });
+        return g?.snapshot ?? null;
       },
     };
   }
@@ -422,7 +498,7 @@ export class App {
       },
       () => {
         if (this.mode.kind === 'start') this.showStart();
-        this.auto.setEnabled(this.settings.recog.autoScan && this.mode.kind !== 'start');
+        this.auto.setEnabled(this.autoAllowed() && this.mode.kind !== 'start');
       },
     );
   }
@@ -434,12 +510,16 @@ export class App {
         settings: this.settings,
         save: () => this.save(),
         reopen: (id) => this.openCamera(id),
+        setMode: (mode) => this.setCameraMode(mode),
+        camConfig: () => this.camConfig(),
         testScan: async () => {
           const res = await this.scanOnce(true);
           return res?.res ?? null;
         },
       },
       () => {
+        // a phone camera is off again until the next photo
+        if (this.handheld) this.camera.close();
         if (this.mode.kind === 'start') this.showStart();
       },
     );
@@ -451,7 +531,7 @@ export class App {
     this.leaveGame();
     this.frozen = resuming;
     this.saveEvery = window.setInterval(() => void this.autosave(), AUTOSAVE_EVERY);
-    this.probe.start();
+    if (!this.handheld) this.probe.start();
     clear(this.ui);
     if (!document.fullscreenElement) void document.documentElement.requestFullscreen?.().catch(() => undefined);
     void this.requestWakeLock();
@@ -471,6 +551,7 @@ export class App {
       title: { meer: '🐠 Meer', weltraum: '👽 Weltraum', savanne: '🦒 Savanne' }[id],
       settings: this.settings,
       camera: this.camera,
+      handheld: this.handheld,
       practice,
       onScan: () => void this.scan('manual', { now: true }),
       onMenu: () => this.showStart(),
@@ -484,10 +565,10 @@ export class App {
       },
     });
     this.updateProgress();
-    this.auto.setEnabled(this.settings.recog.autoScan);
+    this.auto.setEnabled(this.autoAllowed());
     // first show how the practice letter is written
     if (practice) setTimeout(() => this.scene === scene && scene.practiceTarget && scene.showDemo(scene.practiceTarget), 900);
-    if (!this.camera.ready()) toast('Keine Kamera – bitte oben rechts einrichten.', 'warn', 5000);
+    if (!this.handheld && !this.camera.ready()) toast('Keine Kamera – bitte oben rechts einrichten.', 'warn', 5000);
     else if (!resuming) toast(practice ? this.practiceIntro(scene) : 'Schreib Buchstaben oder Zahlen und drücke „Fertig!“', 'info', 5000);
   }
 
@@ -508,6 +589,7 @@ export class App {
       title: '🎨 Mal-Aquarium',
       settings: this.settings,
       camera: this.camera,
+      handheld: this.handheld,
       practice: false,
       newSheetLabel: '🗒 Neue Karten',
       onScan: () => void this.scan('manual', { now: true }),
@@ -519,8 +601,8 @@ export class App {
       onSave: () => this.openSaveGame(),
     });
     this.updateProgress();
-    this.auto.setEnabled(this.settings.recog.autoScan);
-    if (!this.camera.ready()) toast('Keine Kamera – bitte oben rechts einrichten.', 'warn', 5000);
+    this.auto.setEnabled(this.autoAllowed());
+    if (!this.handheld && !this.camera.ready()) toast('Keine Kamera – bitte oben rechts einrichten.', 'warn', 5000);
     else if (!resuming) toast('Ausgemalte Fisch-Karte unter die Kamera legen und „Fertig!“ drücken!', 'info', 5000);
   }
 
@@ -533,6 +615,7 @@ export class App {
       title: '⚔️ Team-Duell',
       settings: this.settings,
       camera: this.camera,
+      handheld: this.handheld,
       practice: false,
       teams: this.teamKeys(),
       onTeamScan: (id) => void this.scan('manual', { now: true, team: id }),
@@ -548,7 +631,7 @@ export class App {
       onSave: () => this.openSaveGame(),
     });
     this.hud.setCounter('');
-    this.auto.setEnabled(this.settings.recog.autoScan);
+    this.auto.setEnabled(this.autoAllowed());
     if (!resuming) toast('Zettel unter die Kamera legen und „Fertig!“ drücken!', 'info', 4500);
   }
 
@@ -560,6 +643,7 @@ export class App {
       title: '🏰 Riesenburg',
       settings: this.settings,
       camera: this.camera,
+      handheld: this.handheld,
       practice: false,
       onScan: () => void this.scan('manual', { now: true }),
       onMenu: () => this.showStart(),
@@ -573,7 +657,7 @@ export class App {
       onSave: () => this.openSaveGame(),
     });
     this.hud.setCounter('');
-    this.auto.setEnabled(this.settings.recog.autoScan);
+    this.auto.setEnabled(this.autoAllowed());
   }
 
   startTowers(resuming = false): void {
@@ -584,6 +668,7 @@ export class App {
       title: '🏗️ Türme bauen',
       settings: this.settings,
       camera: this.camera,
+      handheld: this.handheld,
       practice: false,
       teams: this.teamKeys(),
       onTeamScan: (id) => void this.scan('manual', { now: true, team: id }),
@@ -599,7 +684,7 @@ export class App {
       onSave: () => this.openSaveGame(),
     });
     this.hud.setCounter('');
-    this.auto.setEnabled(this.settings.recog.autoScan);
+    this.auto.setEnabled(this.autoAllowed());
   }
 
   private leaveGame(): void {
@@ -759,7 +844,7 @@ export class App {
     } catch {
       return null;
     }
-    const g = await this.camera.grab(this.settings.camera);
+    const g = await this.camera.grab(this.camConfig());
     const res = await this.vision.scan(g.frame, this.visionOptions(test));
     if (test) await this.vision.reset();
     if (DEBUG) showDebug(res);
@@ -772,24 +857,26 @@ export class App {
    */
   async scan(trigger: 'manual' | 'auto', opt: { now?: boolean; team?: PlayerId } = {}): Promise<void> {
     if (this.busy || this.frozen || !this.scene || isModalOpen()) return;
-    if (!this.camera.ready()) {
+    if (trigger === 'auto' && this.handheld) return;
+    if (!this.handheld && !this.camera.ready()) {
       toast('Keine Kamera verbunden.', 'warn');
       this.cameraSetup();
       return;
     }
     this.busy = true;
-    // right after the start the handwriting recognition may still be waking up
-    this.hud?.setBusy(true, this.engineInfo ? 'Schaue …' : 'Wache auf …');
     try {
-      if (trigger === 'manual' && !opt.now) {
+      if (trigger === 'manual' && !opt.now && !this.handheld) {
         await this.probe.waitStill(1500, () => toast('Hände weg – gleich mache ich ein Foto! 📸', 'info', 2000));
       }
       if (this.scene instanceof PaintScene) {
         await this.scanCards(this.scene);
         return;
       }
+      const g = await this.photo(DETECT_SIZE, this.photoText(opt.team));
+      if (!g || !this.scene) return;
+      // right after the start the handwriting recognition may still be waking up
+      this.hud?.setBusy(true, this.engineInfo ? 'Schaue …' : 'Wache auf …');
       await this.visionReady;
-      const g = await this.camera.grab(this.settings.camera);
       // show the photo right away; the recognition runs meanwhile in the worker
       const s = Math.min(1, DETECT_SIZE / Math.max(g.frame.width, g.frame.height));
       const snap: Snapshot = { canvas: g.snapshot, detW: Math.round(g.frame.width * s), detH: Math.round(g.frame.height * s) };
@@ -829,7 +916,9 @@ export class App {
 
   /** Mal-Aquarium: a sharper photo (the colours become the fish), the worker finds the cards in it. */
   private async scanCards(scene: PaintScene): Promise<void> {
-    const g = await this.camera.grab(this.settings.camera, 2, 1920);
+    const g = await this.photo(1920, this.photoText());
+    if (!g || this.scene !== scene) return;
+    this.hud?.setBusy(true, 'Schaue …');
     const snap: Snapshot = { canvas: g.snapshot, detW: g.frame.width, detH: g.frame.height };
     scene.beginCapture(snap);
     try {
@@ -886,9 +975,13 @@ export class App {
   }
 
   private toggleAuto(): void {
+    if (this.handheld) {
+      toast('Automatisch geht nur mit einer Kamera, die fest steht.', 'info', 3000);
+      return;
+    }
     this.settings.recog.autoScan = !this.auto.enabled;
     this.save();
-    this.auto.setEnabled(this.settings.recog.autoScan);
+    this.auto.setEnabled(this.autoAllowed());
     toast(this.auto.enabled ? 'Automatisch scannen: an 👁' : 'Automatisch scannen: aus', 'info', 2000);
   }
 

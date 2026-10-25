@@ -85,16 +85,20 @@ export class Camera {
     return !!this.stream && this.video.readyState >= 2 && this.video.videoWidth > 0;
   }
 
-  async open(deviceId?: string): Promise<void> {
+  /**
+   * Opens a camera. Without a device: a document camera if there is one, or (handheld) the back camera
+   * of the phone or tablet.
+   */
+  async open(deviceId?: string, handheld = false): Promise<void> {
     this.close();
     if (!navigator.mediaDevices?.getUserMedia) throw explain(new DOMException('', 'NotFoundError'));
     const want = (id?: string): MediaStreamConstraints => ({
       audio: false,
       video: {
-        ...(id ? { deviceId: { exact: id } } : {}),
+        ...(id ? { deviceId: { exact: id } } : handheld ? { facingMode: { ideal: 'environment' } } : {}),
         width: { ideal: 1920 },
         height: { ideal: 1080 },
-        frameRate: { ideal: 15, max: 30 },
+        frameRate: { ideal: handheld ? 30 : 15, max: 30 },
       },
     });
     try {
@@ -105,7 +109,7 @@ export class Camera {
         this.stream = await navigator.mediaDevices.getUserMedia(want());
       }
       // without a remembered device: prefer a document camera once labels are known
-      if (!deviceId) {
+      if (!deviceId && !handheld) {
         const devs = await Camera.devices();
         const doc = devs.find((d) => Camera.isDocCam(d.label));
         const current = this.stream.getVideoTracks()[0]?.getSettings().deviceId;
@@ -199,8 +203,22 @@ export class Camera {
     });
   }
 
-  /** Captures `frames` consecutive frames and averages the sharp ones (less noise, steadier pencil strokes). */
-  async grab(cam: Settings['camera'], frames = 2, maxSide = DETECT_SIZE): Promise<Grab> {
+  /** the torch (lamp) of a phone camera, if it has one */
+  hasTorch(): boolean {
+    const t = this.stream?.getVideoTracks()[0];
+    return !!(t?.getCapabilities?.() as { torch?: boolean } | undefined)?.torch;
+  }
+
+  async setTorch(on: boolean): Promise<void> {
+    const t = this.stream?.getVideoTracks()[0];
+    await t?.applyConstraints({ advanced: [{ torch: on } as MediaTrackConstraintSet] }).catch(() => undefined);
+  }
+
+  /**
+   * Captures `frames` consecutive frames and averages the sharp ones (less noise, steadier pencil strokes).
+   * `sharpest`: a camera in the hand moves, so only the single sharpest frame is used.
+   */
+  async grab(cam: Settings['camera'], frames = 2, maxSide = DETECT_SIZE, sharpest = false): Promise<Grab> {
     if (!this.ready()) throw new CameraError('Die Kamera ist noch nicht bereit.', 'Einen Moment warten oder die Kamera neu verbinden.');
     const roi = this.roiPx(cam);
     // the graphics card scales straight to detection size (the recognition does not need more)
@@ -224,7 +242,7 @@ export class Camera {
     }
     // a refocusing camera delivers blurry frames: only average the sharp ones
     const best = Math.max(...shots.map((x) => x.sharp));
-    const use = shots.filter((x) => x.sharp >= best * 0.7);
+    const use = sharpest ? [shots.find((x) => x.sharp === best)!] : shots.filter((x) => x.sharp >= best * 0.7);
     let out: Uint8ClampedArray;
     if (use.length === 1) out = use[0].data;
     else {

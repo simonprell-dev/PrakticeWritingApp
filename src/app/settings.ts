@@ -3,6 +3,24 @@ import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.
 
 export type HabitatId = 'meer' | 'weltraum' | 'savanne';
 
+/**
+ * fest: a document camera or webcam looks at the paper all the time (projector in class);
+ * hand: a phone or tablet is held over the paper for every photo (the game runs on the device)
+ */
+export type CameraMode = 'fest' | 'hand';
+
+/**
+ * Phones and tablets (iPads report themselves as Macs with touch). Digital classroom boards often run
+ * Android too, but have a big screen and a document camera on them: they keep the fixed camera.
+ */
+export function isHandheld(): boolean {
+  if (typeof navigator === 'undefined' || typeof screen === 'undefined') return false;
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua)) return true;
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
+  return /Android|Mobile/i.test(ua) && Math.min(screen.width, screen.height) <= 1050;
+}
+
 export interface TeamSettings {
   id: PlayerId;
   name: string;
@@ -17,6 +35,7 @@ export interface TeamSettings {
 export interface Settings {
   version: 1;
   camera: {
+    mode: CameraMode;
     deviceId?: string;
     label?: string;
     rotation: Rotation;
@@ -81,7 +100,7 @@ export interface Settings {
 
 export const DEFAULTS: Settings = {
   version: 1,
-  camera: { rotation: 0, mirror: false },
+  camera: { mode: 'fest', rotation: 0, mirror: false },
   recog: { pen: 'auto', lineatur: 'auto', strictness: 'mittel', style: 'beide', autoScan: false, autoDelay: 1.5, noMirror: false },
   game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: true },
   practice: { mode: 'frei', targets: ['A'], count: 5, surprise: true },
@@ -127,12 +146,21 @@ function merge<T>(base: T, over: unknown): T {
   return out as T;
 }
 
+/** the defaults for this device (phones and tablets hold the camera in the hand) */
+function freshSettings(): Settings {
+  const s = structuredClone(DEFAULTS);
+  s.camera.mode = isHandheld() ? 'hand' : 'fest';
+  return s;
+}
+
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return structuredClone(DEFAULTS);
+    if (!raw) return freshSettings();
     const parsed = JSON.parse(raw);
     const s = merge(structuredClone(DEFAULTS), parsed);
+    // older versions only knew fixed cameras; on a phone or tablet the camera is held in the hand
+    if (!parsed.camera?.mode) s.camera.mode = isHandheld() ? 'hand' : 'fest';
     if (!Array.isArray(s.duel.teams) || s.duel.teams.length !== 2) s.duel.teams = structuredClone(DEFAULTS.duel.teams);
     if (!Array.isArray(s.tower.players) || !s.tower.players.length) s.tower.players = structuredClone(DEFAULTS.tower.players);
     // older versions had four towers: keep those teams, add the new ones
@@ -149,7 +177,7 @@ export function loadSettings(): Settings {
     delete (s.practice as { target?: unknown }).target;
     return s;
   } catch {
-    return structuredClone(DEFAULTS);
+    return freshSettings();
   }
 }
 
@@ -167,5 +195,5 @@ export function resetSettings(): Settings {
   } catch {
     /* ignore */
   }
-  return structuredClone(DEFAULTS);
+  return freshSettings();
 }
