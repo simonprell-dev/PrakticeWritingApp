@@ -82,6 +82,27 @@ export function openContinue(m: SaveMeta, d: ContinueDeps): void {
   const m2 = modal(content);
 }
 
+/**
+ * Asked once, the first time a game is left: may this device keep games? (Only then the last game is kept,
+ * so nothing with the children's handwriting is stored without being asked.)
+ */
+export function openKeepQuestion(answer: (keep: boolean) => void): void {
+  const pick = (keep: boolean) => {
+    m.close();
+    answer(keep);
+  };
+  const content = h(
+    'div',
+    { style: 'max-width:min(560px,92vw);text-align:center' },
+    h('div', { style: 'font-size:3rem', 'aria-hidden': 'true' }, '💾'),
+    h('h2', null, 'Spiel merken?'),
+    h('p', { style: 'font-size:1.2rem' }, 'Soll sich die App dieses Spiel merken? Dann könnt ihr später weiterspielen – auch morgen noch.'),
+    h('p', { class: 'help' }, 'Gespeichert werden nur die ausgeschnittenen Buchstaben und Bilder, keine Fotos, und nur in diesem Browser. Die Frage kommt nur einmal; umstellen geht in den Einstellungen.'),
+    h('div', { class: 'actions', style: 'justify-content:center' }, button('Nein, danke', () => pick(false), 'btn'), button('💾 Ja, merken', () => pick(true), 'btn primary')),
+  );
+  const m = modal(content);
+}
+
 export interface SaveDialogDeps {
   mode: GameMode;
   defaultName: string;

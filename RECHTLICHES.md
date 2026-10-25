@@ -9,7 +9,7 @@
 | Daten | Wo verarbeitet | Weitergabe | Speicherdauer |
 |---|---|---|---|
 | **Kamerafotos** | nur im Browser des Geräts (Web Worker) | **keine** | nur im Arbeitsspeicher, bis die Auswertung fertig ist |
-| **Spielstände** (ausgeschnittene Buchstaben mit Bewertung, ausgemalte Fisch-Karten mit dem darauf geschriebenen Fischnamen, Vorschaubild, Spieleinstellungen) | `IndexedDB` des Browsers | keine (nur wenn jemand selbst eine Datei herunterlädt) | das letzte Spiel jeder Spielart bis zum nächsten Spiel dieser Art; benannte Spielstände bis zum Löschen (einzeln, „Alle Spielstände löschen“, „Alles zurücksetzen“ oder Websitedaten löschen) |
+| **Spielstände** (ausgeschnittene Buchstaben mit Bewertung, ausgemalte Fisch-Karten mit dem darauf geschriebenen Fischnamen, Vorschaubild, Spieleinstellungen) | `IndexedDB` des Browsers | keine (nur wenn jemand selbst eine Datei herunterlädt) | das letzte Spiel jeder Spielart nur, wenn „Spiele merken“ ausdrücklich gewählt wurde, bis zum nächsten Spiel dieser Art; benannte Spielstände bis zum Löschen (einzeln, „Alle Spielstände löschen“, „Alles zurücksetzen“ oder Websitedaten löschen) |
 | **Einstellungen** (Kamera, Bildausschnitt, Strenge, Teamnamen, Übungsbuchstabe) | `localStorage` des Browsers | keine | bis „Alles zurücksetzen“ oder Löschen der Websitedaten |
 | **App-Dateien** (Offline-Betrieb) | Cache des Service Workers | keine | bis zur nächsten Aktualisierung |
 | **Verbindungsdaten** (IP-Adresse, Zeit, URL, Statuscode, Datenmenge, Browser) | beim Hoster **Railway** (Auftragsverarbeiter) | Railway Corporation, USA | 7 Tage (Railway-Tarife Trial/Hobby) bzw. 30 Tage (Pro) |
@@ -19,7 +19,11 @@ Außerdem:
 - **Es werden keine Dienste Dritter eingebunden.** Schriften, Modell und Programm liegen auf dem eigenen Server. Die Content-Security-Policy (`default-src 'self'`) erzwingt das technisch.
   - Hintergrund zu den Schriften: Das LG München I (Urteil vom 20.01.2022, Az. 3 O 17493/20) hat die Einbindung von Google Fonts über Googles Server als Datenschutzverstoß gewertet.
 - **Der eigene Server (`server.js`) schreibt keine Zugriffsprotokolle.** Die Protokolle entstehen nur auf der Plattform von Railway.
-- **Ein Cookie-Banner ist nicht nötig.** Die Speicherung im Browser ist für die gewünschten Funktionen unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG).
+- **Ein Cookie-Banner ist nicht nötig.** Die App setzt keine Cookies. Die Speicherung im Browser ist für die gewünschten Funktionen unbedingt erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG):
+  - Einstellungen werden erst gespeichert, wenn man sie wählt.
+  - Das automatische Merken des letzten Spiels (mit Handschrift der Kinder) ist erst aktiv, wenn es ausdrücklich gewählt wurde: im Willkommensfenster oder bei der einmaligen Frage „Spiel merken?“. Damit ist es ein ausdrücklich gewünschter Dienst.
+  - Der Service-Worker-Cache enthält nur Programmdateien.
+- **Kamera erst auf Wunsch:** Beim ersten Besuch erscheint die Übersicht mit einem Willkommensfenster; die Kamera-Berechtigung wird erst beim Einrichten oder beim ersten Spiel angefragt.
 - **Spielstände enthalten Handschrift der Kinder** (ausgeschnittene Buchstaben, ausgemalte Bilder). Sie bleiben im Browser des Geräts. Auf gemeinsam genutzten Geräten in den Einstellungen „Letztes Spiel merken“ ausschalten oder die Spielstände nach dem Unterricht löschen. Heruntergeladene Spielstand-Dateien wie andere Schülerarbeiten behandeln.
 
 **In der App:**

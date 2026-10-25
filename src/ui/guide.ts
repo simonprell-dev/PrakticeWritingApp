@@ -59,7 +59,7 @@ function teachers(): HTMLElement {
     ),
     h('h3', null, 'Weiterspielen, speichern, laden'),
     list(
-      'Die App merkt sich das letzte Spiel jeder Spielart. Wählen Sie die Spielart wieder, fragt sie: weiterspielen oder neu beginnen? Auf der Startseite steht außerdem „▶ Weiterspielen“ für das zuletzt gespielte Spiel.',
+      'Wenn Sie es erlauben (die App fragt einmal), merkt sie sich das letzte Spiel jeder Spielart. Wählen Sie die Spielart wieder, fragt sie: weiterspielen oder neu beginnen? Auf der Startseite steht außerdem „▶ Weiterspielen“ für das zuletzt gespielte Spiel.',
       'Auch nach einem Neuladen der Seite oder am nächsten Tag geht es weiter – auf demselben Blatt zählt nur das Neue.',
       h('span', null, b('💾 im Spiel'), ' (oder Taste S) speichert das Spiel unter einem Namen, z. B. pro Klasse. Unter ', b('„📂 Spielstände“'), ' auf der Startseite laden, herunterladen oder löschen Sie es.'),
       'Als Datei heruntergeladen lässt sich ein Spiel auf einen anderen Computer mitnehmen („Datei öffnen …“).',

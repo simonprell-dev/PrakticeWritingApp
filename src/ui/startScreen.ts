@@ -10,7 +10,7 @@ import { tilePreview, type TileKind } from './previews.ts';
 export interface StartDeps {
   settings: Settings;
   save: () => void;
-  camera: () => { ok: boolean; label: string; handheld: boolean };
+  camera: () => { ok: boolean; label: string; handheld: boolean; configured: boolean };
   /** "So spielt ihr": switches between a fixed camera and a phone or tablet, then opens the camera setup */
   setCameraMode: (mode: CameraMode) => void;
   openCamera: () => void;
@@ -85,7 +85,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
   const short = cam.label.length > 32 ? cam.label.slice(0, 30) + '…' : cam.label;
   const camChip = cam.handheld
     ? button('📱 Kamera: Handy/Tablet', d.openCamera, 'btn small cam-chip ok', 'Kamera einrichten')
-    : button(cam.ok ? `📷 ${short}` : '📷 Kamera einrichten', d.openCamera, `btn small cam-chip ${cam.ok ? 'ok' : 'bad'}`, cam.label);
+    : button(cam.ok ? `📷 ${short}` : '📷 Kamera einrichten', d.openCamera, `btn small cam-chip ${cam.ok ? 'ok' : cam.configured ? 'bad' : ''}`, cam.label);
 
   // "Weiterspielen" appears as soon as the saved games are read
   const cont = h('div', { class: 'continue-row' });

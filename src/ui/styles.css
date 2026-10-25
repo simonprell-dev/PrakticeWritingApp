@@ -2013,3 +2013,76 @@ input[type='range'] {
     opacity: 0;
   }
 }
+
+/* ---------- first visit: welcome window ---------- */
+.welcome {
+  max-width: min(640px, 92vw);
+  text-align: center;
+}
+.welcome-wave {
+  display: inline-block;
+  font-size: 3.4rem;
+  transform-origin: 70% 75%;
+  animation: wave 1.4s ease-in-out 2;
+}
+@keyframes wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25%,
+  75% {
+    transform: rotate(16deg);
+  }
+  50% {
+    transform: rotate(-10deg);
+  }
+}
+.welcome-lead {
+  font-size: 1.15rem;
+}
+.welcome .seg {
+  margin: 0 auto;
+}
+.welcome-keep {
+  background: var(--accent-soft);
+  border-radius: 18px;
+  padding: 10px 14px 2px;
+  margin: 16px 0 6px;
+  text-align: left;
+}
+.welcome .actions {
+  justify-content: center;
+}
+.btn-link {
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome-wave {
+    animation: none;
+  }
+}
+@media (max-width: 700px), (max-height: 700px) {
+  .welcome-wave {
+    font-size: 2.2rem;
+  }
+  .welcome h2 {
+    font-size: 1.4rem;
+  }
+  .welcome-lead {
+    font-size: 1rem;
+    margin: 0.3em 0;
+  }
+  .welcome h3 {
+    margin-top: 0.5em;
+  }
+  .welcome-keep {
+    margin: 10px 0 4px;
+  }
+}

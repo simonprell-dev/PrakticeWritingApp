@@ -49,7 +49,8 @@ Auf dem Bauch jedes Wesens klebt das echte Zeichen des Kindes.
 - Die Handschrift wird **komplett im Browser** ausgewertet.
 - Kamerafotos verlassen das Gerät nie und werden nicht gespeichert.
 - Gespeichert werden die Einstellungen (localStorage) und die Spielstände (IndexedDB): ausgeschnittene Buchstaben und ausgemalte Fische, ohne Kamerafotos. Beides bleibt im Browser; Spielstände lassen sich einzeln oder alle löschen.
-- Es gibt keine Cookies und keine externen Dienste. Auch die Schriften liegen auf dem eigenen Server.
+- Es gibt keine Cookies und keine externen Dienste, deshalb auch kein Cookie-Banner. Auch die Schriften liegen auf dem eigenen Server.
+- Beim ersten Besuch erscheint die Übersicht mit einem Willkommensfenster (Dokumentenkamera oder Handy/Tablet, Spiele merken ja/nein). Der Browser fragt erst nach der Kamera, wenn man sie einrichtet oder ein Spiel beginnt.
 - Datenschutzerklärung, Impressum und Lizenzhinweise sind in der App eingebaut (`/datenschutz`, `/impressum`, `/lizenzen`).
 - Für den legalen Betrieb (Hoster, Auftragsverarbeitung, Pflichtangaben, Schule) siehe **[RECHTLICHES.md](RECHTLICHES.md)**.
 
@@ -65,7 +66,7 @@ Auf dem Bauch jedes Wesens klebt das echte Zeichen des Kindes.
 
 Auf der Startseite zeigt der Bereich **„So spielt ihr“** mit kleinen Animationen die Varianten: Dokumentenkamera und Beamer, Handy oder Tablet, und (kommt bald) Tablet mit Spiegel wie beim Osmo. „So spielen“ stellt die Kamera passend ein.
 
-**Erster Start:** Der Kamera-Assistent öffnet sich von selbst. Dort:
+**Erster Start:** Das Willkommensfenster fragt, womit gespielt wird. „Kamera einrichten“ öffnet den Kamera-Assistenten. Dort:
 1. Die Kamera auswählen. Dokumentenkameras werden automatisch bevorzugt.
 2. „Drehen“ drücken, bis die Schrift aufrecht steht.
 3. Einen Rahmen um das Blatt ziehen.
@@ -92,7 +93,7 @@ Auf der Startseite zeigt der Bereich **„So spielt ihr“** mit kleinen Animati
 - Ein ganz anderes Blatt erkennt die App meist von selbst. Sonst „Neues Blatt“ (Taste N) drücken, dann gilt alles wieder als neu.
 
 **Weiterspielen, speichern, laden**
-- Die App merkt sich das letzte Spiel jeder Spielart, auch über ein Neuladen der Seite hinweg. Wird die Spielart wieder gewählt, fragt sie: **weiterspielen oder neu beginnen?** Auf der Startseite steht dazu „▶ Weiterspielen“ für das zuletzt gespielte Spiel.
+- Wenn ihr es erlaubt, merkt sich die App das letzte Spiel jeder Spielart, auch über ein Neuladen der Seite hinweg. Gefragt wird einmal: im Willkommensfenster beim ersten Besuch oder beim ersten Verlassen eines Spiels („Spiel merken?“). Vorher wird nichts gespeichert. Wird die Spielart wieder gewählt, fragt sie: **weiterspielen oder neu beginnen?** Auf der Startseite steht dazu „▶ Weiterspielen“ für das zuletzt gespielte Spiel.
 - Weitergespielt wird mit allen Wesen, Bausteinen, Burgen, Übungsbuchstaben und Teams. Auf demselben Blatt zählt auch danach nur das Neue.
 - **💾** im Spiel (Taste S) speichert das Spiel unter einem Namen, z. B. eines pro Klasse, oder lädt es als Datei herunter.
 - **📂 Spielstände** auf der Startseite: alle Spiele laden, als Datei herunterladen, löschen oder eine Datei öffnen (auch von einem anderen Computer).

@@ -153,7 +153,7 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       h(
         'div',
         { class: 'row' },
-        toggle('Letztes Spiel merken', s.game.autosave, (on) => {
+        toggle('Letztes Spiel merken', s.game.autosave === true, (on) => {
           s.game.autosave = on;
           d.save();
         }),

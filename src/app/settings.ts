@@ -60,8 +60,8 @@ export interface Settings {
     sound: boolean;
     volume: number;
     habitat: HabitatId;
-    /** keep the last game of every mode (to continue it later) */
-    autosave: boolean;
+    /** keep the last game of every mode (to continue it later); null = not asked yet */
+    autosave: boolean | null;
   };
   practice: {
     mode: 'frei' | 'ueben';
@@ -102,7 +102,7 @@ export const DEFAULTS: Settings = {
   version: 1,
   camera: { mode: 'fest', rotation: 0, mirror: false },
   recog: { pen: 'auto', lineatur: 'auto', strictness: 'mittel', style: 'beide', autoScan: false, autoDelay: 1.5, noMirror: false },
-  game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: true },
+  game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: null },
   practice: { mode: 'frei', targets: ['A'], count: 5, surprise: true },
   duel: {
     by: 'pen',

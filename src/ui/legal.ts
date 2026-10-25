@@ -182,7 +182,8 @@ function datenschutz(info: LegalInfo): HTMLElement {
       list([
         ['Die Kamerabilder werden ', h('b', null, 'ausschließlich auf Ihrem Gerät'), ' im Browser ausgewertet. Sie werden weder an uns noch an Dritte übertragen und nicht gespeichert.'],
         ['Spielstände (ausgeschnittene Buchstaben, ausgemalte Bilder) werden nur in Ihrem Browser gespeichert und lassen sich jederzeit löschen.'],
-        ['Es gibt keine Benutzerkonten, keine Cookies, kein Tracking, keine Werbung und keine Analysedienste.'],
+        ['Es gibt keine Benutzerkonten, keine Cookies, kein Tracking, keine Werbung und keine Analysedienste. Deshalb gibt es auch kein Cookie-Banner.'],
+        ['Die Kamera startet erst, wenn Sie sie einrichten oder ein Spiel beginnen.'],
         ['Es werden keine externen Dienste eingebunden – auch Schriftarten und Programmteile kommen ausschließlich von unserem eigenen Server.'],
         ['Beim Aufruf der Website verarbeitet unser Hosting-Anbieter technisch notwendige Verbindungsdaten (z. B. Ihre IP-Adresse).'],
       ]),
@@ -214,7 +215,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
         ],
         [
           h('b', null, 'IndexedDB (Spielstände): '),
-          'das letzte Spiel jeder Spielart (nur solange „Letztes Spiel merken“ eingeschaltet ist) und die Spiele, die Sie unter einem Namen speichern. Ein Spielstand enthält die ausgeschnittenen Buchstaben bzw. ausgemalten Fische, ihre Bewertung, ein kleines Vorschaubild des Spiels und die Spieleinstellungen – keine Kamerafotos. Spielstände verlassen Ihr Gerät nicht. Laden Sie einen Spielstand als Datei herunter, liegt diese Datei nur bei Ihnen.',
+          'das letzte Spiel jeder Spielart – nur wenn Sie das ausdrücklich wählen (die App fragt beim ersten Besuch bzw. beim ersten Verlassen eines Spiels, ob sie Spiele auf diesem Gerät merken soll) – und die Spiele, die Sie selbst unter einem Namen speichern. Ein Spielstand enthält die ausgeschnittenen Buchstaben bzw. ausgemalten Fische, ihre Bewertung, ein kleines Vorschaubild des Spiels und die Spieleinstellungen – keine Kamerafotos. Spielstände verlassen Ihr Gerät nicht. Laden Sie einen Spielstand als Datei herunter, liegt diese Datei nur bei Ihnen.',
         ],
         [h('b', null, 'Service Worker / Cache: '), 'Programmdateien der App, damit sie auch ohne Internetverbindung funktioniert.'],
       ]),

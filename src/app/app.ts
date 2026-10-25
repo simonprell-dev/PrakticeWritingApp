@@ -23,7 +23,8 @@ import { button, clear, h, isModalOpen, modal } from '../ui/dom.ts';
 import { openDuelLobby } from '../ui/duelLobby.ts';
 import { openGlyphCard } from '../ui/glyphCard.ts';
 import { openPaintedCard, openPaintLobby } from '../ui/paintLobby.ts';
-import { openContinue, openSaveDialog, openSavesList } from '../ui/savesPanel.ts';
+import { openContinue, openKeepQuestion, openSaveDialog, openSavesList } from '../ui/savesPanel.ts';
+import { openWelcome } from '../ui/welcome.ts';
 import { LEGAL_PATHS, openLegal } from '../ui/legal.ts';
 import { Hud } from '../ui/hud.ts';
 import { openSettings } from '../ui/settingsPanel.ts';
@@ -50,6 +51,15 @@ type Mode = { kind: 'start' } | { kind: 'habitat'; id: HabitatId } | { kind: 'pa
 
 /** a phone camera goes off this long after the last photo (battery; the next photo starts faster before) */
 const HAND_CAMERA_OFF = 20_000;
+
+/** the browser already allows the camera (no question pops up when it starts) */
+async function cameraAllowed(): Promise<boolean> {
+  try {
+    return (await navigator.permissions.query({ name: 'camera' as PermissionName })).state === 'granted';
+  } catch {
+    return false;
+  }
+}
 
 /** keep the running game every so often, and soon after something new happened */
 const AUTOSAVE_EVERY = 30_000;
@@ -142,13 +152,12 @@ export class App {
 
   private async startup(): Promise<void> {
     if (!this.settings.firstRunDone) {
-      this.settings.firstRunDone = true;
-      this.save();
-      this.cameraSetup();
+      this.welcome();
       return;
     }
-    // a phone or tablet only starts its camera for a photo
-    if (!this.handheld) {
+    // a phone or tablet only starts its camera for a photo; a fixed camera starts right away only when the
+    // browser already allows it (otherwise the first thing on screen would be the permission question)
+    if (!this.handheld && (await cameraAllowed())) {
       try {
         await this.openCamera(this.settings.camera.deviceId);
       } catch {
@@ -156,6 +165,54 @@ export class App {
       }
     }
     if (this.mode.kind === 'start') this.showStart();
+  }
+
+  /** the first visit: the overview with a welcome window */
+  private welcome(): void {
+    openWelcome({
+      mode: this.settings.camera.mode,
+      autosave: this.settings.game.autosave,
+      setMode: (mode) => {
+        this.setCameraMode(mode);
+        if (this.mode.kind === 'start') this.showStart();
+      },
+      setAutosave: (on) => {
+        this.settings.game.autosave = on;
+        this.save();
+      },
+      setupCamera: () => this.cameraSetup(),
+      done: () => {
+        this.settings.firstRunDone = true;
+        this.save();
+      },
+    });
+  }
+
+  /** a fixed camera starts with the first game (the browser may ask for it then) */
+  private ensureCamera(): void {
+    if (this.handheld || this.camera.ready()) return;
+    this.openCamera(this.settings.camera.deviceId).catch(() => toast('Keine Kamera – bitte oben rechts einrichten.', 'warn', 5000));
+  }
+
+  /**
+   * Back to the menu. The first time a game with something in it is left, the app asks whether games may be
+   * kept on this device (nothing is kept before that).
+   */
+  private toMenu(): void {
+    const scene = this.scene;
+    if (this.settings.game.autosave !== null || !scene?.saveState || this.frozen) return this.showStart();
+    void scene.saveState().then(
+      (s) => {
+        if (this.scene !== scene) return;
+        if (!s) return this.showStart();
+        openKeepQuestion((keep) => {
+          this.settings.game.autosave = keep;
+          this.save();
+          if (this.scene === scene) this.showStart();
+        });
+      },
+      () => this.showStart(),
+    );
   }
 
   /** the camera is held in the hand (phone, tablet): photos through the viewfinder */
@@ -252,7 +309,12 @@ export class App {
     renderStart(this.ui, {
       settings: this.settings,
       save: () => this.save(),
-      camera: () => ({ ok: this.handheld || this.camera.ready(), label: this.camera.label || this.settings.camera.label || 'Kamera', handheld: this.handheld }),
+      camera: () => ({
+        ok: this.handheld || this.camera.ready(),
+        label: this.camera.label || this.settings.camera.label || 'Kamera',
+        handheld: this.handheld,
+        configured: !!this.settings.camera.deviceId,
+      }),
       setCameraMode: (mode) => {
         this.setCameraMode(mode);
         this.cameraSetup();
@@ -292,7 +354,11 @@ export class App {
             openCamera: () => this.cameraSetup(),
           }),
         ),
-      lastGame: () => (this.settings.game.autosave ? listSaves().then((l) => l.find((m) => m.auto) ?? null) : Promise.resolve(null)),
+      // the game just left may still be on its way into the storage
+      lastGame: () =>
+        this.settings.game.autosave
+          ? (this.saving ?? Promise.resolve()).then(() => listSaves()).then((l) => l.find((m) => m.auto) ?? null)
+          : Promise.resolve(null),
       resume: (id) => void this.resume(id),
       openSaves: () => this.openSaves(),
     });
@@ -470,9 +536,14 @@ export class App {
     return {
       save: () => this.save(),
       photo: async () => {
+        // the camera starts when it is first needed (the browser may ask now)
         if (!this.handheld && !this.camera.ready()) {
-          toast('Zuerst die Kamera einrichten.', 'warn');
-          return null;
+          try {
+            await this.openCamera(this.settings.camera.deviceId);
+          } catch {
+            toast('Zuerst die Kamera einrichten.', 'warn');
+            return null;
+          }
         }
         const g = await this.photo(DETECT_SIZE, { title: 'Farbe zeigen', hint: 'Einen Zettel oder ein Wort in der Farbe des Teams ins Bild halten.' });
         return g?.snapshot ?? null;
@@ -532,6 +603,7 @@ export class App {
     this.frozen = resuming;
     this.saveEvery = window.setInterval(() => void this.autosave(), AUTOSAVE_EVERY);
     if (!this.handheld) this.probe.start();
+    this.ensureCamera();
     clear(this.ui);
     if (!document.fullscreenElement) void document.documentElement.requestFullscreen?.().catch(() => undefined);
     void this.requestWakeLock();
@@ -554,7 +626,7 @@ export class App {
       handheld: this.handheld,
       practice,
       onScan: () => void this.scan('manual', { now: true }),
-      onMenu: () => this.showStart(),
+      onMenu: () => this.toMenu(),
       onNewSheet: () => this.newSheet(),
       onToggleAuto: () => this.toggleAuto(),
       onFullscreen: () => this.toggleFullscreen(),
@@ -568,8 +640,7 @@ export class App {
     this.auto.setEnabled(this.autoAllowed());
     // first show how the practice letter is written
     if (practice) setTimeout(() => this.scene === scene && scene.practiceTarget && scene.showDemo(scene.practiceTarget), 900);
-    if (!this.handheld && !this.camera.ready()) toast('Keine Kamera – bitte oben rechts einrichten.', 'warn', 5000);
-    else if (!resuming) toast(practice ? this.practiceIntro(scene) : 'Schreib Buchstaben oder Zahlen und drücke „Fertig!“', 'info', 5000);
+    if (!resuming) toast(practice ? this.practiceIntro(scene) : 'Schreib Buchstaben oder Zahlen und drücke „Fertig!“', 'info', 5000);
   }
 
   private practiceIntro(scene: HabitatScene): string {
@@ -593,7 +664,7 @@ export class App {
       practice: false,
       newSheetLabel: '🗒 Neue Karten',
       onScan: () => void this.scan('manual', { now: true }),
-      onMenu: () => this.showStart(),
+      onMenu: () => this.toMenu(),
       onNewSheet: () => this.newSheet(),
       onToggleAuto: () => this.toggleAuto(),
       onFullscreen: () => this.toggleFullscreen(),
@@ -602,8 +673,7 @@ export class App {
     });
     this.updateProgress();
     this.auto.setEnabled(this.autoAllowed());
-    if (!this.handheld && !this.camera.ready()) toast('Keine Kamera – bitte oben rechts einrichten.', 'warn', 5000);
-    else if (!resuming) toast('Ausgemalte Fisch-Karte unter die Kamera legen und „Fertig!“ drücken!', 'info', 5000);
+    if (!resuming) toast('Ausgemalte Fisch-Karte unter die Kamera legen und „Fertig!“ drücken!', 'info', 5000);
   }
 
   startDuel(resuming = false): void {
@@ -620,7 +690,7 @@ export class App {
       teams: this.teamKeys(),
       onTeamScan: (id) => void this.scan('manual', { now: true, team: id }),
       onScan: () => void this.scan('manual', { now: true }),
-      onMenu: () => this.showStart(),
+      onMenu: () => this.toMenu(),
       onNewSheet: () => {
         void this.vision.reset();
         toast('Alle Zettel gelten wieder als neu.', 'info');
@@ -646,7 +716,7 @@ export class App {
       handheld: this.handheld,
       practice: false,
       onScan: () => void this.scan('manual', { now: true }),
-      onMenu: () => this.showStart(),
+      onMenu: () => this.toMenu(),
       onNewSheet: () => {
         void this.vision.reset();
         toast('Alles gilt wieder als neu.', 'info');
@@ -673,7 +743,7 @@ export class App {
       teams: this.teamKeys(),
       onTeamScan: (id) => void this.scan('manual', { now: true, team: id }),
       onScan: () => void this.scan('manual', { now: true }),
-      onMenu: () => this.showStart(),
+      onMenu: () => this.toMenu(),
       onNewSheet: () => {
         void this.vision.reset();
         toast('Alle Zettel gelten wieder als neu.', 'info');
@@ -943,16 +1013,18 @@ export class App {
       h(
         'p',
         { style: 'font-size:1.15rem' },
-        this.settings.game.autosave
+        this.settings.game.autosave === true
           ? 'Zurück zum Menü? Das Spiel wird gemerkt – ihr könnt es später weiterspielen.'
-          : 'Zurück zum Menü? Die Wesen in diesem Spiel verschwinden dann (außer ihr speichert es).',
+          : this.settings.game.autosave === false
+            ? 'Zurück zum Menü? Die Wesen in diesem Spiel verschwinden dann (außer ihr speichert es).'
+            : 'Zurück zum Menü?',
       ),
       h(
         'div',
         { class: 'actions', style: 'justify-content:center' },
         button('Zum Menü', () => {
           m.close();
-          this.showStart();
+          this.toMenu();
         }, 'btn'),
         button('💾 Speichern', () => {
           m.close();
