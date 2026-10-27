@@ -7,6 +7,8 @@ import { legalLinks, legalWarning } from './legal.ts';
 import { continueBanner } from './savesPanel.ts';
 import { tilePreview, type TileKind } from './previews.ts';
 
+const DONATE_URL = 'https://www.paypal.com/donate/?hosted_button_id=S9NDLBWM4BZ6G';
+
 export interface StartDeps {
   settings: Settings;
   save: () => void;
@@ -120,6 +122,11 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         button('📂 Spielstände', d.openSaves, 'btn small'),
         button('⚙️ Einstellungen', d.openSettings, 'btn small'),
         button('👩‍🏫 Für Lehrer und Eltern', openGuide, 'btn small'),
+        h(
+          'a',
+          { class: 'btn small', href: DONATE_URL, target: '_blank', rel: 'noopener noreferrer', title: 'Krakel & Krone mit einer Spende über PayPal unterstützen' },
+          '💛 Spenden',
+        ),
       ),
       legalLinks(),
     ),
