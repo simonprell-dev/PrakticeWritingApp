@@ -34,9 +34,9 @@ const GLYPHS: Record<string, GlyphDef> = {
   J: { w: 0.9, strokes: ['M0.75 0 L0.75 1.5 C0.75 2.08 0.08 2.12 0.05 1.6'] },
   K: { w: 1.1, strokes: ['M0.1 0 L0.1 2', 'M0.12 1.1 L1.0 0', 'M0.38 0.78 L1.05 2'] },
   L: { w: 0.9, strokes: ['M0.1 0 L0.1 2', 'M0.1 2 L0.85 2'] },
-  // M and N: down and back up on the same line (double arrow in the chart)
-  M: { w: 1.5, strokes: ['M0.1 0 L0.1 2 L0.1 0', 'M0.1 0 L0.75 1.35', 'M0.75 1.35 L1.4 0', 'M1.4 0 L1.4 2'] },
-  N: { w: 1.2, strokes: ['M0.1 0 L0.1 2 L0.1 0', 'M0.1 0 L1.1 2', 'M1.1 2 L1.1 0'] },
+  // M and N start at the bottom: M up, down, up, down; N up, down, up
+  M: { w: 1.5, strokes: ['M0.1 2 L0.1 0', 'M0.1 0 L0.75 1.35', 'M0.75 1.35 L1.4 0', 'M1.4 0 L1.4 2'] },
+  N: { w: 1.2, strokes: ['M0.1 2 L0.1 0', 'M0.1 0 L1.1 2', 'M1.1 2 L1.1 0'] },
   O: { w: 1.4, strokes: [RING(0.7, 1, 0.62, 1, -90, -450)] },
   P: { w: 1.05, strokes: ['M0.1 0 L0.1 2', 'M0.1 0 L0.5 0 C1.02 0 1.02 1.05 0.5 1.05 L0.1 1.05'] },
   Q: { w: 1.45, strokes: [RING(0.7, 1, 0.62, 1, -90, -450), 'M0.85 1.45 L1.4 2.05'] },
