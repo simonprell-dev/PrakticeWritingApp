@@ -453,7 +453,7 @@ function needsAnalysis(m: MatchResult, i: number): boolean {
  * the paper may have moved). Returns the jobs of the glyphs that still need the recognition.
  */
 export function matchKnown(seg: FrameSegmentation, memory: GlyphMemory): GlyphJob[] {
-  seg.match = memory.match(seg.glyphs.map((g) => ({ box: g.box, thumb: g.thumb })));
+  seg.match = memory.match(seg.glyphs.map((g) => ({ box: g.box, thumb: g.thumb, dots: g.dots })));
   const m = seg.match;
   return seg.glyphs.filter((_, i) => needsAnalysis(m, i)).map((g) => g.job);
 }
@@ -483,7 +483,7 @@ export function finishScan(
   const glyphs = seg.glyphs;
   // without matchKnown() the caller has analysed every glyph
   const matchedBefore = !!seg.match;
-  const match = seg.match ?? deps.memory.match(glyphs.map((g) => ({ box: g.box, thumb: g.thumb })));
+  const match = seg.match ?? deps.memory.match(glyphs.map((g) => ({ box: g.box, thumb: g.thumb, dots: g.dots })));
   const fresh = glyphs.map((_, i) => !matchedBefore || needsAnalysis(match, i));
   let k = 0;
   // stored analyses are copied: the scan-wide scoring adjusts them
@@ -495,9 +495,9 @@ export function finishScan(
     return { ...s, rejected: (opts.noMirror && s.mirrored) || undefined };
   });
   const mem: MemGlyph[] = glyphs.map((g, i) => {
-    if (!fresh[i]) return { box: g.box, thumb: g.thumb };
+    if (!fresh[i]) return { box: g.box, thumb: g.thumb, dots: g.dots };
     const { cnn: _debugOnly, ...analysis } = all[i];
-    return { box: g.box, thumb: g.thumb, known: { analysis: structuredClone(analysis), score: final[i] } };
+    return { box: g.box, thumb: g.thumb, dots: g.dots, known: { analysis: structuredClone(analysis), score: final[i] } };
   });
   // a known glyph without a stored result (cannot happen in the app) gets it now
   match.matched.forEach((m, i) => {

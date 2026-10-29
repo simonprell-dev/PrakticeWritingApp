@@ -14,6 +14,8 @@ export interface MemGlyph {
   box: Box;
   /** 16x16 binary thumbnail */
   thumb: Uint8Array;
+  /** dots on top when it was scanned (missing in games saved before) */
+  dots?: number;
   known?: KnownResult;
 }
 
@@ -140,6 +142,8 @@ export class GlyphMemory {
         const ob = { x: o.box.x + shift.dx, y: o.box.y + shift.dy, w: o.box.w, h: o.box.h };
         if (iou(ob, g.box) < minIou) continue;
         if (softDice(o.thumb, g.thumb) < minDice) continue;
+        // dots added later ("Punkte nicht vergessen!"): u becomes ü, a new letter
+        if (gainedDots(o, g)) continue;
         usedOld.add(i);
         return o;
       }
@@ -163,10 +167,18 @@ export class GlyphMemory {
       const old = res.matched[i];
       // a known glyph follows the paper exactly; it keeps its first thumbnail and result
       if (old) old.box = g.box;
-      else this.items.push(g);
+      else {
+        // the same letter with its dots added replaces the one without
+        this.items = this.items.filter((o) => !(gainedDots(o, g) && iou(o.box, g.box) >= 0.35));
+        this.items.push(g);
+      }
     });
     if (this.items.length > 400) this.items.splice(0, this.items.length - 400);
   }
+}
+
+function gainedDots(old: MemGlyph, now: MemGlyph): boolean {
+  return old.dots !== undefined && now.dots !== undefined && now.dots > old.dots;
 }
 
 function median(a: number[]): number {

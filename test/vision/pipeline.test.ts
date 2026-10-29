@@ -69,6 +69,42 @@ describe('pipeline on synthetic pages', () => {
     expect(res.glyphs[2].score.char.toLowerCase()).toBe('ü');
   });
 
+  it('dots added after a scan ("Punkte nicht vergessen!") make the letter new again', () => {
+    const page: PageSpec = {
+      width: 1000,
+      height: 700,
+      glyphs: [
+        { char: 'n', x: 200, y: 380, size: 70, pen: 7 },
+        { char: 'u', x: 420, y: 380, size: 70, pen: 7 },
+        { char: 'u', x: 640, y: 380, size: 70, pen: 7 },
+      ],
+    };
+    const memory = new GlyphMemory();
+    const first = runScan(makePage(bank, page), base, { recognizer: rec, memory });
+    const withoutDots = first.glyphs.length;
+    expect(first.glyphs.every((g) => g.dots === 0)).toBe(true);
+    const img = makePage(bank, page);
+    // the second u gets its umlaut dots
+    for (const [cx, cy] of [
+      [625, 325],
+      [655, 325],
+    ]) {
+      for (let y = cy - 4; y <= cy + 4; y++) {
+        for (let x = cx - 4; x <= cx + 4; x++) {
+          if ((x - cx) ** 2 + (y - cy) ** 2 > 16) continue;
+          const o = (y * img.width + x) * 4;
+          img.data[o] = img.data[o + 1] = img.data[o + 2] = 35;
+        }
+      }
+    }
+    const second = runScan(img, base, { recognizer: rec, memory });
+    expect(second.glyphs.length).toBe(withoutDots);
+    const fresh = second.glyphs.filter((g) => g.isNew);
+    expect(fresh.length).toBe(1);
+    expect(fresh[0].dots).toBe(2);
+    expect(fresh[0].score.char.toLowerCase()).toBe('ü');
+  });
+
   it('tells lower and upper case apart by letter height', () => {
     const glyphs: GlyphSpec[] = [
       { char: 'n', x: 160, y: 380, size: 60, pen: 6 },
