@@ -55,6 +55,7 @@ body {
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: block;
   touch-action: manipulation;
 }
@@ -593,7 +594,7 @@ body {
   justify-content: center;
   z-index: 50;
   animation: fade-in 0.18s;
-  padding: 16px;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 .modal-back.closing {
   opacity: 0;
@@ -611,8 +612,11 @@ body {
   box-shadow: var(--shadow);
   padding: 22px 26px;
   max-width: min(1100px, 96vw);
-  max-height: 94vh;
+  /* the whole dialog scrolls as one; the backdrop keeps it inside the visible screen (browser bars included) */
+  max-height: 100%;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   animation: pop-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: text;
 }
@@ -716,6 +720,12 @@ input[type='range'] {
   border-radius: 22px;
   overflow: hidden;
   border: 3px solid var(--ink);
+  /* never taller than about 60 % of the screen, so there is always room left to scroll the dialog */
+  width: min(100%, 80dvh);
+  margin: 0 auto;
+}
+/* only while a region can be dragged does the picture keep the finger to itself */
+.cam-view.roi {
   touch-action: none;
 }
 .cam-view canvas {
@@ -1113,7 +1123,8 @@ input[type='range'] {
 /* colour picker: tap the colour in a photo */
 .picker-photo {
   position: relative;
-  max-width: 760px;
+  /* leave room around the photo to scroll the dialog with the finger */
+  max-width: min(760px, 100%, 85dvh);
   margin: 0 auto;
   border: 3px solid var(--ink);
   border-radius: 16px;
@@ -1255,8 +1266,6 @@ input[type='range'] {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 60vh;
-  overflow-y: auto;
   padding: 4px 4px 8px;
 }
 .save-row {
@@ -1444,7 +1453,7 @@ input[type='range'] {
   transform: translate(-50%, -50%);
   pointer-events: none;
   /* room left between the title bar (top) and the hint and shutter (bottom) */
-  --h: calc(100vh - 330px);
+  --h: calc(100dvh - 330px);
   height: min(var(--h), 112vw);
   width: min(86vw, calc(var(--h) * 0.75));
 }
@@ -1559,7 +1568,7 @@ input[type='range'] {
 @media (orientation: landscape) and (max-height: 600px) {
   .vf-guide,
   .vf-guide.card {
-    --h: calc(100vh - 140px);
+    --h: calc(100dvh - 140px);
     top: calc(50% + 46px);
     height: var(--h);
     width: min(calc(100vw - 250px), calc(var(--h) * 1.34));
