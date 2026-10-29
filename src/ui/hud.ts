@@ -212,7 +212,8 @@ export class Hud {
     if (!g) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const cssH = cv.clientHeight || 60;
-    const unit = (cssH * dpr) / 3.4;
+    // room above the top line for the dots of Ä, Ö, Ü (half a band up), below the bottom line a little
+    const unit = (cssH * dpr) / 3.75;
     const W = Math.ceil(Math.max(2.4, g.w + 0.9) * unit);
     const H = Math.ceil(cssH * dpr);
     if (cv.width !== W || cv.height !== H) {
@@ -222,7 +223,7 @@ export class Hud {
     }
     const ctx = cv.getContext('2d')!;
     ctx.clearRect(0, 0, W, H);
-    const top = unit * 0.2;
+    const top = unit * 0.55;
     drawSchoolLines(ctx, 0, W, top, unit, s.recog.lineatur === 'L3' ? 2 : 4);
     // write, hold, write again
     const dur = writeDuration(g);
