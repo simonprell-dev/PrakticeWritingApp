@@ -29,6 +29,7 @@ export function openWelcome(d: WelcomeDeps): void {
       [
         { value: 'fest', label: '📽️ Dokumentenkamera oder Webcam' },
         { value: 'hand', label: '📱 Handy oder Tablet' },
+        { value: 'spiegel', label: '🪞 Tablet mit Spiegel' },
       ],
       d.mode,
       (v: CameraMode) => d.setMode(v),

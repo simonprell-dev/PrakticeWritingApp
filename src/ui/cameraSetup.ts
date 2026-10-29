@@ -1,7 +1,8 @@
-// Camera wizard: fixed camera or phone/tablet in the hand; choose the camera, rotate/mirror, drag the region
-// of interest (fixed camera only), test scan.
+// Camera wizard: fixed camera, phone/tablet in the hand or tablet with a mirror; choose the camera,
+// rotate/mirror, drag the region of interest (fixed camera) or the four corners of the sheet (mirror), test scan.
 import type { CameraMode, Settings } from '../app/settings.ts';
 import { Camera, CameraError } from '../camera/camera.ts';
+import { DEFAULT_QUAD, quadPoint, type Quad } from '../camera/perspective.ts';
 import { TIER_LABEL } from '../recog/score.ts';
 import type { ScanResult } from '../vision/types.ts';
 import { button, h, modal, segmented } from './dom.ts';
@@ -76,8 +77,34 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     const r = overlay.getBoundingClientRect();
     return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
   };
+  // ---- corners of the sheet (mirror): the nearest corner jumps to the finger ----
+  let corner = -1;
+  const moveCorner = (e: PointerEvent) => {
+    const p = toNorm(e);
+    const q = cam.quad!.map((c) => [...c]) as Quad;
+    q[corner] = [Math.min(1, Math.max(0, p.x)), Math.min(1, Math.max(0, p.y))];
+    cam.quad = q;
+  };
   overlay.addEventListener('pointerdown', (e) => {
-    if (cam.mode === 'hand') return;
+    if (cam.mode !== 'spiegel' || !cam.quad) return;
+    const p = toNorm(e);
+    const r = overlay.getBoundingClientRect();
+    const dist = cam.quad.map(([x, y]) => Math.hypot((x - p.x) * r.width, (y - p.y) * r.height));
+    corner = dist.indexOf(Math.min(...dist));
+    moveCorner(e);
+    overlay.setPointerCapture(e.pointerId);
+  });
+  overlay.addEventListener('pointermove', (e) => {
+    if (corner >= 0) moveCorner(e);
+  });
+  overlay.addEventListener('pointerup', () => {
+    if (corner < 0) return;
+    corner = -1;
+    d.save();
+  });
+
+  overlay.addEventListener('pointerdown', (e) => {
+    if (cam.mode !== 'fest') return;
     const p = toNorm(e);
     const roi = cam.roi ?? { x: 0, y: 0, w: 1, h: 1 };
     const near = (ax: number, ay: number) => Math.hypot(p.x - ax, p.y - ay) < 0.05;
@@ -133,9 +160,19 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     const W = overlay.width;
     const H = overlay.height;
     c.clearRect(0, 0, W, H);
+    if (cam.mode === 'spiegel' && cam.quad) {
+      const q = cam.quad;
+      drawQuad(c, W, H, q);
+      drawScan(c, (u, v) => {
+        const [x, y] = quadPoint(q, u, v);
+        return [x * W, y * H];
+      });
+      return;
+    }
     const r = (cam.mode === 'hand' ? undefined : cam.roi) ?? { x: 0, y: 0, w: 1, h: 1 };
+    const inRoi = (u: number, v: number): [number, number] => [(r.x + u * r.w) * W, (r.y + v * r.h) * H];
     if (cam.mode === 'hand') {
-      drawScan(c, W, H, r);
+      drawScan(c, inRoi);
       return;
     }
     c.fillStyle = 'rgba(20,10,40,0.55)';
@@ -155,21 +192,79 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
       c.arc(x * W, y * H, 9, 0, Math.PI * 2);
       c.fill();
     }
-    drawScan(c, W, H, r);
+    drawScan(c, inRoi);
+  };
+
+  /** the sheet between its four corners; the thick top edge is where the writing points */
+  const drawQuad = (c: CanvasRenderingContext2D, W: number, H: number, q: Quad) => {
+    const pts = q.map(([x, y]) => [x * W, y * H]);
+    const outline = () => {
+      c.beginPath();
+      c.moveTo(pts[0][0], pts[0][1]);
+      for (const [x, y] of pts.slice(1)) c.lineTo(x, y);
+      c.closePath();
+    };
+    c.fillStyle = 'rgba(20,10,40,0.55)';
+    outline();
+    c.rect(0, 0, W, H);
+    c.fill('evenodd');
+    c.strokeStyle = '#ffcf3d';
+    c.lineWidth = 3;
+    outline();
+    c.stroke();
+    c.lineWidth = 7;
+    c.beginPath();
+    c.moveTo(pts[0][0], pts[0][1]);
+    c.lineTo(pts[1][0], pts[1][1]);
+    c.stroke();
+    // the canvas is scaled to the screen: handles and text keep their size for the finger
+    const k = W / (overlay.getBoundingClientRect().width || W);
+    c.font = `600 ${Math.round(15 * k)}px Fredoka, sans-serif`;
+    c.textAlign = 'center';
+    c.lineWidth = 3 * k;
+    c.strokeStyle = 'rgba(0,0,0,0.7)';
+    c.fillStyle = '#fff';
+    const mx = (pts[0][0] + pts[1][0]) / 2;
+    const my = (pts[0][1] + pts[1][1]) / 2 - 12 * k;
+    c.strokeText('oben', mx, my);
+    c.fillText('oben', mx, my);
+    c.textAlign = 'start';
+    for (const [x, y] of pts) {
+      c.fillStyle = 'rgba(255,207,61,0.35)';
+      c.beginPath();
+      c.arc(x, y, 22 * k, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = '#ffcf3d';
+      c.beginPath();
+      c.arc(x, y, 9 * k, 0, Math.PI * 2);
+      c.fill();
+    }
   };
 
   /** the letters of the last test scan, with their score */
-  const drawScan = (c: CanvasRenderingContext2D, W: number, H: number, r: Roi) => {
+  const drawScan = (c: CanvasRenderingContext2D, at: (u: number, v: number) => [number, number]) => {
     if (lastScan && performance.now() < lastScan.until) {
       const res = lastScan.res;
-      const sx = (r.w * W) / (res.frameW / res.scale);
-      const sy = (r.h * H) / (res.frameH / res.scale);
+      const fw = res.frameW / res.scale;
+      const fh = res.frameH / res.scale;
       c.font = '600 15px Fredoka, sans-serif';
       for (const g of res.glyphs) {
-        const x = r.x * W + g.box.x * sx;
-        const y = r.y * H + g.box.y * sy;
+        const u0 = g.box.x / fw;
+        const v0 = g.box.y / fh;
+        const u1 = (g.box.x + g.box.w) / fw;
+        const v1 = (g.box.y + g.box.h) / fh;
+        const [x, y] = at(u0, v0);
         c.strokeStyle = g.score.score >= 70 ? '#27c46b' : g.score.score >= 40 ? '#ffcf3d' : '#ff5470';
-        c.strokeRect(x - 2, y - 2, g.box.w * sx + 4, g.box.h * sy + 4);
+        c.beginPath();
+        for (const [u, v] of [
+          [u0, v0],
+          [u1, v0],
+          [u1, v1],
+          [u0, v1],
+        ])
+          c.lineTo(...at(u, v));
+        c.closePath();
+        c.stroke();
         c.fillStyle = '#fff';
         c.strokeStyle = 'rgba(0,0,0,0.7)';
         c.lineWidth = 3;
@@ -209,6 +304,33 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     ),
     h('p', { class: 'help' }, 'Ziehe im Bild einen Rahmen um das Blatt. Nur dort wird gesucht. Die Schrift sollte aufrecht zu sehen sein – sonst „Drehen“.'),
   );
+  // a tablet with a mirror sees the sheet at a slant: four corners instead of a rectangle
+  const mirrorOnly = h(
+    'div',
+    null,
+    h(
+      'div',
+      { class: 'row' },
+      button('⟳ Drehen', () => {
+        cam.rotation = ((cam.rotation + 90) % 360) as Settings['camera']['rotation'];
+        cam.quad = structuredClone(DEFAULT_QUAD);
+        d.save();
+      }, 'btn small'),
+      button('⇋ Spiegeln', () => {
+        cam.mirror = !cam.mirror;
+        d.save();
+      }, 'btn small'),
+      button('↺ Ecken zurücksetzen', () => {
+        cam.quad = structuredClone(DEFAULT_QUAD);
+        d.save();
+      }, 'btn small'),
+    ),
+    h(
+      'p',
+      { class: 'help' },
+      'Ziehe die vier gelben Punkte auf die Ecken des Blatts – oder auf die Ecken des Teils, der zu sehen ist. Die dicke Linie mit „oben“ gehört an den oberen Rand der Schrift. Die App rechnet das Blatt dann gerade. Steht die Schrift auf dem Kopf oder spiegelverkehrt: „Drehen“ oder „Spiegeln“.',
+    ),
+  );
   const handOnly = h(
     'div',
     { class: 'hand-help' },
@@ -217,12 +339,17 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
   );
   const tips = h('ul', { class: 'help', style: 'padding-left:1.2em;margin:0' });
   const showMode = () => {
-    fixedOnly.style.display = cam.mode === 'hand' ? 'none' : '';
+    if (cam.mode === 'spiegel' && !cam.quad) cam.quad = structuredClone(DEFAULT_QUAD);
+    fixedOnly.style.display = cam.mode === 'fest' ? '' : 'none';
+    mirrorOnly.style.display = cam.mode === 'spiegel' ? '' : 'none';
     handOnly.style.display = cam.mode === 'hand' ? '' : 'none';
+    wrap.classList.toggle('roi', cam.mode !== 'hand');
     tips.replaceChildren(
       ...(cam.mode === 'hand'
         ? ['Gutes Licht, kein Schatten vom Gerät auf dem Blatt (🔦 hilft)', 'Das Blatt flach hinlegen', 'Beim Auslösen kurz ganz still halten', 'Datenschutz: nur das Papier fotografieren, keine Gesichter']
-        : ['Filzstift oder weicher Bleistift (B/2B)', 'Licht der Dokumentenkamera einschalten, Schatten vermeiden', 'Zwischen den Buchstaben etwas Platz lassen', 'Bei Zetteln: dunkle Unterlage hilft', 'Datenschutz: nur das Papier filmen, keine Gesichter']
+        : cam.mode === 'spiegel'
+          ? ['Das Blatt immer an dieselbe Stelle vor das Tablet legen (z. B. mit Klebeband markieren)', 'Groß und kräftig schreiben: hinten auf dem Blatt wird die Schrift im Bild klein', 'Gutes Licht von oben, Schatten der Hand vermeiden', 'Datenschutz: nur das Papier ins Bild, keine Gesichter']
+          : ['Filzstift oder weicher Bleistift (B/2B)', 'Licht der Dokumentenkamera einschalten, Schatten vermeiden', 'Zwischen den Buchstaben etwas Platz lassen', 'Bei Zetteln: dunkle Unterlage hilft', 'Datenschutz: nur das Papier filmen, keine Gesichter']
       ).map((t) => h('li', null, t)),
     );
   };
@@ -230,6 +357,7 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     [
       { value: 'fest', label: '📽️ Kamera steht fest' },
       { value: 'hand', label: '📱 Handy/Tablet in der Hand' },
+      { value: 'spiegel', label: '🪞 Tablet mit Spiegel' },
     ],
     cam.mode,
     (v: CameraMode) => {
@@ -258,6 +386,7 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
         h('div', { class: 'row' }, h('label', { style: 'min-width:auto' }, 'Kamera'), select),
         handOnly,
         fixedOnly,
+        mirrorOnly,
         h(
           'div',
           { class: 'row' },

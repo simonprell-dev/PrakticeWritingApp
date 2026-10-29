@@ -1,5 +1,6 @@
 // Camera access: device choice (document camera preferred), orientation, region of interest, frame averaging.
-import type { Settings } from '../app/settings.ts';
+import type { CameraMode, Settings } from '../app/settings.ts';
+import { quadSize, warpQuad, type Quad } from './perspective.ts';
 import { DETECT_SIZE } from '../vision/constants.ts';
 import type { RGBAImage } from '../vision/types.ts';
 
@@ -86,16 +87,17 @@ export class Camera {
   }
 
   /**
-   * Opens a camera. Without a device: a document camera if there is one, or (handheld) the back camera
-   * of the phone or tablet.
+   * Opens a camera. Without a device: a document camera if there is one, or the back camera of the phone
+   * or tablet in the hand, or the front camera of a tablet with a mirror on it.
    */
-  async open(deviceId?: string, handheld = false): Promise<void> {
+  async open(deviceId?: string, mode: CameraMode = 'fest'): Promise<void> {
+    const handheld = mode === 'hand';
     this.close();
     if (!navigator.mediaDevices?.getUserMedia) throw explain(new DOMException('', 'NotFoundError'));
     const want = (id?: string): MediaStreamConstraints => ({
       audio: false,
       video: {
-        ...(id ? { deviceId: { exact: id } } : handheld ? { facingMode: { ideal: 'environment' } } : {}),
+        ...(id ? { deviceId: { exact: id } } : mode === 'fest' ? {} : { facingMode: { ideal: handheld ? 'environment' : 'user' } }),
         width: { ideal: 1920 },
         height: { ideal: 1080 },
         frameRate: { ideal: handheld ? 30 : 15, max: 30 },
@@ -109,7 +111,7 @@ export class Camera {
         this.stream = await navigator.mediaDevices.getUserMedia(want());
       }
       // without a remembered device: prefer a document camera once labels are known
-      if (!deviceId && !handheld) {
+      if (!deviceId && mode === 'fest') {
         const devs = await Camera.devices();
         const doc = devs.find((d) => Camera.isDocCam(d.label));
         const current = this.stream.getVideoTracks()[0]?.getSettings().deviceId;
@@ -220,6 +222,7 @@ export class Camera {
    */
   async grab(cam: Settings['camera'], frames = 2, maxSide = DETECT_SIZE, sharpest = false): Promise<Grab> {
     if (!this.ready()) throw new CameraError('Die Kamera ist noch nicht bereit.', 'Einen Moment warten oder die Kamera neu verbinden.');
+    if (cam.quad) return this.grabQuad(cam, cam.quad, frames, maxSide);
     const roi = this.roiPx(cam);
     // the graphics card scales straight to detection size (the recognition does not need more)
     const s = Math.min(1, maxSide / Math.max(roi.w, roi.h));
@@ -251,7 +254,51 @@ export class Camera {
       out = new Uint8ClampedArray(acc.length);
       for (let i = 0; i < out.length; i++) out[i] = acc[i] / use.length;
     }
-    const frame: RGBAImage = { width: ow, height: oh, data: out };
+    return this.result({ width: ow, height: oh, data: out });
+  }
+
+  /**
+   * A sheet at a slant (mirror): cut out between the four corners and straightened, from the full
+   * resolution of the camera (the far end of the sheet is small in the picture).
+   */
+  private async grabQuad(cam: Settings['camera'], q: Quad, frames: number, maxSide: number): Promise<Grab> {
+    const shots: { img: RGBAImage; sharp: number }[] = [];
+    for (let k = 0; k < frames; k++) {
+      if (k) await this.nextFrame();
+      const { w, h } = this.drawOriented(cam);
+      const px = q.map(([x, y]) => [x * w, y * h]) as Quad;
+      const x0 = Math.max(0, Math.floor(Math.min(...px.map((p) => p[0]))));
+      const y0 = Math.max(0, Math.floor(Math.min(...px.map((p) => p[1]))));
+      const x1 = Math.min(w, Math.ceil(Math.max(...px.map((p) => p[0]))));
+      const y1 = Math.min(h, Math.ceil(Math.max(...px.map((p) => p[1]))));
+      const src = this.ctx.getImageData(x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0));
+      const local = px.map(([x, y]) => [x - x0, y - y0]) as Quad;
+      // the proportions come from the whole picture (optical axis in its centre)
+      const size = quadSize(px, w, h, maxSide);
+      const img = warpQuad(src, local, size.w, size.h);
+      shots.push({ img, sharp: sharpness(img.data, img.width, img.height) });
+    }
+    const best = Math.max(...shots.map((x) => x.sharp));
+    const use = shots.filter((x) => x.sharp >= best * 0.7);
+    const { width, height } = use[0].img;
+    const out = new Uint8ClampedArray(width * height * 4);
+    for (let i = 0; i < out.length; i++) {
+      let s = 0;
+      for (const x of use) s += x.img.data[i];
+      out[i] = s / use.length;
+    }
+    const frame: RGBAImage = { width, height, data: out };
+    if (this.small.width !== width || this.small.height !== height) {
+      this.small.width = width;
+      this.small.height = height;
+    }
+    this.smallCtx.putImageData(new ImageData(out, width, height), 0, 0);
+    return this.result(frame);
+  }
+
+  /** the frame plus a small copy of it (drawn from the `small` canvas) */
+  private result(frame: RGBAImage): Grab {
+    const { width: ow, height: oh } = frame;
     const snapshot = document.createElement('canvas');
     const ss = Math.min(1, 720 / Math.max(ow, oh));
     snapshot.width = Math.round(ow * ss);

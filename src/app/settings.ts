@@ -1,13 +1,15 @@
 // App settings, persisted in localStorage (only on this device, nothing personal).
+import type { Quad } from '../camera/perspective.ts';
 import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
 
 export type HabitatId = 'meer' | 'weltraum' | 'savanne';
 
 /**
  * fest: a document camera or webcam looks at the paper all the time (projector in class);
- * hand: a phone or tablet is held over the paper for every photo (the game runs on the device)
+ * hand: a phone or tablet is held over the paper for every photo (the game runs on the device);
+ * spiegel: a tablet stands, a mirror on its front camera looks at the paper in front of it, at a slant
  */
-export type CameraMode = 'fest' | 'hand';
+export type CameraMode = 'fest' | 'hand' | 'spiegel';
 
 /**
  * Phones and tablets (iPads report themselves as Macs with touch). Digital classroom boards often run
@@ -42,6 +44,8 @@ export interface Settings {
     mirror: boolean;
     /** normalised region of interest 0..1 */
     roi?: { x: number; y: number; w: number; h: number };
+    /** mirror: the corners of the sheet, normalised 0..1 (top left, top right, bottom right, bottom left) */
+    quad?: Quad;
   };
   recog: {
     pen: PenPreset;

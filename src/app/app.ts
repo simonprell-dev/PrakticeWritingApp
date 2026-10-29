@@ -220,10 +220,14 @@ export class App {
     return this.settings.camera.mode === 'hand';
   }
 
-  /** the camera settings a photo is taken with: a camera in the hand is never turned or cut */
+  /**
+   * the camera settings a photo is taken with: a camera in the hand is never turned or cut; a fixed
+   * camera cuts out a rectangle, a tablet with a mirror the four corners of the sheet
+   */
   private camConfig(): Settings['camera'] {
     const c = this.settings.camera;
-    return c.mode === 'hand' ? { ...c, rotation: 0, mirror: false, roi: undefined } : c;
+    if (c.mode === 'hand') return { ...c, rotation: 0, mirror: false, roi: undefined, quad: undefined };
+    return c.mode === 'spiegel' ? { ...c, roi: undefined } : { ...c, quad: undefined };
   }
 
   /** automatic scans need a camera that stands still */
@@ -267,6 +271,11 @@ export class App {
     // the other kind of camera: let the app choose again (document camera, or the back camera)
     this.settings.camera.deviceId = undefined;
     this.settings.camera.label = undefined;
+    // the mirror shows the sheet the right way round; turning or mirroring for a document camera would spoil it
+    if (mode === 'spiegel') {
+      this.settings.camera.rotation = 0;
+      this.settings.camera.mirror = false;
+    }
     this.save();
     this.camera.close();
     if (this.mode.kind !== 'start') {
@@ -283,7 +292,7 @@ export class App {
   }
 
   async openCamera(deviceId?: string): Promise<void> {
-    await this.camera.open(deviceId, this.handheld);
+    await this.camera.open(deviceId, this.settings.camera.mode);
     this.settings.camera.deviceId = this.camera.deviceId;
     this.settings.camera.label = this.camera.label;
     this.save();

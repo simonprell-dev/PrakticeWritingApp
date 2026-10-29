@@ -1,5 +1,5 @@
 // "So spielt ihr" on the start screen: three little animations show how the game is played with a document
-// camera and a projector, with a phone or tablet in the hand, and (coming soon) with a tablet and a mirror.
+// camera and a projector, with a phone or tablet in the hand, and with a tablet and a mirror.
 import type { CameraMode } from '../app/settings.ts';
 import { button, h } from './dom.ts';
 
@@ -78,7 +78,7 @@ const HANDHELD = `<svg viewBox="0 0 320 200" class="ht ht2" aria-hidden="true">
 </g>
 </svg>`;
 
-/** coming soon: the tablet stands, a mirror on its front camera looks down at the paper in front */
+/** the tablet stands, a mirror on its front camera looks down at the paper in front */
 const MIRROR = `<svg viewBox="0 0 320 200" class="ht ht3" aria-hidden="true">
 <defs>${water('ht-water3')}</defs>
 <rect width="320" height="200" rx="18" fill="#efeaff"/>
@@ -122,18 +122,17 @@ export function howtoSection(d: HowtoDeps): HTMLElement {
         : button('Kommt bald', () => undefined, 'btn small'),
     );
   };
-  const soon = card({
+  const mirror = card({
     svg: MIRROR,
     title: '🪞 Tablet mit Spiegel',
     who: 'Ganz ohne Halten – wie beim Osmo',
     steps: [
       'Das Tablet steht im Ständer, ein kleiner Spiegel sitzt auf der Frontkamera.',
       'Davor schreiben oder malen: Das Tablet schaut über den Spiegel zu.',
-      'Die Wesen erscheinen von selbst auf dem Tablet.',
+      'Einmal die vier Ecken des Blatts festlegen, dann nur noch „Fertig!“ tippen.',
     ],
-    soon: true,
+    mode: 'spiegel',
   });
-  (soon.querySelector('button') as HTMLButtonElement).disabled = true;
   return h(
     'section',
     { class: 'howto', 'aria-label': 'So spielt ihr' },
@@ -163,7 +162,7 @@ export function howtoSection(d: HowtoDeps): HTMLElement {
         ],
         mode: 'hand',
       }),
-      soon,
+      mirror,
     ),
   );
 }
