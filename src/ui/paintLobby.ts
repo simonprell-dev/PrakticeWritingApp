@@ -16,7 +16,7 @@ const SIMPLE_SHEETS: { value: SheetId; label: string }[] = [
 ];
 
 function isSheetId(v: unknown): v is SheetId {
-  return v === 'mix-a' || v === 'mix-b' || (typeof v === 'string' && v in SPECIES);
+  return v === 'mix-a' || v === 'mix-b' || (typeof v === 'string' && Object.hasOwn(SPECIES, v));
 }
 
 function loadSheet(): SheetId {

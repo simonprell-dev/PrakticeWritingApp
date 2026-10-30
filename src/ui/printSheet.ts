@@ -42,7 +42,7 @@ ${L.arrow ? text(L.arrow, L.hint.size, 'end') + '\n' + marks : ''}${text(L.name,
 }
 
 /** y (mm) of the footer's baseline: below the cut lines of the bottom row, inside the printable margin */
-export const FOOTER_Y = 294;
+export const FOOTER_Y = 292.3;
 
 /** the whole A4 page (mm units); `host` is the web address shown in the footer (left out if empty) */
 export function sheetSvg(id: SheetId = 'fisch', opts: { host?: string } = {}): string {
@@ -63,7 +63,7 @@ export function sheetSvg(id: SheetId = 'fisch', opts: { host?: string } = {}): s
 <g stroke="#b8b4c4" stroke-width="${LINE.frameDash}" stroke-dasharray="2 1.6">${cut.join('')}</g>
 <text x="${L.x0 + 1}" y="${L.y0 - 1.6}" font-size="2.6" fill="#8d879c" font-family="Fredoka, sans-serif">✂ Krakel &amp; Krone · Mal-Aquarium – ausmalen, ausschneiden (der schwarze Rahmen muss ganz bleiben) und unter die Kamera legen</text>
 ${L.cells.map((c, i) => cardSvg(animals[i], c.x, c.y)).join('\n')}
-<text x="${SHEET.w / 2}" y="${FOOTER_Y}" font-size="2.4" text-anchor="middle" fill="#9a95a8" font-family="Fredoka, sans-serif">${opts.host ? `${opts.host} · ` : ''}Ein Projekt von PrellDynamics · prelldynamics.de</text>
+<text x="${SHEET.w / 2}" y="${FOOTER_Y}" font-size="2.2" text-anchor="middle" fill="#9a95a8" font-family="Fredoka, sans-serif">${opts.host ? `${opts.host.replace(/&/g, '&amp;').replace(/</g, '&lt;')} · ` : ''}Ein Projekt von PrellDynamics · prelldynamics.de</text>
 </svg>`;
 }
 

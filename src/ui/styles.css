@@ -1333,6 +1333,20 @@ input[type='range'] {
   gap: 8px;
   align-items: flex-start;
 }
+.sheet-chooser .seg {
+  flex-wrap: wrap;
+  max-width: 100%;
+  border-radius: 18px;
+}
+.sheet-chooser select {
+  max-width: 100%;
+}
+@media (max-width: 480px) {
+  .sheet-chooser .seg-btn {
+    font-size: 1rem;
+    padding: 0.4em 0.8em;
+  }
+}
 .sheet-title {
   margin: 0;
 }

@@ -91,8 +91,8 @@ describe('sheets', () => {
   it('prints a discreet footer below the cards', () => {
     const L = sheetLayout();
     const bottom = L.y0 + SHEET.rows * L.cellH;
-    expect(FOOTER_Y).toBeGreaterThan(bottom);
-    expect(FOOTER_Y).toBeLessThan(SHEET.h);
+    expect(FOOTER_Y).toBeGreaterThanOrEqual(bottom + 1.5);
+    expect(FOOTER_Y).toBeLessThanOrEqual(SHEET.h - 4);
     const withHost = sheetSvg('mix-a', { host: 'example.org' });
     expect(withHost).toContain('example.org');
     expect(withHost).toContain('Ein Projekt von PrellDynamics');
