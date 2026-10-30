@@ -1,6 +1,6 @@
 import { createCanvas } from '@napi-rs/canvas';
 import { describe, expect, it } from 'vitest';
-import { nameCrop } from '../../src/game/creatures/paintedFish.ts';
+import { nameCrop } from '../../src/game/creatures/paintedAnimal.ts';
 import { cardImage, type CardLook } from '../../src/game/paint/cardArt.ts';
 import { CARD, CARD_PX, LABELS, SHEET } from '../../src/game/paint/fishCard.ts';
 import { MIX_A, MIX_B } from '../../src/game/paint/sheets.ts';

@@ -53,12 +53,12 @@ const save = (name: string, c: { toBuffer(t: 'image/png'): Buffer }) => {
 {
   const { paperPicture, photo, pose } = await import('../test/helpers/cardScene.ts');
   const { findCards } = await import('../src/vision/cards.ts');
-  const { paintedFishSprite, fishPicture } = await import('../src/game/creatures/paintedFish.ts');
+  const { paintedSprite, animalPicture } = await import('../src/game/creatures/paintedAnimal.ts');
   const look = { fills: { body: '#ff8a2a', tail: '#ffd23c', dorsal: '#2f9bff', anal: '#2f9bff', pelvic: '#2f9bff', pectoral: '#ff4f8a', water: '#bfe6ff' } };
   const img = photo(paperPicture('card', [look]), { width: 1280, height: 960, table: [60, 50, 44], corners: pose(100, 94, 7, 640, 480, 23, 0.05), noise: 8, texture: 0.35, cast: [1.05, 1, 0.88] });
   const res = findCards(img);
   console.log('cards', res.cards.length, res.cards.map((c) => [c.match, c.colored.toFixed(2)]), res.ms + ' ms');
-  const sp = paintedFishSprite(res.cards[0].image, 3);
+  const sp = paintedSprite(res.cards[0].species, res.cards[0].image, 3);
   const c = createCanvas(900, 420);
   const ctx = c.getContext('2d');
   const g = ctx.createLinearGradient(0, 0, 0, 420);
@@ -66,7 +66,7 @@ const save = (name: string, c: { toBuffer(t: 'image/png'): Buffer }) => {
   g.addColorStop(1, '#155f98');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 900, 420);
-  ctx.drawImage(fishPicture(sp, 380) as unknown as Parameters<typeof ctx.drawImage>[0], 20, 60);
+  ctx.drawImage(animalPicture(sp, 380) as unknown as Parameters<typeof ctx.drawImage>[0], 20, 60);
   ctx.save();
   ctx.translate(680, 210);
   ctx.scale(-0.7, 0.7);

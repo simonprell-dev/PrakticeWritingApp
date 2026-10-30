@@ -4,9 +4,10 @@ import { dataURLToRGBA, encodeOnce, rememberEncoded, rgbaToDataURL } from '../ap
 import { sfx } from '../game/audio.ts';
 import { canvasFromRGBA } from '../game/canvas.ts';
 import { makeGenome } from '../game/creatures/genome.ts';
-import { fishPicture, nameCrop, paintedFishSprite } from '../game/creatures/paintedFish.ts';
+import { animalPicture, nameCrop, paintedSprite } from '../game/creatures/paintedAnimal.ts';
 import type { Sprite } from '../game/creatures/sprite.ts';
 import { lerp } from '../game/math.ts';
+import type { SpeciesId } from '../game/paint/species.ts';
 import { hashBytes } from '../game/rng.ts';
 import type { FxItem } from '../game/spawnFx.ts';
 import { tierOf } from '../recog/score.ts';
@@ -54,10 +55,10 @@ export class PaintScene extends HabitatScene {
     this.letters = false;
   }
 
-  /** the skin and sprite of a coloured card; k = size (sprite px per fish unit) */
-  makeSkin(image: RGBAImage, thumb: number[], k = 2.5 * (0.9 + Math.random() * 0.22)): { skin: PaintedSkin; sprite: Sprite } {
-    const sprite = paintedFishSprite(image, k, canvasFromRGBA(image));
-    return { skin: { image, thumb, name: nameCrop(image), picture: fishPicture(sprite, 150), k }, sprite };
+  /** the skin and sprite of a coloured card; k = size (sprite px per animal unit) */
+  makeSkin(image: RGBAImage, thumb: number[], k = 2.5 * (0.9 + Math.random() * 0.22), sp: SpeciesId = 'fisch'): { skin: PaintedSkin; sprite: Sprite } {
+    const sprite = paintedSprite(sp, image, k, canvasFromRGBA(image));
+    return { skin: { image, thumb, name: nameCrop(image, sp), picture: animalPicture(sprite, 150), k }, sprite };
   }
 
   handleCards(res: CardScan, snap: Snapshot): void {
@@ -93,14 +94,14 @@ export class PaintScene extends HabitatScene {
       if (before && fish) {
         Object.assign(before, { thumb: card.thumb, cx, cy, size, seen: this.scans });
         recoloured++;
-        const { skin, sprite } = this.makeSkin(card.image, card.thumb, fish.painted!.k);
+        const { skin, sprite } = this.makeSkin(card.image, card.thumb, fish.painted!.k, card.species);
         items.push({ box, isNew: true, fly: { sticker: skin.picture, to: { x: fish.x, y: fish.y }, onLand: () => this.recolour(fish, skin, sprite) } });
         continue;
       }
       hatched++;
       const entry: KnownCard = { thumb: card.thumb, cx, cy, size, fish: 0, seen: this.scans };
       this.known.push(entry);
-      const { skin, sprite } = this.makeSkin(card.image, card.thumb);
+      const { skin, sprite } = this.makeSkin(card.image, card.thumb, undefined, card.species);
       const to = { x: lerp(B.x0 + 160, B.x1 - 160, Math.random()), y: lerp(B.y0 + 80, B.y1 - 80, Math.random()) };
       items.push({
         box,
@@ -160,7 +161,7 @@ export class PaintScene extends HabitatScene {
     const p = c.painted;
     if (!p) return super.showCreature(c);
     this.host.showPainted?.({
-      picture: fishPicture(c.sprite, 460),
+      picture: animalPicture(c.sprite, 460),
       name: p.name,
       release: () => {
         c.leaving = true;

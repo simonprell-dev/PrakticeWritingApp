@@ -3,6 +3,7 @@
 // which animal is on the card and which way up it lies. The card is then cut out straight (homography) at a
 // fixed resolution and its colours are evened out against the white paper.
 import { CARD, CARD_PX, FREEFORM, insidePolygon, lineSamples, onAnimal, toCard, type LineSample } from '../game/paint/fishCard.ts';
+import { freeformShare } from '../game/paint/freeform.ts';
 import { ANIMALS, SPECIES, type SpeciesId } from '../game/paint/species.ts';
 import { label } from './components.ts';
 import { boxBlur, maxFilter } from './filters.ts';
@@ -224,24 +225,20 @@ function paintBox(sp: SpeciesId): { x0: number; y0: number; x1: number; y1: numb
 
 const colourPts = new Map<SpeciesId, Pt[]>();
 
-/** points (card mm) on the colourable animal, away from the printed lines and the eyes */
+/** points (card mm) on the colourable animal, away from the printed lines and the eyes (not the free-form card) */
 function colourPoints(sp: SpeciesId): Pt[] {
   let pts = colourPts.get(sp);
   if (pts) return pts;
   const def = SPECIES[sp];
   const lines = samplesOf(sp).full;
   const b = paintBox(sp);
-  const a = FREEFORM.arrow;
   const step = 1.5;
   pts = [];
   for (let cy = b.y0; cy <= b.y1; cy += step) {
     for (let cx = b.x0; cx <= b.x1; cx += step) {
       const x = (cx - def.place.x) / def.place.s;
       const y = (cy - def.place.y) / def.place.s;
-      if (sp === 'freiform') {
-        // not the arrow and its words
-        if (cx > a.x0 - 3 && cy > a.y - 9 && cy < a.y + 4) continue;
-      } else if (!onAnimal(sp, x, y) || def.eyes.some((e) => Math.hypot(x - e.x, y - e.y) < e.r + 1.5)) continue;
+      if (!onAnimal(sp, x, y) || def.eyes.some((e) => Math.hypot(x - e.x, y - e.y) < e.r + 1.5)) continue;
       if (lines.some((s) => Math.abs(s.x - cx) < 1.3 && Math.abs(s.y - cy) < 1.3)) continue;
       pts.push([cx, cy]);
     }
@@ -555,6 +552,8 @@ function texel(img: RGBAImage, x: number, y: number): [number, number, number] {
 
 /** share of the animal that is coloured in (blank cards on a full sheet do not become animals) */
 export function colouredShare(img: RGBAImage, sp: SpeciesId): number {
+  // the free-form card: what the cut-out keeps, so pale crayon counts and the printed words do not
+  if (sp === 'freiform') return freeformShare(img);
   const pts = colourPoints(sp);
   let n = 0;
   for (const [x, y] of pts) {

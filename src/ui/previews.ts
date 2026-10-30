@@ -4,7 +4,7 @@ import { alienSprite } from '../game/creatures/alien.ts';
 import { bubbleSprite } from '../game/creatures/bubble.ts';
 import { fighterSprite } from '../game/creatures/duelFigure.ts';
 import { fishSprite } from '../game/creatures/fish.ts';
-import { paintedFishSprite } from '../game/creatures/paintedFish.ts';
+import { paintedSprite } from '../game/creatures/paintedAnimal.ts';
 import { cardImage, drawCard, type CardLook } from '../game/paint/cardArt.ts';
 import { drawGiant } from '../game/creatures/giant.ts';
 import { drawBeam, drawPortal, drawUfo } from '../game/creatures/ufo.ts';
@@ -220,9 +220,9 @@ export function tilePreview(kind: TileKind, canvas: HTMLCanvasElement): void {
     ctx.quadraticCurveTo(240, 40, 300, 95);
     ctx.stroke();
     ctx.restore();
-    const fish = paintedFishSprite(cardImage(PAINTED), 1.35);
+    const fish = paintedSprite('fisch', cardImage(PAINTED), 1.35);
     draw(ctx, fish, 360, 150, 1);
-    draw(ctx, paintedFishSprite(cardImage(PAINTED_2), 0.9), 400, 285, 1, -1);
+    draw(ctx, paintedSprite('fisch', cardImage(PAINTED_2), 0.9), 400, 285, 1, -1);
   } else {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#9fd8ff');

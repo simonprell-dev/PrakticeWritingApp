@@ -1,3 +1,4 @@
+import type { Motion } from '../paint/species.ts';
 import type { AnyCanvas, Ctx } from '../canvas.ts';
 import type { EyeInfo } from './parts.ts';
 
@@ -11,13 +12,15 @@ export interface Sprite {
   eyes: EyeInfo[];
   /** colour of the eyelid when blinking */
   lid: string;
-  /** separately animated tail (fish), pivot at (pivotX, pivotY) in tail sprite, attached at (px, py) */
+  /** separately animated part (the fish's tail, an animal's fins, claws or arms), pivot at (pivotX, pivotY) in its sprite, attached at (px, py) */
   tail?: { canvas: AnyCanvas; pivotX: number; pivotY: number; px: number; py: number };
   /** where an accessory like a crown or sparkles sits (sprite px) */
   top: { x: number; y: number };
   /** white badge circle (sprite px); the child's letter is drawn live so it is never mirrored */
   badge?: { x: number; y: number; r: number };
   sticker?: AnyCanvas | null;
+  /** how a painted animal moves (Mal-Aquarium); other creatures swim the habitat's way */
+  motion?: Motion;
 }
 
 /**
