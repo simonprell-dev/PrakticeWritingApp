@@ -2,13 +2,17 @@
 // The print sheet uses the same geometry as SVG (ui/printSheet.ts).
 import type { RGBAImage } from '../../vision/types.ts';
 import { makeCanvas, makePath, type Ctx } from '../canvas.ts';
-import { CARD, CARD_PX, FISH, FISH_TO_CARD, LABELS, LINE, OUTLINE_PARTS, type FishPart } from './fishCard.ts';
+import { CARD, CARD_PX, FREEFORM, LINE } from './fishCard.ts';
+import { labelsFor } from './sheets.ts';
+import { SPECIES, type SpeciesId } from './species.ts';
 
 export const INK = '#1d1a24';
 
 export interface CardLook {
+  /** the animal on the card (default: the fish) */
+  species?: SpeciesId;
   /** colours of the parts (white when missing), 'water' = the area around the fish */
-  fills?: Partial<Record<FishPart | 'water', string>>;
+  fills?: Partial<Record<string, string>>;
   font?: string;
   /** draw the white margin up to the cut line */
   margin?: boolean;
@@ -41,54 +45,72 @@ export function drawCard(ctx: Ctx, k: number, look: CardLook = {}): void {
   ctx.fillRect(w - frame, 0, frame, h);
 
   ctx.save();
-  ctx.translate(FISH_TO_CARD.x, FISH_TO_CARD.y);
-  ctx.scale(FISH_TO_CARD.s, FISH_TO_CARD.s);
-  const u = 1 / FISH_TO_CARD.s;
+  const sp = SPECIES[look.species ?? 'fisch'];
+  const labels = labelsFor(sp.id);
+  ctx.translate(sp.place.x, sp.place.y);
+  ctx.scale(sp.place.s, sp.place.s);
+  const u = 1 / sp.place.s;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   ctx.strokeStyle = INK;
-  for (const part of OUTLINE_PARTS) {
-    const p = makePath(FISH[part]);
-    ctx.fillStyle = look.fills?.[part] ?? '#ffffff';
+  for (const part of sp.parts) {
+    const p = makePath(part.d);
+    ctx.fillStyle = look.fills?.[part.id] ?? '#ffffff';
     ctx.fill(p);
     ctx.lineWidth = LINE.outline * u;
     ctx.stroke(p);
   }
   ctx.lineWidth = LINE.inner * u;
-  for (const d of FISH.lines) ctx.stroke(makePath(d));
+  for (const d of sp.lines) ctx.stroke(makePath(d));
   ctx.lineWidth = LINE.outline * u * 0.8;
-  ctx.stroke(makePath(FISH.mouth));
-  const { eye, pupil } = FISH;
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(eye.x, eye.y, eye.r, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = LINE.inner * u * 1.3;
-  ctx.stroke();
-  ctx.fillStyle = INK;
-  ctx.beginPath();
-  ctx.arc(pupil.x, pupil.y, pupil.r, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(pupil.x - 0.9, pupil.y - 1, 0.85, 0, Math.PI * 2);
-  ctx.fill();
+  for (const d of sp.strokes) ctx.stroke(makePath(d));
+  for (const { pupil, ...eye } of sp.eyes) {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(eye.x, eye.y, eye.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = LINE.inner * u * 1.3;
+    ctx.stroke();
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.arc(pupil.x, pupil.y, pupil.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(pupil.x - 0.9, pupil.y - 1, 0.85, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 
   const font = look.font ?? 'Fredoka, system-ui, sans-serif';
   ctx.fillStyle = '#4a4458';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `600 ${LABELS.hint.size}px ${font}`;
+  ctx.font = `600 ${labels.hint.size}px ${font}`;
   ctx.textAlign = 'right';
-  ctx.fillText(LABELS.hint.text, LABELS.hint.x, LABELS.hint.y);
-  ctx.font = `600 ${LABELS.name.size}px ${font}`;
+  ctx.fillText(labels.hint.text, labels.hint.x, labels.hint.y);
+  if (labels.arrow) ctx.fillText(labels.arrow.text, labels.arrow.x, labels.arrow.y);
+  ctx.font = `600 ${labels.name.size}px ${font}`;
   ctx.textAlign = 'left';
-  ctx.fillText(LABELS.name.text, LABELS.name.x, LABELS.name.y);
+  ctx.fillText(labels.name.text, labels.name.x, labels.name.y);
+  if (labels.arrow) {
+    // the free-form card: a box around the hint and a drawn arrow, so the camera knows which way up it lies
+    const { hintBox: b, arrow: a } = FREEFORM;
+    ctx.strokeStyle = '#4a4458';
+    ctx.lineWidth = FREEFORM.width;
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+    ctx.beginPath();
+    ctx.moveTo(a.x0, a.y);
+    ctx.lineTo(a.x1, a.y);
+    ctx.moveTo(a.x1 - a.head, a.y - a.head * 0.75);
+    ctx.lineTo(a.x1, a.y);
+    ctx.lineTo(a.x1 - a.head, a.y + a.head * 0.75);
+    ctx.stroke();
+  }
   ctx.strokeStyle = '#6d6680';
   ctx.lineWidth = 0.35;
   ctx.beginPath();
-  ctx.moveTo(LABELS.line.x0, LABELS.line.y);
-  ctx.lineTo(LABELS.line.x1, LABELS.line.y);
+  ctx.moveTo(labels.line.x0, labels.line.y);
+  ctx.lineTo(labels.line.x1, labels.line.y);
   ctx.stroke();
   ctx.restore();
 }

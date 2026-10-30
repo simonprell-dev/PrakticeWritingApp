@@ -112,7 +112,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         tile('duell', '⚔️ Team-Duell', 'Zwei Teams, Zettel, Blasen-Burgen', d.openDuel),
         tile('riesenburg', '🏰 Riesenburg', 'Die ganze Klasse gegen den Riesen', d.openSiege),
         tile('tuerme', '🏗️ Türme bauen', 'Bis zu 8 Teams, Aliens helfen', d.openTowers),
-        tile('malen', '🎨 Mal-Aquarium', 'Fische ausmalen – sie schwimmen los', d.openPaint),
+        tile('malen', '🎨 Mal-Aquarium', 'Meerestiere ausmalen – sie schwimmen los', d.openPaint),
       ),
       howtoSection({ mode: s.camera.mode, choose: d.setCameraMode }),
       h(

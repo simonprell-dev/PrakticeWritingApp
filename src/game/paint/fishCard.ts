@@ -1,6 +1,8 @@
-// The colouring card of the "Mal-Aquarium": a fish to colour in, inside a thick black frame; six cards fit
+// The colouring card of the "Mal-Aquarium": an animal to colour in, inside a thick black frame; six cards fit
 // on an A4 sheet. Pure geometry in millimetres, shared by the print sheet, the card detection in the worker
 // and the sprite of the painted fish.
+
+import { SPECIES, type SpeciesId } from './species.ts';
 
 export type Pt = [number, number];
 
@@ -12,44 +14,6 @@ export const SHEET = { w: 210, h: 297, cols: 2, rows: 3 } as const;
 
 /** texture resolution of a scanned card (px per mm) */
 export const CARD_PX = 5;
-
-/** the fish is drawn in its own units (100 × 76, facing right) and placed on the card with this transform */
-export const FISH_TO_CARD = { s: 0.82, x: 6, y: 12 } as const;
-
-/**
- * The fish, back to front. Outline parts are closed shapes; the tail and the fins tuck under the body.
- * Inner lines divide the body into areas to colour.
- */
-export const FISH = {
-  tail: 'M 34 33 C 26 27 16 17 4 11 C 8 23 12 31 13 38 C 12 45 8 53 4 65 C 16 59 26 49 34 43 Z',
-  dorsal: 'M 72 18 C 66 7 54 1 41 3 C 46 9 47 15 46 23 Z',
-  anal: 'M 43 58 C 39 64 34 68 28 68 C 31 64 33 59 34 53 Z',
-  pelvic: 'M 65 61 C 61 68 55 72 47 73 C 50 69 52 65 53 62 Z',
-  body: 'M 30 30 C 40 15 62 10 78 16 C 90 21 97 31 97 39 C 97 49 88 58 74 62 C 58 66 40 61 30 46 C 28 42 28 34 30 30 Z',
-  pectoral: 'M 66 45 C 60 46 53 51 52 57 C 58 57 65 53 68 48 Z',
-  lines: [
-    // gill and two stripes
-    'M 79 22 C 73 30 73 47 79 56',
-    'M 61 14 C 56 26 56 49 61 63',
-    'M 45 20 C 41 31 41 48 45 58',
-    // fin rays
-    'M 25 33 L 13 22',
-    'M 25 38 L 15 38',
-    'M 25 43 L 13 54',
-  ],
-  mouth: 'M 89.5 46 Q 92.5 48.5 95.5 45.5',
-  eye: { x: 85, y: 32, r: 5.4 },
-  pupil: { x: 86.3, y: 32.6, r: 2.5 },
-  /** where the tail turns when it wags */
-  joint: { x: 31, y: 38 },
-  /** bounding box of the whole fish (fish units) */
-  box: { x0: 3, y0: 1.5, x1: 98.5, y1: 74.5 },
-} as const;
-
-/** order in which the parts are drawn (the tail is a sprite of its own) */
-export const BODY_PARTS = ['dorsal', 'anal', 'pelvic', 'body', 'pectoral'] as const;
-export const OUTLINE_PARTS = ['tail', ...BODY_PARTS] as const;
-export type FishPart = (typeof OUTLINE_PARTS)[number];
 
 /** line widths in mm */
 export const LINE = { outline: 1.1, inner: 0.6, frameDash: 0.35 } as const;
@@ -63,8 +27,21 @@ export const LABELS = {
   nameBox: { x: 39, y: 73.5, w: CARD.w - 43.5, h: 11 },
 } as const;
 
-export function fishToCard(x: number, y: number): Pt {
-  return [FISH_TO_CARD.x + x * FISH_TO_CARD.s, FISH_TO_CARD.y + y * FISH_TO_CARD.s];
+/**
+ * The printed marks of the free-form card (card mm): a box around the hint at the top and an arrow under
+ * „Kopf nach hier →“. The card has no animal outline, so these marks (and the name line) tell which way up it lies.
+ */
+export const FREEFORM = {
+  hintBox: { x: 40.5, y: 5, w: 49, h: 5.8 },
+  /** shaft from x0 to x1, the head at x1 */
+  arrow: { x0: 64, x1: 88, y: 48, head: 3 },
+  width: 0.6,
+} as const;
+
+/** a point of the animal (its own units) on the card, in mm */
+export function toCard(sp: SpeciesId, x: number, y: number): Pt {
+  const { place } = SPECIES[sp];
+  return [place.x + x * place.s, place.y + y * place.s];
 }
 
 /** top-left corners (mm) of the six cards on the sheet; the cut lines run around each cell */
@@ -140,23 +117,22 @@ export function insidePolygon(poly: Pt[], x: number, y: number): boolean {
   return inside;
 }
 
-let partPolys: Record<FishPart, Pt[]> | null = null;
+const partPolys = new Map<SpeciesId, Record<string, Pt[]>>();
 
-/** the outline parts as polygons in fish units */
-export function partPolygons(): Record<FishPart, Pt[]> {
-  if (!partPolys) {
-    const out = {} as Record<FishPart, Pt[]>;
-    for (const k of OUTLINE_PARTS) out[k] = flatten(FISH[k])[0];
-    partPolys = out;
+/** the outline parts as polygons in the animal's units */
+export function partPolygons(sp: SpeciesId): Record<string, Pt[]> {
+  let out = partPolys.get(sp);
+  if (!out) {
+    out = {};
+    for (const p of SPECIES[sp].parts) out[p.id] = flatten(p.d)[0];
+    partPolys.set(sp, out);
   }
-  return partPolys;
+  return out;
 }
 
-/** true when the point (fish units) is on the fish */
-export function onFish(x: number, y: number): boolean {
-  const polys = partPolygons();
-  for (const k of OUTLINE_PARTS) if (insidePolygon(polys[k], x, y)) return true;
-  return false;
+/** true when the point (animal units) is on the animal */
+export function onAnimal(sp: SpeciesId, x: number, y: number): boolean {
+  return Object.values(partPolygons(sp)).some((poly) => insidePolygon(poly, x, y));
 }
 
 export interface LineSample {
@@ -169,15 +145,17 @@ export interface LineSample {
 }
 
 /**
- * Points every `step` mm along the visible printed lines of the fish (silhouette and inner lines), with
+ * Points every `step` mm along the visible printed lines of the animal (silhouette and inner lines), with
  * their normals, in card mm. The detection looks for them to find out which way up a card lies.
  */
-export function lineSamples(step = 1): LineSample[] {
+export function lineSamples(sp: SpeciesId, step = 1): LineSample[] {
+  if (sp === 'freiform') return freeformSamples(step);
+  const { place, parts, lines, eyes } = SPECIES[sp];
   const out: LineSample[] = [];
   const add = (poly: Pt[], visible: (x: number, y: number) => boolean) => {
     for (let i = 1; i < poly.length; i++) {
-      const [ax, ay] = fishToCard(poly[i - 1][0], poly[i - 1][1]);
-      const [bx, by] = fishToCard(poly[i][0], poly[i][1]);
+      const [ax, ay] = toCard(sp, poly[i - 1][0], poly[i - 1][1]);
+      const [bx, by] = toCard(sp, poly[i][0], poly[i][1]);
       const len = Math.hypot(bx - ax, by - ay);
       if (len < 1e-6) continue;
       const nx = -(by - ay) / len;
@@ -187,18 +165,45 @@ export function lineSamples(step = 1): LineSample[] {
         const t = (k + 0.5) / n;
         const x = ax + (bx - ax) * t;
         const y = ay + (by - ay) * t;
-        const fx = (x - FISH_TO_CARD.x) / FISH_TO_CARD.s;
-        const fy = (y - FISH_TO_CARD.y) / FISH_TO_CARD.s;
-        if (visible(fx, fy)) out.push({ x, y, nx, ny });
+        const fx = (x - place.x) / place.s;
+        const fy = (y - place.y) / place.s;
+        // the eyes are drawn over everything
+        if (visible(fx, fy) && !eyes.some((e) => Math.hypot(fx - e.x, fy - e.y) < e.r)) out.push({ x, y, nx, ny });
       }
     }
   };
-  const polys = partPolygons();
-  // the parts behind the body are only visible outside of it
-  OUTLINE_PARTS.forEach((k, i) => {
-    const front = OUTLINE_PARTS.slice(i + 1).filter((f) => f !== 'pectoral' || k !== 'body');
+  const polys = partPolygons(sp);
+  const ids = parts.map((p) => p.id);
+  // the parts are drawn back to front: an outline is only visible where no later part covers it
+  ids.forEach((k, i) => {
+    const front = ids.slice(i + 1);
     add(polys[k], (x, y) => !front.some((f) => insidePolygon(polys[f], x, y)));
   });
-  for (const d of FISH.lines) for (const poly of flatten(d)) add(poly, () => true);
+  for (const d of lines) for (const poly of flatten(d)) add(poly, () => true);
+  return out;
+}
+
+/** samples along a polyline in card mm */
+function along(poly: Pt[], step: number, out: LineSample[]): void {
+  for (let i = 1; i < poly.length; i++) {
+    const [ax, ay] = poly[i - 1];
+    const [bx, by] = poly[i];
+    const len = Math.hypot(bx - ax, by - ay);
+    const n = Math.max(1, Math.round(len / step));
+    for (let k = 0; k < n; k++) {
+      const t = (k + 0.5) / n;
+      out.push({ x: ax + (bx - ax) * t, y: ay + (by - ay) * t, nx: -(by - ay) / len, ny: (bx - ax) / len });
+    }
+  }
+}
+
+/** the free-form card: its hint box, its arrow and the right part of the name line (the same on every card) */
+function freeformSamples(step: number): LineSample[] {
+  const { hintBox: b, arrow: a } = FREEFORM;
+  const out: LineSample[] = [];
+  along([[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h], [b.x, b.y + b.h], [b.x, b.y]], step, out);
+  along([[a.x0, a.y], [a.x1, a.y]], step, out);
+  along([[a.x1 - a.head, a.y - a.head * 0.75], [a.x1, a.y], [a.x1 - a.head, a.y + a.head * 0.75]], step, out);
+  along([[LABELS.line.x1 - 28, LABELS.line.y], [LABELS.line.x1, LABELS.line.y]], step, out);
   return out;
 }

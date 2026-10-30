@@ -53,7 +53,7 @@ scope.onmessage = async (e: MessageEvent<WorkerRequest>) => {
       scope.postMessage({ id: msg.id, ok: true, value: null });
     } else if (msg.type === 'cards') {
       const res = engine.cards(msg.frame);
-      scope.postMessage({ id: msg.id, ok: true, value: res }, res.cards.map((c) => c.image.data.buffer as ArrayBuffer));
+      scope.postMessage({ id: msg.id, ok: true, value: res }, res.cards.flatMap((c) => [c.image.data.buffer as ArrayBuffer, ...(c.mask ? [c.mask.buffer as ArrayBuffer] : [])]));
     } else if (msg.type === 'calibrate') {
       scope.postMessage({ id: msg.id, ok: true, value: engine.calibrate(msg.frame, msg.kind) });
     }

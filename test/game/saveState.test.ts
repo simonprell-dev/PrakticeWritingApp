@@ -1,10 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { packTyped, unpackTyped } from '../../src/app/imageCodec.ts';
 import { defaultName, when } from '../../src/app/saves.ts';
+import { DEFAULTS } from '../../src/app/settings.ts';
+import type { AnyCanvas } from '../../src/game/canvas.ts';
 import { DuelSim } from '../../src/game/duel/duelSim.ts';
+import { CARD, CARD_PX } from '../../src/game/paint/fishCard.ts';
+import type { SpeciesId } from '../../src/game/paint/species.ts';
 import { mulberry32 } from '../../src/game/rng.ts';
 import { TowerSim } from '../../src/game/tower/towerSim.ts';
+import { PaintScene, type PaintSave } from '../../src/scenes/paintScene.ts';
 import { restoredId } from '../../src/scenes/saved.ts';
+import type { SceneHost, Snapshot } from '../../src/scenes/scene.ts';
+import type { CardHit } from '../../src/vision/cards.ts';
+import type { RGBAImage } from '../../src/vision/types.ts';
+import { colourful, drawLook } from '../helpers/cardScene.ts';
 
 const step = (sim: { step(dt: number): void; drain(): unknown[] }, seconds: number) => {
   for (let t = 0; t < seconds; t += 1 / 60) {
@@ -74,5 +84,120 @@ describe('saved games', () => {
     expect(when(new Date(2026, 9, 22, 9, 5).getTime(), now)).toBe('gestern, 9:05');
     expect(when(new Date(2026, 8, 3, 8, 0).getTime(), now)).toBe('03.09.2026, 8:00');
     expect(defaultName('malen', new Date(2026, 9, 23, 10, 7))).toBe('Mal-Aquarium – 23.10., 10:07');
+  });
+});
+
+describe('saved Mal-Aquarium', () => {
+  // Node has no createImageBitmap: the saved JPEGs are decoded with @napi-rs/canvas instead
+  beforeEach(() => {
+    vi.stubGlobal('createImageBitmap', async (blob: Blob) => Object.assign(await loadImage(Buffer.from(await blob.arrayBuffer())), { close() {} }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const toasts: string[] = [];
+  const host = { settings: DEFAULTS, toast: (t: string) => toasts.push(t), showCard() {}, progress() {} } as unknown as SceneHost;
+  const snap: Snapshot = { canvas: createCanvas(640, 480) as unknown as AnyCanvas, detW: 640, detH: 480 };
+
+  /** a coloured card of this animal as the detection cuts it out */
+  function card(sp: SpeciesId, fills?: Record<string, string>): RGBAImage {
+    const c = createCanvas(Math.round(CARD.w * CARD_PX), Math.round(CARD.h * CARD_PX));
+    const ctx = c.getContext('2d');
+    drawLook(ctx as unknown as CanvasRenderingContext2D, CARD_PX, fills ? { species: sp, fills } : colourful(sp));
+    const id = ctx.getImageData(0, 0, c.width, c.height);
+    return { width: id.width, height: id.height, data: new Uint8ClampedArray(id.data) };
+  }
+
+  const hit = (species: SpeciesId, image: RGBAImage, thumb: number[]): CardHit => ({
+    species,
+    image,
+    thumb,
+    quad: [[100, 100], [300, 100], [300, 250], [100, 250]],
+    match: 0.5,
+    colored: 0.6,
+  });
+
+  it('every animal comes back as what it was; fish of old saves are fish', async () => {
+    const scene = new PaintScene(host, 1920);
+    for (const [sp, x] of [['hai', 500], ['freiform', 1200]] as const) {
+      const { skin, sprite } = scene.makeSkin(card(sp), [0.5], undefined, sp);
+      scene.addPainted(skin, sprite, x, 400, false);
+    }
+    const saved = JSON.parse(JSON.stringify((await scene.saveState())!.state)) as PaintSave;
+    expect(saved.fish.map((f) => f.species)).toEqual(['hai', 'freiform']);
+
+    const again = new PaintScene(host, 1920);
+    await again.restoreState(saved);
+    expect(again.creatures.map((c) => c.painted?.species)).toEqual(['hai', 'freiform']);
+    expect(again.creatures.map((c) => c.sprite.motion)).toEqual(['swim', 'sway']);
+    // the shark keeps its size
+    expect(again.creatures[0].sprite.radius).toBeCloseTo(scene.creatures[0].sprite.radius);
+
+    // a game saved before there were other animals: no species anywhere
+    const old = { fish: saved.fish.map(({ species: _, ...f }) => f), known: [[0.1], [0.2]], away: 0 };
+    const fromOld = new PaintScene(host, 1920);
+    await fromOld.restoreState(old);
+    expect(fromOld.creatures.map((c) => c.painted?.species)).toEqual(['fisch', 'fisch']);
+    expect(fromOld.known.map((k) => k.species)).toEqual(['fisch', 'fisch']);
+  });
+
+  it('a carp and a clownfish coloured just alike are two animals, not one card seen twice', () => {
+    toasts.length = 0;
+    const scene = new PaintScene(host, 1920);
+    const fills = { body: '#ff8a2a', tail: '#2f9bff', dorsal: '#ffd23c' };
+    const thumb = Array.from({ length: 12 * 8 * 3 }, (_, i) => (i % 7) / 7);
+    scene.handleCards({ frameW: 640, frameH: 480, cards: [hit('karpfen', card('karpfen', fills), thumb)], unsure: 0, ms: 1 }, snap);
+    scene.handleCards({ frameW: 640, frameH: 480, cards: [hit('clownfisch', card('clownfisch', fills), thumb)], unsure: 0, ms: 1 }, snap);
+    expect(scene.known.map((k) => k.species)).toEqual(['karpfen', 'clownfisch']);
+    expect(scene.fx.polaroid?.label).toBe('Ein neuer Clownfisch!');
+    expect(toasts.some((t) => t.includes('kenne'))).toBe(false);
+    // the same clownfish again is known
+    scene.handleCards({ frameW: 640, frameH: 480, cards: [hit('clownfisch', card('clownfisch', fills), thumb)], unsure: 0, ms: 1 }, snap);
+    expect(scene.known.length).toBe(2);
+    expect(scene.fx.polaroid?.label).toBe('1 kenne ich schon');
+  });
+
+  it('says which animal is new, and asks again once when a card was not clear', () => {
+    toasts.length = 0;
+    const scene = new PaintScene(host, 1920);
+    const scan = (cards: CardHit[], unsure = 0) => {
+      scene.handleCards({ frameW: 640, frameH: 480, cards, unsure, ms: 1 }, snap);
+      return scene.fx.polaroid?.label;
+    };
+    const t = (n: number) => Array.from({ length: 12 * 8 * 3 }, (_, i) => ((i * n) % 11) / 11);
+    expect(scan([hit('hai', card('hai'), t(1))])).toBe('Ein neuer Hai!');
+    expect(scan([hit('seepferdchen', card('seepferdchen'), t(2))])).toBe('Ein neues Seepferdchen!');
+    expect(scan([hit('qualle', card('qualle'), t(3))])).toBe('Eine neue Qualle!');
+    expect(scan([hit('freiform', card('freiform'), t(4))])).toBe('Ein neues Tier!');
+    expect(scan([hit('krebs', card('krebs'), t(5)), hit('krake', card('krake'), t(6)), hit('hecht', card('hecht'), t(7))])).toBe('3 neue Tiere!');
+    expect(toasts).toEqual([]);
+    // a card was there, but not clear: the photo does not say there was none
+    expect(scan([], 2)).toBe('Karte nicht erkannt');
+    expect(toasts).toEqual(['Diese Karte erkenne ich nicht sicher – bitte flach und ganz ins Bild legen']);
+    expect(scan([])).toBe('Keine Karte gefunden');
+  });
+
+  it('remembers which animal each known card is, across a save', async () => {
+    toasts.length = 0;
+    const scene = new PaintScene(host, 1920);
+    const t = (n: number) => Array.from({ length: 12 * 8 * 3 }, (_, i) => ((i * n) % 13) / 13);
+    const fills = { body: '#ff8a2a', tail: '#2f9bff', dorsal: '#ffd23c' };
+    scene.handleCards({ frameW: 640, frameH: 480, cards: [hit('hai', card('hai'), t(1)), hit('karpfen', card('karpfen', fills), t(2))], unsure: 0, ms: 1 }, snap);
+    // (the new animals are still flying into the aquarium: one that is already in it, so there is a save)
+    const { skin, sprite } = scene.makeSkin(card('hai'), t(1), undefined, 'hai');
+    scene.addPainted(skin, sprite, 500, 400, false);
+    const saved = JSON.parse(JSON.stringify((await scene.saveState())!.state)) as PaintSave;
+    expect(saved.knownSpecies).toEqual(['hai', 'karpfen']);
+
+    const again = new PaintScene(host, 1920);
+    await again.restoreState(saved);
+    expect(again.known.map((k) => k.species)).toEqual(['hai', 'karpfen']);
+    const scan = (cards: CardHit[]) => {
+      again.handleCards({ frameW: 640, frameH: 480, cards, unsure: 0, ms: 1 }, snap);
+      return again.fx.polaroid?.label;
+    };
+    // the shark is known after the restore
+    expect(scan([hit('hai', card('hai'), t(1))])).toBe('1 kenne ich schon');
+    // a clownfish with the thumbnail of the known carp is a new animal
+    expect(scan([hit('clownfisch', card('clownfisch', fills), t(2))])).toBe('Ein neuer Clownfisch!');
   });
 });

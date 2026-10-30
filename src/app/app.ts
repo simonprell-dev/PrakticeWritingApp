@@ -256,7 +256,7 @@ export class App {
 
   /** what the viewfinder asks for */
   private photoText(team?: PlayerId): { title: string; hint: string; frame?: 'sheet' | 'card' } {
-    if (this.scene instanceof PaintScene) return { title: 'Fisch-Karte fotografieren', hint: 'Die ganze Karte mit dem schwarzen Rahmen ins Bild, dann auf den runden Knopf.', frame: 'card' };
+    if (this.scene instanceof PaintScene) return { title: 'Karte fotografieren', hint: 'Die ganze Karte mit dem schwarzen Rahmen ins Bild, dann auf den runden Knopf.', frame: 'card' };
     const name = team ? this.teamKeys().find((t) => t.id === team)?.name : undefined;
     return {
       title: name ? `Foto für ${name}` : 'Foto machen',
@@ -682,7 +682,7 @@ export class App {
     });
     this.updateProgress();
     this.auto.setEnabled(this.autoAllowed());
-    if (!resuming) toast('Ausgemalte Fisch-Karte unter die Kamera legen und „Fertig!“ drücken!', 'info', 5000);
+    if (!resuming) toast('Ausgemalte Karte unter die Kamera legen und „Fertig!“ drücken!', 'info', 5000);
   }
 
   startDuel(resuming = false): void {
