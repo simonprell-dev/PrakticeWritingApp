@@ -1,6 +1,7 @@
 // Remembers glyphs of previous scans so only new handwriting spawns creatures – and only new
 // handwriting is recognised: a known glyph keeps the result of the scan it first appeared in.
-// The paper may move between scans: the shift is found by voting over matched glyph pairs.
+// The paper may move between scans: the shift is found by voting over matched glyph pairs. When the paper
+// was also turned, the turn is found from pairs of neighbouring glyphs that lie the same distance apart.
 import type { Analysis } from '../recog/recognizer.ts';
 import type { Box, GlyphScore } from './types.ts';
 
@@ -24,7 +25,15 @@ export interface MatchResult {
   /** the remembered glyph each current glyph matched (null for new glyphs) */
   matched: (MemGlyph | null)[];
   shift: { dx: number; dy: number };
+  /** the paper was turned: an old centre p lies at R(a)·p + (dx, dy) now */
+  turn?: Turn;
   newSheet: boolean;
+}
+
+export interface Turn {
+  a: number;
+  dx: number;
+  dy: number;
 }
 
 export const THUMB = 16;
@@ -135,7 +144,7 @@ export class GlyphMemory {
       shift = { dx: best.dx / best.n, dy: best.dy / best.n };
     }
     const usedOld = new Set<number>();
-    const matched = glyphs.map((g) => {
+    let matched = glyphs.map((g) => {
       for (let i = 0; i < this.items.length; i++) {
         if (usedOld.has(i)) continue;
         const o = this.items[i];
@@ -149,16 +158,147 @@ export class GlyphMemory {
       }
       return null;
     });
-    const matchedOld = usedOld.size;
+    let matchedOld = usedOld.size;
+    let turn: Turn | undefined;
+    // few glyphs found again: maybe the paper was turned
+    if (matchedOld < 0.6 * Math.min(this.items.length, n) && this.items.length >= 2 && n >= 2) {
+      // the turn whose glyphs look most alike wins (on an even grid a quarter turn also fits the positions)
+      let bestScore = matchedOld;
+      for (const t of this.turns(glyphs, H)) {
+        const { matched: m, score } = this.pairTurned(glyphs, t, H, minDice);
+        if (score > bestScore) {
+          matched = m;
+          matchedOld = m.filter(Boolean).length;
+          bestScore = score;
+          turn = t;
+        }
+      }
+    }
     const newSheet = this.mode === 'sheet' && this.items.length >= 3 && n >= 3 && matchedOld / this.items.length < 0.3 && matchedOld / n < 0.3;
     if (newSheet) return allNew(true);
-    return { isNew: matched.map((m) => !m), matched, shift, newSheet };
+    return { isNew: matched.map((m) => !m), matched, shift: turn ? { dx: 0, dy: 0 } : shift, turn, newSheet };
+  }
+
+  /**
+   * Candidate turns of the paper: a pair of neighbouring old glyphs and a pair of current glyphs the same
+   * distance apart give an angle and a shift; the ones that bring most old glyphs onto current glyphs win.
+   */
+  private turns(glyphs: MemGlyph[], H: number): Turn[] {
+    const old = this.items.map((o) => centre(o.box));
+    const now = glyphs.map((g) => centre(g.box));
+    const pairs = (pts: [number, number][]) => {
+      const out: { i: number; j: number; d: number; ang: number }[] = [];
+      pts.forEach((p, i) => {
+        const near = pts
+          .map((q, j) => ({ j, d: Math.hypot(q[0] - p[0], q[1] - p[1]) }))
+          .filter((x) => x.j !== i && x.d > 0.8 * H)
+          .sort((a, b) => a.d - b.d)
+          .slice(0, 4);
+        for (const { j, d } of near) out.push({ i, j, d, ang: Math.atan2(pts[j][1] - p[1], pts[j][0] - p[0]) });
+      });
+      return out;
+    };
+    const op = pairs(old);
+    const np = pairs(now);
+    const tol = 0.4 * H;
+    // old centres on a grid of cells `tol` wide: "was there a glyph here?" in constant time
+    const cell = (gx: number, gy: number) => (gy + 4096) * 8192 + gx + 4096;
+    const grid = new Set(old.map(([u, v]) => cell(Math.floor(u / tol), Math.floor(v / tol))));
+    const near = (x: number, y: number) => {
+      const gx = Math.floor(x / tol);
+      const gy = Math.floor(y / tol);
+      for (let yy = gy - 1; yy <= gy + 1; yy++) for (let xx = gx - 1; xx <= gx + 1; xx++) if (grid.has(cell(xx, yy))) return true;
+      return false;
+    };
+    // a guess is checked on at most 60 of the current glyphs, turned back onto the old paper (only part of
+    // the old paper may be in the picture, so counting the old glyphs would favour wrong turns)
+    const probe = now.filter((_, i) => i % Math.ceil(now.length / 60) === 0);
+    const seen = new Map<string, { t: Turn; inliers: number }>();
+    const turned = new Map<string, Uint8Array>();
+    // a full sheet has many pairs: a bounded number of guesses keeps the scan fast
+    let budget = 3000;
+    for (const b of np) {
+      if (budget <= 0) break;
+      for (const a of op) {
+        if (Math.abs(a.d - b.d) > 0.12 * b.d + 0.15 * H) continue;
+        const ang = wrap(b.ang - a.ang);
+        const c = Math.cos(ang);
+        const s = Math.sin(ang);
+        const [ox, oy] = old[a.i];
+        const t: Turn = { a: ang, dx: now[b.i][0] - (c * ox - s * oy), dy: now[b.i][1] - (s * ox + c * oy) };
+        const key = `${Math.round(ang / 0.05)},${Math.round(t.dx / tol)},${Math.round(t.dy / tol)}`;
+        if (seen.has(key)) continue;
+        // the first glyph of the pair must look like itself turned by this angle
+        const tk = `${a.i},${Math.round(ang / 0.05)}`;
+        let th = turned.get(tk);
+        if (!th) turned.set(tk, (th = turnThumb(this.items[a.i].thumb, ang)));
+        if (softDice(th, glyphs[b.i].thumb) < 0.5) continue;
+        if (--budget <= 0) break;
+        let inliers = 0;
+        for (const [x, y] of probe) {
+          const u = x - t.dx;
+          const v = y - t.dy;
+          if (near(c * u + s * v, -s * u + c * v)) inliers++;
+        }
+        seen.set(key, { t, inliers });
+      }
+    }
+    const need = Math.max(2, Math.round((0.3 * Math.min(old.length, now.length) * probe.length) / now.length));
+    return [...seen.values()]
+      .filter((x) => x.inliers >= need)
+      .sort((a, b) => b.inliers - a.inliers)
+      .slice(0, 8)
+      .map((x) => x.t);
+  }
+
+  /** current glyphs matched to the old ones moved by the turn (the old picture turned along) */
+  private pairTurned(glyphs: MemGlyph[], t: Turn, H: number, minDice: number): { matched: (MemGlyph | null)[]; score: number } {
+    const c = Math.cos(t.a);
+    const s = Math.sin(t.a);
+    const used = new Set<number>();
+    const thumbs = new Map<number, Uint8Array>();
+    let score = 0;
+    const matched = glyphs.map((g) => {
+      const [gx, gy] = centre(g.box);
+      for (let i = 0; i < this.items.length; i++) {
+        if (used.has(i)) continue;
+        const o = this.items[i];
+        const [x, y] = centre(o.box);
+        if (Math.hypot(c * x - s * y + t.dx - gx, s * x + c * y + t.dy - gy) > 0.45 * Math.max(H, g.box.h)) continue;
+        const r = Math.max(g.box.w, g.box.h) / Math.max(o.box.w, o.box.h);
+        if (r < 0.6 || r > 1.6) continue;
+        let th = thumbs.get(i);
+        if (!th) thumbs.set(i, (th = turnThumb(o.thumb, t.a)));
+        // turning a 16 × 16 picture blurs it a little
+        const d = softDice(th, g.thumb);
+        if (d < minDice - 0.08) continue;
+        if (gainedDots(o, g)) continue;
+        used.add(i);
+        score += d;
+        return o;
+      }
+      return null;
+    });
+    return { matched, score };
   }
 
   /** Stores the current scan: old glyphs follow the paper shift, new ones are added (with their result). */
   commit(glyphs: MemGlyph[], res: MatchResult): void {
     if (res.newSheet) this.items = [];
-    else {
+    else if (res.turn) {
+      // everything turns with the paper, the pictures too (later scans see the paper this way round)
+      const { a, dx, dy } = res.turn;
+      const c = Math.cos(a);
+      const s = Math.sin(a);
+      for (const o of this.items) {
+        const [x, y] = centre(o.box);
+        const quarter = Math.abs(Math.sin(a)) > Math.SQRT1_2;
+        const w = quarter ? o.box.h : o.box.w;
+        const h = quarter ? o.box.w : o.box.h;
+        o.box = { x: c * x - s * y + dx - w / 2, y: s * x + c * y + dy - h / 2, w, h };
+        o.thumb = turnThumb(o.thumb, a);
+      }
+    } else {
       for (const o of this.items) {
         o.box = { ...o.box, x: o.box.x + res.shift.dx, y: o.box.y + res.shift.dy };
       }
@@ -175,6 +315,50 @@ export class GlyphMemory {
     });
     if (this.items.length > 400) this.items.splice(0, this.items.length - 400);
   }
+}
+
+function centre(b: Box): [number, number] {
+  return [b.x + b.w / 2, b.y + b.h / 2];
+}
+
+function wrap(a: number): number {
+  return Math.atan2(Math.sin(a), Math.cos(a));
+}
+
+/** a thumbnail turned by `a` (radians), fitted again into its box like thumbnail() does */
+export function turnThumb(t: Uint8Array, a: number): Uint8Array {
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  const m = (THUMB - 1) / 2;
+  const pts: [number, number][] = [];
+  for (let y = 0; y < THUMB; y++) {
+    for (let x = 0; x < THUMB; x++) {
+      if (!t[y * THUMB + x]) continue;
+      // a few points per cell, so the turned picture has no holes
+      for (const oy of [-0.33, 0, 0.33]) {
+        for (const ox of [-0.33, 0, 0.33]) {
+          const px = x + ox - m;
+          const py = y + oy - m;
+          pts.push([c * px - s * py, s * px + c * py]);
+        }
+      }
+    }
+  }
+  const out = new Uint8Array(THUMB * THUMB);
+  if (!pts.length) return out;
+  const x0 = Math.min(...pts.map((p) => p[0])) - 0.5;
+  const y0 = Math.min(...pts.map((p) => p[1])) - 0.5;
+  const w = Math.max(...pts.map((p) => p[0])) + 0.5 - x0;
+  const h = Math.max(...pts.map((p) => p[1])) + 0.5 - y0;
+  const L = Math.max(w, h);
+  const ox = (L - w) / 2;
+  const oy = (L - h) / 2;
+  for (const [x, y] of pts) {
+    const tx = Math.min(THUMB - 1, Math.floor(((x - x0 + ox) / L) * THUMB));
+    const ty = Math.min(THUMB - 1, Math.floor(((y - y0 + oy) / L) * THUMB));
+    out[ty * THUMB + tx] = 1;
+  }
+  return out;
 }
 
 function gainedDots(old: MemGlyph, now: MemGlyph): boolean {

@@ -166,6 +166,41 @@ describe('pipeline on synthetic pages', () => {
     expect(shifted.glyphs.filter((g) => g.isNew).map((g) => g.score.char)).toEqual(['f']);
   });
 
+  it('knows the letters again when the paper was shifted and turned', () => {
+    const W = 1280;
+    const H = 800;
+    const glyphs = [...row('abcde', 300, {}, 260), ...row('fghkm', 520, {}, 260)];
+    /** the same sheet turned by `a` (radians) around (cx, cy) and shifted */
+    const turned = (a: number, dx: number, dy: number) => {
+      const cx = W / 2;
+      const cy = H / 2;
+      return glyphs.map((g) => ({
+        ...g,
+        x: cx + dx + (g.x - cx) * Math.cos(a) - (g.y - cy) * Math.sin(a),
+        y: cy + dy + (g.x - cx) * Math.sin(a) + (g.y - cy) * Math.cos(a),
+        rotate: a,
+      }));
+    };
+    for (const [a, dx, dy] of [
+      [0.26, 30, -20],
+      [-0.5, -40, 25],
+    ]) {
+      const memory = new GlyphMemory();
+      const first = scan({ width: W, height: H, glyphs }, {}, memory);
+      expect(first.glyphs.filter((g) => g.isNew).length).toBe(10);
+      const again = scan({ width: W, height: H, glyphs: turned(a, dx, dy), seed: 9 }, {}, memory);
+      expect(again.glyphs.length).toBe(10);
+      expect(again.glyphs.filter((g) => g.isNew).length).toBe(0);
+      // one new letter on the turned sheet is the only new one
+      const extra = turned(a, dx, dy);
+      const p = turned(a, dx, dy)[4];
+      const q = turned(a, dx, dy)[3];
+      extra.push({ ...p, char: 'z', x: 2 * p.x - q.x, y: 2 * p.y - q.y });
+      const more = scan({ width: W, height: H, glyphs: extra, seed: 11 }, {}, memory);
+      expect(more.glyphs.filter((g) => g.isNew).map((g) => g.score.char.toLowerCase())).toEqual(['z']);
+    }
+  });
+
   it('practice mode: a surprise letter is scored as itself, the practice letter stays the practice letter', () => {
     const page = (ch: string) => ({ width: 900, height: 500, glyphs: row(ch, 250, {}, 450) });
     // without the surprise letter an m is just a poor B
