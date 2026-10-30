@@ -35,7 +35,7 @@ export interface CardLabels {
 }
 
 /** generous width of a text in mm (Fredoka is narrower, so there is always air before the line) */
-const textWidth = (text: string, size: number) => text.length * size * 0.6;
+export const textWidth = (text: string, size: number) => text.length * size * 0.6;
 
 /** space between the name and the line, mm */
 const GAP = 3;
