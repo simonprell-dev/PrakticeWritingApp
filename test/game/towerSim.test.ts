@@ -179,4 +179,36 @@ describe('Türme bauen', () => {
     run(sim, 10);
     expect(sim.towers[1].metres).toBe(6);
   });
+  it('higher finish lines keep the blocks big: the ground sinks while the towers grow', () => {
+    expect(new TowerSim(2, 150, 1920).ppm).toBeCloseTo(new TowerSim(2, 60, 1920).ppm);
+    const low = new TowerSim(2, 60, 1920, 0, mulberry32(4));
+    const sim = new TowerSim(2, 150, 1920, 0, mulberry32(4));
+    for (const s of [low, sim]) for (let k = 0; k < 9; k++) s.addBlock(0, 95, k + 1);
+    run(low, 60);
+    run(sim, 60);
+    expect(low.over?.reason).toBe('goal');
+    expect(low.lift).toBe(0);
+    expect(sim.towers[0].metres).toBe(72);
+    expect(sim.lift).toBeGreaterThan(0);
+    // the top of the highest tower stays on the screen
+    expect(sim.topY(0)).toBeGreaterThan(TOWER.liftCeil - 1);
+    expect(sim.topY(0)).toBeLessThan(TOWER.liftTop + 1);
+    // every block sits where the next one lands on it
+    expect(sim.towers[0].blocks).toHaveLength(9);
+    // the last tower stays in view as long as it can
+    expect(sim.topY(1)).toBeLessThanOrEqual(TOWER.liftFloor + 1);
+  });
+
+  it('at the finish line the goal is back at its usual height', () => {
+    const sim = new TowerSim(2, 100, 1920, 0, mulberry32(6));
+    for (let k = 0; k < 13; k++) {
+      sim.addBlock(0, 95, k + 1);
+      sim.addBlock(1, 95, 100 + k);
+    }
+    run(sim, 90);
+    expect(sim.over?.reason).toBe('goal');
+    run(sim, 3);
+    expect(sim.lift).toBeCloseTo(sim.maxLift, 0);
+    expect(sim.goalY()).toBeCloseTo(TOWER.goalY, 0);
+  });
 });

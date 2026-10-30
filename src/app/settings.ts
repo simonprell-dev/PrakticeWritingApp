@@ -95,7 +95,7 @@ export interface Settings {
     count: number;
     players: TeamSettings[];
     /** height of the finish line */
-    goal: 'klein' | 'mittel' | 'gross';
+    goal: 'klein' | 'mittel' | 'gross' | 'hoch' | 'mond';
     /** minutes, 0 = no limit */
     timeLimit: number;
   };

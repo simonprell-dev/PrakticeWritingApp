@@ -26,6 +26,7 @@ import { WORLD_H } from '../game/stage.ts';
 import { mischiefPose, type FxName, type GagCue, type GagKit, type GagPose } from '../game/tower/gags.ts';
 import { TOWER, towerSpacing } from '../game/tower/rules.ts';
 import { blockWidth, drawBlock, drawGoalLine, drawPlinth } from '../game/tower/towerArt.ts';
+import { drawSkyThings, paintSky } from '../game/tower/towerSky.ts';
 import { TowerSim, type Alien, type TowerBlock, type TowerEvent, type TowerSave } from '../game/tower/towerSim.ts';
 import { starsOf } from '../recog/score.ts';
 import { PLAYER_IDS, type ScanResult, type ScannedGlyph } from '../vision/types.ts';
@@ -61,6 +62,16 @@ export interface TowerSceneSave {
   /** the letters on the blocks */
   glyphs: SavedGlyph[];
 }
+
+/** what Zork says when the ground has sunk this many metres */
+const SIGHTS = [
+  { at: 4, say: 'Die Bäume werden ja ganz klein!' },
+  { at: 12, say: 'Huch, wir sind in den Wolken!' },
+  { at: 20, say: 'Winke, winke, Flugzeug!' },
+  { at: 34, say: 'Wir sind im Weltall!' },
+  { at: 46, say: 'Hallo ISS! Habt ihr Kekse?' },
+  { at: 80, say: 'Da vorne ist der Mond!' },
+];
 
 export const ALIEN_NAMES = ['Zork', 'Zip', 'Zap', 'Zisch', 'Zuppi', 'Zibbel', 'Zonk', 'Zappel'];
 const ALIEN_HUES = [105, 190, 300, 30, 160, 260, 340, 55];
@@ -100,7 +111,13 @@ export class TowerScene implements Scene {
   scoops: Scoop[] = [];
   W: number;
   t = 0;
+  /** hills, ground and plinths: they sink with the ground */
   bg: AnyCanvas | null = null;
+  sky: ReturnType<typeof makeCanvas> | null = null;
+  /** metres the ground had sunk when the sky was painted */
+  skyAt = -1;
+  /** sights Zork has already called out */
+  seen = 0;
   portalOpen = 0;
   portalPulse = 0;
   seq: { name: SeqName; t: number; dur: number; fired: Set<number> } | null = null;
@@ -148,6 +165,7 @@ export class TowerScene implements Scene {
     this.seq = null;
     this.countdown = -1;
     this.portalOpen = 1;
+    this.seen = SIGHTS.filter((s) => s.at <= this.sunk()).length;
     this.banner = { title: 'Weiter geht’s!', sub: 'Die Türme stehen noch – baut weiter!', t: 0, dur: 2.6 };
     const zork = this.sim.aliens[0];
     if (zork) this.talk(zork, 'Da seid ihr ja wieder!', 2.4);
@@ -159,6 +177,27 @@ export class TowerScene implements Scene {
     const { canvas, ctx } = makeCanvas(Math.round(worldW), WORLD_H);
     this.paint(ctx as CanvasRenderingContext2D);
     this.bg = canvas;
+    this.sky = null;
+  }
+
+  /** metres the ground has sunk away (only with finish lines higher than fit on the screen) */
+  private sunk(): number {
+    return this.sim.lift / this.sim.ppm;
+  }
+
+  private get high(): boolean {
+    return this.sim.maxLift > 0;
+  }
+
+  private drawSky(ctx: CanvasRenderingContext2D): void {
+    const c = this.sunk();
+    if (!this.sky || Math.abs(c - this.skyAt) > 0.25) {
+      if (!this.sky) this.sky = makeCanvas(Math.round(this.W), WORLD_H);
+      paintSky(this.sky.ctx, this.W, c, this.high);
+      this.skyAt = c;
+    }
+    ctx.drawImage(this.sky.canvas as CanvasImageSource, 0, 0);
+    if (this.high) drawSkyThings(ctx, this.W, c, this.t);
   }
 
   // ---------------------------------------------------------------- background
@@ -167,45 +206,7 @@ export class TowerScene implements Scene {
     const W = this.W;
     const G = TOWER.groundY;
     const r = mulberry32(21);
-    const sky = ctx.createLinearGradient(0, 0, 0, G);
-    sky.addColorStop(0, '#1d1450');
-    sky.addColorStop(0.5, '#5a43b8');
-    sky.addColorStop(0.85, '#d98bd0');
-    sky.addColorStop(1, '#ffc1c9');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, W, G);
-    for (let i = 0; i < 180; i++) {
-      const y = r() * G * 0.62;
-      ctx.fillStyle = `rgba(255,255,255,${(0.3 + r() * 0.7) * (1 - y / (G * 0.7))})`;
-      ctx.beginPath();
-      ctx.arc(r() * W, y, r() < 0.9 ? 1 + r() * 1.3 : 2.4, 0, TAU);
-      ctx.fill();
-    }
-    // ringed planet and a little moon
-    const px = W * 0.88;
-    const py = 360;
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,220,170,0.6)';
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.ellipse(px, py, 110, 26, -0.25, Math.PI, TAU);
-    ctx.stroke();
-    const pg = ctx.createRadialGradient(px - 20, py - 20, 5, px, py, 62);
-    pg.addColorStop(0, '#ffd59a');
-    pg.addColorStop(1, '#e0885a');
-    ctx.fillStyle = pg;
-    ctx.beginPath();
-    ctx.arc(px, py, 60, 0, TAU);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(px, py, 110, 26, -0.25, 0, Math.PI);
-    ctx.stroke();
-    ctx.fillStyle = '#efe9ff';
-    ctx.beginPath();
-    ctx.arc(W * 0.1, 470, 26, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-    // hills
+    // hills (the sky is painted on its own: it changes when the ground sinks)
     for (const [dy, c, f] of [
       [70, 'rgba(120,80,170,0.55)', 0.004],
       [30, 'rgba(90,150,110,0.8)', 0.007],
@@ -234,7 +235,6 @@ export class TowerScene implements Scene {
       ctx.arc(x, y, 2, 0, TAU);
       ctx.fill();
     }
-    drawGoalLine(ctx, W, this.sim.goal, this.sim.ppm);
     this.sim.towers.forEach((tw, i) => drawPlinth(ctx, tw.x, this.names[i], this.colors[i], this.sim.towerW));
   }
 
@@ -423,9 +423,9 @@ export class TowerScene implements Scene {
       wrongDy: wrong === job.tower ? 0 : wp.y - a.y,
       stars: b.stars,
       blockH: b.h,
-      room: TOWER.groundY - (a.y + TOWER.hang + b.h) - 30,
+      room: sim.groundY() - (a.y + TOWER.hang + b.h) - 30,
       dropDist: job.dropDist,
-      toGround: TOWER.groundY - a.y,
+      toGround: sim.groundY() - a.y,
       metres,
       toGoal: Math.max(0, sim.goal - metres - b.metres),
       teamName: this.names[job.tower],
@@ -449,6 +449,7 @@ export class TowerScene implements Scene {
     this.sim.paused = this.seq?.name === 'intro';
     this.sim.step(dt);
     for (const e of this.sim.drain()) this.onEvent(e);
+    this.sightseeing();
     this.animated.clear();
     for (const a of this.sim.aliens) {
       const v = this.view(a);
@@ -487,8 +488,8 @@ export class TowerScene implements Scene {
       }
       s.vy += 900 * dt;
       s.y += s.vy * dt;
-      if (s.y >= TOWER.groundY + 40) {
-        s.y = TOWER.groundY + 40;
+      if (s.y >= this.sim.groundY() + 40) {
+        s.y = this.sim.groundY() + 40;
         s.landed = 0;
         sfx.splat();
         this.particles.burst('drop', s.x, s.y, 8, { color: '#ff9fc6', size: 6, speed: 160, gravity: 500, max: 0.5 });
@@ -710,7 +711,9 @@ export class TowerScene implements Scene {
   render(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.translate((Math.random() - 0.5) * this.shake * 16, (Math.random() - 0.5) * this.shake * 16);
-    if (this.bg) ctx.drawImage(this.bg as CanvasImageSource, 0, 0);
+    this.drawSky(ctx);
+    if (this.bg && this.sim.lift < WORLD_H) ctx.drawImage(this.bg as CanvasImageSource, 0, this.sim.lift);
+    drawGoalLine(ctx, this.W, this.sim.goal, this.sim.ppm, this.sim.groundY());
     const p = this.sim.portalPos();
     drawPortal(ctx, p.x, p.y, TOWER.portal.r, this.t, this.portalOpen, this.portalPulse);
     this.sim.towers.forEach((_, i) => this.drawTower(ctx, i));
@@ -757,7 +760,8 @@ export class TowerScene implements Scene {
     const tw = this.sim.towers[i];
     const lean = tw.shakeDir * tw.shake * (0.025 + 0.02 * Math.sin(this.t * 13));
     ctx.save();
-    ctx.translate(tw.x, TOWER.groundY);
+    const ground = this.sim.groundY();
+    ctx.translate(tw.x, ground);
     ctx.rotate(lean);
     let y = 0;
     for (const b of tw.blocks) {
@@ -772,7 +776,7 @@ export class TowerScene implements Scene {
       y -= b.h;
     }
     ctx.restore();
-    const top = TOWER.groundY + y;
+    const top = ground + y;
     // height sign next to the top
     const label = `${tw.metres} m`;
     ctx.save();
@@ -781,7 +785,7 @@ export class TowerScene implements Scene {
     // with many towers there is no room beside them: the sign sits on top
     const beside = towerSpacing(this.sim.towers.length, this.W) - this.sim.towerW >= w + 110;
     const lx = beside ? tw.x + this.sim.towerW / 2 + 12 : tw.x - w / 2;
-    const ly = beside ? Math.min(TOWER.groundY - 40, top + 4) : top - 28;
+    const ly = beside ? Math.min(ground - 40, TOWER.liftFloor - 20, top + 4) : top - 28;
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.strokeStyle = this.colors[i];
     ctx.lineWidth = 3;
@@ -873,7 +877,7 @@ export class TowerScene implements Scene {
     if (p.extra === 'cloud') drawCloud(ctx, u.x, u.y - 150, this.t);
     if (p.extra === 'shootingStar') drawShootingStar(ctx, u.x, u.y - 160, p.extraP ?? 0);
     if (p.extra === 'flames') drawFlames(ctx, u.x, u.y, dir, this.t);
-    if (p.extra === 'tapeLine') drawTape(ctx, u.x + 41, u.y + 26, u.y + 26 + (TOWER.groundY - u.y - 26) * (p.extraP ?? 0), this.sim.ppm);
+    if (p.extra === 'tapeLine') drawTape(ctx, u.x + 41, u.y + 26, u.y + 26 + (this.sim.groundY() - u.y - 26) * (p.extraP ?? 0), this.sim.ppm);
     ctx.save();
     ctx.globalAlpha = p.ua ?? 1;
     ctx.translate(u.x, u.y);
@@ -979,7 +983,54 @@ export class TowerScene implements Scene {
     ctx.restore();
   }
 
+  /** Zork calls out what flies by when the towers grow into the sky */
+  private sightseeing(): void {
+    const s = SIGHTS[this.seen];
+    if (!this.high || !s || this.sunk() < s.at || this.sim.over) return;
+    this.seen++;
+    const zork = this.sim.aliens[0];
+    if (zork) this.talk(zork, s.say, 2.6);
+  }
+
+  /** with high finish lines the goal is far above: a bar at the side shows how far every tower is */
+  private drawMeter(ctx: CanvasRenderingContext2D): void {
+    if (!this.high || this.seq?.name === 'intro') return;
+    const x = this.W - 46;
+    const y0 = 150;
+    const y1 = 930;
+    const at = (m: number) => lerp(y1, y0, clamp(m / this.sim.goal));
+    ctx.save();
+    ctx.fillStyle = 'rgba(20,12,45,0.55)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(x - 9, y0 - 6, 18, y1 - y0 + 12, 9);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = '700 22px Fredoka, system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = 'rgba(40,20,60,0.7)';
+    ctx.lineWidth = 5;
+    ctx.lineJoin = 'round';
+    ctx.strokeText(`Ziel ${this.sim.goal} m`, x + 14, y0 - 30);
+    ctx.fillText(`Ziel ${this.sim.goal} m`, x + 14, y0 - 30);
+    this.sim.towers.forEach((tw, i) => {
+      const y = at(tw.metres);
+      ctx.fillStyle = this.colors[i];
+      ctx.strokeStyle = '#2b1d45';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 13, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
   private drawHud(ctx: CanvasRenderingContext2D): void {
+    this.drawMeter(ctx);
     if (this.seq || this.sim.timeLimit <= 0) return;
     const left = Math.max(0, this.sim.timeLimit - this.sim.time);
     const text = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;

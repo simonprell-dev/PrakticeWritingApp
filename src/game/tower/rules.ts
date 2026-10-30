@@ -3,7 +3,9 @@
 // Rules: every letter becomes a building block for the tower of its colour (pen or slip). The nicer
 // the letter, the taller the block: 1–5 stars = 2, 3, 4, 6 or 8 metres. Alien Zork carries every
 // block from the portal to its tower; when he is busy and the next block arrives, he clones himself.
-// The first tower that reaches the finish line wins.
+// The first tower that reaches the finish line wins. Up to 60 m the whole height fits on the screen;
+// higher finish lines keep the blocks this size and let the ground sink away below while the towers grow.
+import { WORLD_H } from '../stage.ts';
 import { starsOf } from '../../recog/score.ts';
 
 export const TOWER = {
@@ -12,7 +14,14 @@ export const TOWER = {
   /** block height in metres per star (index = stars) */
   metres: [0, 2, 3, 4, 6, 8],
   /** height of the finish line in metres */
-  goal: { klein: 24, mittel: 40, gross: 60 } as const,
+  goal: { klein: 24, mittel: 40, gross: 60, hoch: 100, mond: 150 } as const,
+  /** the highest finish line that fits on the screen */
+  fitGoal: 60,
+  /** higher goals: the ground sinks so the highest tower top stays at about this height on screen */
+  liftTop: 430,
+  /** ... but never higher than this, and the lowest tower top stays above liftFloor if it can */
+  liftCeil: 150,
+  liftFloor: WORLD_H - 40,
   maxAliens: 8,
   /** chance that something funny happens on a delivery */
   gagChance: 0.4,
@@ -42,9 +51,9 @@ export type GoalSize = keyof typeof TOWER.goal;
 export const blockStars = (score: number): number => starsOf(score);
 export const blockMetres = (score: number): number => TOWER.metres[starsOf(score)];
 
-/** px per metre: the finish line is always at the same height on screen */
+/** px per metre: up to fitGoal the finish line is always at the same height on screen */
 export function pxPerMetre(goal: number): number {
-  return (TOWER.groundY - TOWER.goalY) / goal;
+  return (TOWER.groundY - TOWER.goalY) / Math.min(goal, TOWER.fitGoal);
 }
 
 /** distance between two towers: wide for few towers, up to eight fit side by side */

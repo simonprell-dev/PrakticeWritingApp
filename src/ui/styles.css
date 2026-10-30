@@ -129,6 +129,7 @@ body {
 
 .seg {
   display: inline-flex;
+  flex-wrap: wrap;
   background: var(--card);
   border: 3px solid var(--ink);
   border-radius: 999px;

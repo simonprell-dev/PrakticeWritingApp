@@ -77,6 +77,8 @@ export function openTowerLobby(d: TowerLobbyDeps): void {
           { value: 'klein', label: `Niedrig (${TOWER.goal.klein} m)` },
           { value: 'mittel', label: `Mittel (${TOWER.goal.mittel} m)` },
           { value: 'gross', label: `Hoch (${TOWER.goal.gross} m)` },
+          { value: 'hoch', label: `🚀 Weltall (${TOWER.goal.hoch} m)` },
+          { value: 'mond', label: `🌙 Mond (${TOWER.goal.mond} m)` },
         ],
         s.goal,
         (v) => {
@@ -90,7 +92,7 @@ export function openTowerLobby(d: TowerLobbyDeps): void {
       { class: 'row' },
       h('label', null, 'Zeitlimit'),
       segmented(
-        ['0', '3', '5', '10'].map((v) => ({ value: v, label: v === '0' ? 'Keins' : `${v} Min` })),
+        ['0', '3', '5', '10', '15', '20', '30'].map((v) => ({ value: v, label: v === '0' ? 'Keins' : `${v} Min` })),
         String(s.timeLimit),
         (v) => {
           s.timeLimit = Number(v);
@@ -98,6 +100,7 @@ export function openTowerLobby(d: TowerLobbyDeps): void {
         },
       ),
     ),
+    h('p', { class: 'help' }, 'Bei „Weltall“ und „Mond“ wachsen die Türme aus dem Bild: Die Welt sinkt nach unten weg – über die Wolken, ins Weltall, an der ISS vorbei bis zum Mond.'),
     h('p', { class: 'help' }, `Bausteine: ${TOWER.metres.slice(1).map((m, i) => `${i + 1} ${i ? 'Sterne' : 'Stern'} = ${m} m`).join(', ')}. Gekritzel macht nur „Pfff?“.`),
     h(
       'div',

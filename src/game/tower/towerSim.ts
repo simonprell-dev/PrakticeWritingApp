@@ -165,6 +165,10 @@ export class TowerSim {
   /** metres to the finish line */
   readonly goal: number;
   readonly ppm: number;
+  /** px the ground has sunk below its place (only for goals higher than fitGoal) */
+  lift = 0;
+  /** the lift when the finish line has come down to its usual height */
+  readonly maxLift: number;
   time = 0;
   timeLimit: number;
   over: { winner: number | null; reason: 'goal' | 'time' } | null = null;
@@ -187,6 +191,7 @@ export class TowerSim {
     this.worldW = worldW;
     this.goal = goalMetres;
     this.ppm = pxPerMetre(goalMetres);
+    this.maxLift = Math.max(0, goalMetres * this.ppm - (TOWER.groundY - TOWER.goalY));
     this.timeLimit = timeLimitSec;
     this.rand = rand;
     const xs = towerXs(players, worldW);
@@ -212,8 +217,40 @@ export class TowerSim {
     return { x: this.worldW / 2, y: TOWER.portal.y };
   }
 
+  /** the ground on screen */
+  groundY(): number {
+    return TOWER.groundY + this.lift;
+  }
+
   topY(tower: number): number {
-    return TOWER.groundY - this.towers[tower].metres * this.ppm;
+    return this.groundY() - this.towers[tower].metres * this.ppm;
+  }
+
+  goalY(): number {
+    return this.groundY() - this.goal * this.ppm;
+  }
+
+  /** how far the ground should sink: the leader stays in view, the last tower too if it can */
+  wantLift(): number {
+    if (!this.maxLift) return 0;
+    const px = this.towers.map((t) => t.metres * this.ppm);
+    const hi = Math.max(...px);
+    const lo = Math.min(...px);
+    let l = Math.min(hi - (TOWER.groundY - TOWER.liftTop), lo + TOWER.liftFloor - TOWER.groundY);
+    l = Math.max(l, hi - (TOWER.groundY - TOWER.liftCeil));
+    return clamp(l, 0, this.maxLift);
+  }
+
+  /** the ground sinks smoothly; whatever is just being set onto a tower sinks along */
+  private moveLift(dt: number): void {
+    const want = this.wantLift();
+    const d = Math.abs(want - this.lift) < 0.5 ? want - this.lift : (want - this.lift) * (1 - Math.exp(-dt * 2.5));
+    if (!d) return;
+    this.lift += d;
+    for (const a of this.aliens) {
+      if (a.state === 'drop') a.y += d;
+      else if (a.state === 'carry' && a.flight) a.flight.y1 += d;
+    }
   }
 
   /** where the UFO hovers to set a block onto a tower */
@@ -321,6 +358,7 @@ export class TowerSim {
     this.nextId = Math.max(this.nextId, s.nextId);
     this.over = null;
     this.events = [];
+    this.lift = this.wantLift();
     this.aliens = [];
     for (let i = 0; i < Math.max(1, Math.min(TOWER.maxAliens, s.aliens)); i++) {
       const a = this.addAlien(p.x, p.y, i ? 1 : 0);
@@ -360,6 +398,7 @@ export class TowerSim {
     if (!this.paused && !this.over) this.dispatch();
     for (const a of [...this.aliens]) this.updateAlien(a, dt);
     for (const t of this.towers) t.shake = Math.max(0, t.shake - dt * 1.5);
+    this.moveLift(dt);
     this.updateBlockViews();
   }
 
@@ -662,7 +701,7 @@ export class TowerSim {
       const x = 170 + this.rand() * (W - 340);
       const y = TOWER.sky.y0 + this.rand() * (TOWER.sky.y1 - TOWER.sky.y0);
       // keep the portal and the "Ziel" sign free
-      if ((Math.abs(x - W / 2) < 220 && y < 340) || (x < 480 && Math.abs(y - TOWER.goalY) < 70)) continue;
+      if ((Math.abs(x - W / 2) < 220 && y < 340) || (x < 480 && Math.abs(y - this.goalY()) < 70)) continue;
       let d = Infinity;
       for (const o of this.aliens) if (o !== a) d = Math.min(d, Math.hypot(o.x - x, o.y - y));
       if (d > 170) return { x, y };
@@ -689,7 +728,7 @@ export class TowerSim {
   }
 
   private pushPoint(tower: number, side: number): { x: number; y: number } {
-    const y = clamp(this.topY(tower) + 45, TOWER.sky.y0, TOWER.groundY - 70);
+    const y = clamp(this.topY(tower) + 45, TOWER.sky.y0, Math.min(this.groundY(), TOWER.liftFloor) - 70);
     return { x: this.towers[tower].x + side * (this.towerW / 2 + 66), y };
   }
 

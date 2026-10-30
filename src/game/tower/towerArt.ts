@@ -206,13 +206,14 @@ export function drawPlinth(ctx: Ctx, x: number, name: string, color: string, tow
   ctx.restore();
 }
 
-/** dashed rainbow finish line with "Ziel" flags and metre marks every 10 m */
-export function drawGoalLine(ctx: Ctx, worldW: number, goal: number, ppm: number): void {
+/** dashed rainbow finish line with "Ziel" flags and metre marks every 10 m (`ground`: the ground on screen) */
+export function drawGoalLine(ctx: Ctx, worldW: number, goal: number, ppm: number, ground: number = TOWER.groundY): void {
   ctx.save();
   ctx.font = '600 22px Fredoka, system-ui, sans-serif';
   ctx.textBaseline = 'middle';
   for (let m = 10; m < goal; m += 10) {
-    const y = TOWER.groundY - m * ppm;
+    const y = ground - m * ppm;
+    if (y < -20 || y > ground - 20) continue;
     ctx.strokeStyle = 'rgba(255,255,255,0.22)';
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 10]);
@@ -225,7 +226,11 @@ export function drawGoalLine(ctx: Ctx, worldW: number, goal: number, ppm: number
     ctx.textAlign = 'left';
     ctx.fillText(`${m} m`, 26, y);
   }
-  const y = TOWER.goalY;
+  const y = ground - goal * ppm;
+  if (y < -10) {
+    ctx.restore();
+    return;
+  }
   const seg = 28;
   for (let x = 40, i = 0; x < worldW - 40; x += seg, i++) {
     ctx.fillStyle = hsl(i * 30, 0.85, 0.65);
