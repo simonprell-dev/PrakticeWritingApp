@@ -1,7 +1,7 @@
 import { createCanvas } from '@napi-rs/canvas';
 import { describe, expect, it } from 'vitest';
 import { paintedSprite } from '../../src/game/creatures/paintedAnimal.ts';
-import { cardImage } from '../../src/game/paint/cardArt.ts';
+import { cardImage, type CardLook } from '../../src/game/paint/cardArt.ts';
 import { CARD, CARD_PX } from '../../src/game/paint/fishCard.ts';
 import { freeformMask } from '../../src/game/paint/freeform.ts';
 import { labelsFor } from '../../src/game/paint/sheets.ts';
@@ -9,24 +9,37 @@ import { colouredShare, findCards } from '../../src/vision/cards.ts';
 import type { RGBAImage } from '../../src/vision/types.ts';
 import { colourful, paperPicture, photo, pose } from '../helpers/cardScene.ts';
 
-/** a card is blank below this share (paintScene.ts) */
+/** a card is blank below this share: the same value as `BLANK` in src/scenes/paintScene.ts (not exported there) */
 const BLANK = 0.04;
 const TW = Math.round(CARD.w * CARD_PX);
 const TH = Math.round(CARD.h * CARD_PX);
 
-type Draw = (ctx: CanvasRenderingContext2D) => void;
+/** draws in card mm × k */
+type Draw = (ctx: CanvasRenderingContext2D, k?: number) => void;
 interface Blob { x: number; y: number; rx: number; ry: number; colour: string }
 
-const ellipse = (b: Blob): Draw => (ctx) => {
+const ellipse = (b: Blob): Draw => (ctx, k = CARD_PX) => {
   ctx.fillStyle = b.colour;
   ctx.beginPath();
-  ctx.ellipse(b.x * CARD_PX, b.y * CARD_PX, b.rx * CARD_PX, b.ry * CARD_PX, 0, 0, Math.PI * 2);
+  ctx.ellipse(b.x * k, b.y * k, b.rx * k, b.ry * k, 0, 0, Math.PI * 2);
   ctx.fill();
+};
+
+/** crayon over the print: the printed lines show through */
+const crayon = (b: Blob): Draw => (ctx, k) => {
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ellipse(b)(ctx, k);
+  ctx.restore();
 };
 
 /** a free-form card as the detection cuts it out, with something drawn on it */
 function freeCard(...draws: Draw[]): RGBAImage {
-  const img = cardImage({ species: 'freiform' });
+  return onCard({ species: 'freiform' }, ...draws);
+}
+
+function onCard(look: CardLook, ...draws: Draw[]): RGBAImage {
+  const img = cardImage(look);
   const c = createCanvas(TW, TH);
   const ctx = c.getContext('2d') as unknown as CanvasRenderingContext2D;
   const id = ctx.createImageData(TW, TH);
@@ -188,5 +201,124 @@ describe('sprites of all animals', () => {
     const blobW = (2 * RED.rx * k) / 0.82;
     expect(canvas.width).toBeGreaterThan(blobW);
     expect(canvas.width).toBeLessThan(blobW + 60);
+  });
+});
+
+/** the share of `where` that is in the mask, and the share of everything else (with a margin of `m` mm around `where`) */
+function split(mask: Uint8Array, where: Uint8Array, m = 0): { on: number; off: number } {
+  const grown = new Uint8Array(where);
+  const r = Math.round(m * CARD_PX);
+  if (r) {
+    for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+      if (!where[y * TW + x]) continue;
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        const yy = y + dy;
+        const xx = x + dx;
+        if (yy >= 0 && xx >= 0 && yy < TH && xx < TW) grown[yy * TW + xx] = 1;
+      }
+    }
+  }
+  return { on: share(mask, where), off: share(mask, grown.map((v) => 1 - v)) };
+}
+
+/** a free-form card photographed (lit from one side when `shadow` is set) and cut out by the detection */
+function shot(look: CardLook, spec: { shadow?: number; texture?: number }, ...draws: Draw[]): RGBAImage {
+  const pic = paperPicture('card', [look]);
+  const ctx = pic.canvas.getContext('2d') as unknown as CanvasRenderingContext2D;
+  const k = 6;
+  const m = CARD.margin;
+  ctx.save();
+  // (paperPicture leaves its context moved to the card)
+  ctx.setTransform(1, 0, 0, 1, m * k, m * k);
+  for (const d of draws) d(ctx, k);
+  ctx.restore();
+  const res = findCards(photo(pic, { width: 1280, height: 960, table: [40, 34, 30], corners: pose(CARD.w + 2 * m, CARD.h + 2 * m, 6, 640, 480, 0), noise: 8, ...spec }));
+  expect(res.cards.map((c) => c.species)).toEqual(['freiform']);
+  return res.cards[0].image;
+}
+
+describe('free-form cut-out over the print, in the shade and on painted water', () => {
+  const head = (() => {
+    // the printed arrow head, right of every blob below
+    const out = new Uint8Array(TW * TH);
+    for (let y = 45 * CARD_PX; y <= 51 * CARD_PX; y++) for (let x = 82 * CARD_PX; x <= 89 * CARD_PX; x++) out[y * TW + x] = 1;
+    return out;
+  })();
+
+  // dark crayon, pale yellow, and a very pale apricot (max - min = 55)
+  for (const colour of ['#3a3030', '#fff3a0', '#ffe8c8']) {
+    it(`a ${colour} fill ending in the arrow band keeps its part over the print`, () => {
+      // the head of the animal reaches into the words and the shaft of the arrow
+      const blob: Blob = { x: 58, y: 45, rx: 18, ry: 9, colour };
+      const mask = freeformMask(freeCard(crayon(blob)));
+      const { on, off } = split(mask, truth(ellipse(blob)), 0.5);
+      expect(on).toBeGreaterThanOrEqual(0.9);
+      expect(off).toBeLessThan(0.002);
+      expect(share(mask, head)).toBe(0);
+    });
+
+    it(`a ${colour} fill crossing the hint box keeps its part over the print`, () => {
+      const blob: Blob = { x: 52, y: 13, rx: 13, ry: 6.5, colour };
+      const mask = freeformMask(freeCard(crayon(blob)));
+      const { on, off } = split(mask, truth(ellipse(blob)), 0.5);
+      expect(on).toBeGreaterThanOrEqual(0.9);
+      expect(off).toBeLessThan(0.002);
+    });
+  }
+
+  it('a card in strong shade from one side: the paper stays paper', () => {
+    for (const shadow of [0.6, 0.8]) {
+      const img = shot({ species: 'freiform' }, { shadow }, ellipse(RED), ellipse(PALE));
+      const mask = freeformMask(img);
+      expect(share(mask, truth(ellipse(RED)))).toBeGreaterThanOrEqual(0.9);
+      expect(share(mask, truth(ellipse(PALE)))).toBeGreaterThanOrEqual(0.9);
+      const { off } = split(mask, truth(ellipse(RED), ellipse(PALE)), 1);
+      expect(off, `shadow ${shadow}`).toBeLessThan(0.01);
+    }
+  });
+
+  const WATER = '#bfe6ff';
+  const animals: Blob[] = [
+    { x: 45, y: 40, rx: 20, ry: 12, colour: '#e8322a' },
+    { x: 45, y: 40, rx: 20, ry: 12, colour: '#ffd23c' },
+  ];
+  /** the free area painted as water, leaving a white strip of 2 mm along the frame */
+  const water: Draw = (ctx, k = CARD_PX) => {
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = WATER;
+    const e = CARD.frame + 2;
+    ctx.fillRect(e * k, e * k, (CARD.w - 2 * e) * k, (labelsFor('freiform').nameBox.y - e) * k);
+    ctx.restore();
+  };
+  const waterArea = () => truth((ctx) => water(ctx));
+
+  for (const a of animals) {
+    it(`a ${a.colour} animal on painted water: the water is background`, () => {
+      const animal = truth(ellipse(a));
+      const wet = waterArea().map((v, i) => (v && !animal[i] ? 1 : 0));
+      const mask = freeformMask(freeCard(water, ellipse(a)));
+      expect(share(mask, animal)).toBeGreaterThanOrEqual(0.9);
+      expect(share(mask, wet)).toBeLessThan(0.05);
+    });
+
+    it(`a ${a.colour} animal on water up to the frame: the water is background`, () => {
+      const animal = truth(ellipse(a));
+      const mask = freeformMask(onCard({ species: 'freiform', fills: { water: WATER } }, ellipse(a)));
+      const band = (CARD.frame + 1) * CARD_PX;
+      const wet = animal.map((v, i) => (!v && i % TW > band && i % TW < TW - band && i / TW > band && i / TW < labelsFor('freiform').nameBox.y * CARD_PX ? 1 : 0));
+      expect(share(mask, animal)).toBeGreaterThanOrEqual(0.9);
+      expect(share(mask, wet)).toBeLessThan(0.05);
+    });
+  }
+
+  it('a photo of an animal on water, with crayon texture', () => {
+    const a = animals[0];
+    const img = shot({ species: 'freiform' }, { texture: 0.35, shadow: 0.3 }, water, ellipse(a));
+    const mask = freeformMask(img);
+    const animal = truth(ellipse(a));
+    expect(share(mask, animal)).toBeGreaterThanOrEqual(0.9);
+    const { off } = split(mask, animal, 1);
+    expect(off).toBeLessThan(0.05);
   });
 });

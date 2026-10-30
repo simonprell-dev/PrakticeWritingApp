@@ -163,35 +163,54 @@ function freeformSprite(img: RGBAImage, k: number): Sprite {
   const ch = y1 - y0 + 1 + 2 * e;
   const cut = makeCanvas(cw, ch);
   const id = cut.ctx.createImageData(cw, ch);
-  const e2 = e * e;
+  // distance (px) of every pixel of the cut-out to the drawing: two chamfer passes instead of a disc around each pixel
+  const dist = new Float32Array(cw * ch).fill(1e6);
   for (let y = 0; y < ch; y++) {
     for (let x = 0; x < cw; x++) {
       const ix = x0 - e + x;
       const iy = y0 - e + y;
-      const p = (y * cw + x) * 4;
-      if (ix >= 0 && iy >= 0 && ix < w && iy < h && mask[iy * w + ix]) {
-        const o = (iy * w + ix) * 4;
+      if (ix >= 0 && iy >= 0 && ix < w && iy < h && mask[iy * w + ix]) dist[y * cw + x] = 0;
+    }
+  }
+  const D = Math.SQRT2;
+  for (let y = 0; y < ch; y++) {
+    for (let x = 0; x < cw; x++) {
+      const i = y * cw + x;
+      let v = dist[i];
+      if (x > 0) v = Math.min(v, dist[i - 1] + 1);
+      if (y > 0) {
+        v = Math.min(v, dist[i - cw] + 1);
+        if (x > 0) v = Math.min(v, dist[i - cw - 1] + D);
+        if (x < cw - 1) v = Math.min(v, dist[i - cw + 1] + D);
+      }
+      dist[i] = v;
+    }
+  }
+  for (let y = ch - 1; y >= 0; y--) {
+    for (let x = cw - 1; x >= 0; x--) {
+      const i = y * cw + x;
+      let v = dist[i];
+      if (x < cw - 1) v = Math.min(v, dist[i + 1] + 1);
+      if (y < ch - 1) {
+        v = Math.min(v, dist[i + cw] + 1);
+        if (x < cw - 1) v = Math.min(v, dist[i + cw + 1] + D);
+        if (x > 0) v = Math.min(v, dist[i + cw - 1] + D);
+      }
+      dist[i] = v;
+    }
+  }
+  for (let y = 0; y < ch; y++) {
+    for (let x = 0; x < cw; x++) {
+      const i = y * cw + x;
+      const p = i * 4;
+      if (dist[i] === 0) {
+        const o = ((y0 - e + y) * w + x0 - e + x) * 4;
         id.data[p] = d[o];
         id.data[p + 1] = d[o + 1];
         id.data[p + 2] = d[o + 2];
         id.data[p + 3] = 255;
-        continue;
-      }
-      // the edge: a painted pixel within e
-      let near = false;
-      for (let dy = -e; dy <= e && !near; dy++) {
-        const yy = iy + dy;
-        if (yy < 0 || yy >= h) continue;
-        for (let dx = -e; dx <= e; dx++) {
-          const xx = ix + dx;
-          if (xx < 0 || xx >= w || dx * dx + dy * dy > e2) continue;
-          if (mask[yy * w + xx]) {
-            near = true;
-            break;
-          }
-        }
-      }
-      if (near) {
+      } else if (dist[i] <= e) {
+        // the white sticker edge
         id.data[p] = id.data[p + 1] = id.data[p + 2] = 255;
         id.data[p + 3] = 255;
       }

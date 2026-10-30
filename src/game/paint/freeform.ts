@@ -4,12 +4,17 @@ import type { RGBAImage } from '../../vision/types.ts';
 import { CARD, CARD_PX, FREEFORM } from './fishCard.ts';
 import { labelsFor, textWidth } from './sheets.ts';
 
-/** a pixel is painted when it is this much darker than the paper (luminance 0..255) … */
+/** a pixel is painted when it is this much darker than the paper (luminance 0..255, paper lifted to 255) … */
 const DARKER = 45;
 /** … or this much more colourful (max - min channel); camera noise on paper stays below 30 */
 const COLOURFUL = 45;
-/** on the printed elements colour has to be clearer: their grey ink reaches about 50 in a photo */
-const COLOURFUL_ON_PRINT = 70;
+/** on the printed elements only what is wider than the printed strokes counts (opening radius, mm) */
+const PRINT_STROKE = 0.6;
+/** painted water: one colour covers this share of the free area … */
+const WATER_SHARE = 0.55;
+/** … and lies along this share of the edge of the free area (within WATER_ZONE mm of it) */
+const WATER_ALONG = 0.6;
+const WATER_ZONE = 6;
 /** a hole lying this much on the printed elements is a printed box or letter, not the inside of the animal */
 const PRINTED_HOLE = 0.8;
 /** closing radius (mm): bridges small gaps in a drawn outline */
@@ -88,34 +93,98 @@ function components(m: Uint8Array, w: number, h: number, v: number, each: (px: n
   }
 }
 
+/** solves the n × n system a·x = b (Gauss with pivoting); null when it is singular */
+function solve(a: number[][], b: number[]): number[] | null {
+  const n = b.length;
+  const m = a.map((row, i) => [...row, b[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(m[r][c]) > Math.abs(m[p][c])) p = r;
+    if (Math.abs(m[p][c]) < 1e-9) return null;
+    [m[c], m[p]] = [m[p], m[c]];
+    for (let r = 0; r < n; r++) {
+      if (r === c) continue;
+      const f = m[r][c] / m[c][c];
+      for (let k = c; k <= n; k++) m[r][k] -= f * m[c][k];
+    }
+  }
+  return m.map((row, i) => row[n] / row[i]);
+}
+
+/**
+ * The paper's brightness over the card: a smooth surface (quadratic in x and y) through the grey paper samples
+ * along the frame, so light falling off towards one side is not taken for paint. Samples clearly below the
+ * surface (pencil touching the frame) are dropped and the surface is fitted again.
+ */
+function paperSurface(pts: { x: number; y: number; l: number }[], w: number, h: number): (x: number, y: number) => number {
+  const basis = (x: number, y: number) => {
+    const u = x / w - 0.5;
+    const v = y / h - 0.5;
+    return [1, u, v, u * u, u * v, v * v];
+  };
+  let use = pts;
+  let coef: number[] | null = null;
+  for (let it = 0; it < 4 && use.length >= 24; it++) {
+    const a = Array.from({ length: 6 }, () => Array<number>(6).fill(0));
+    const b = Array<number>(6).fill(0);
+    for (const p of use) {
+      const f = basis(p.x, p.y);
+      for (let i = 0; i < 6; i++) {
+        b[i] += f[i] * p.l;
+        for (let j = 0; j < 6; j++) a[i][j] += f[i] * f[j];
+      }
+    }
+    const c = solve(a, b);
+    if (!c) break;
+    coef = c;
+    const at = (p: { x: number; y: number }) => basis(p.x, p.y).reduce((s, f, i) => s + f * c[i], 0);
+    use = pts.filter((p) => p.l > at(p) - 10);
+  }
+  // no grey paper along the frame (painted up to it): the colours were already evened out against white
+  if (!coef) return () => 250;
+  const c = coef;
+  return (x, y) => Math.max(60, basis(x, y).reduce((s, f, i) => s + f * c[i], 0));
+}
+
 /** 1 = painted pixel of the free-form animal (card image at CARD_PX), holes filled, crumbs and printed elements removed */
 export function freeformMask(img: RGBAImage): Uint8Array {
   const { width: w, height: h, data: d } = img;
   const band = Math.ceil((CARD.frame + 1) * CARD_PX);
-  // the paper: the bright part of a strip just inside the frame (a drawing may touch the frame here and there)
-  const ls: number[] = [];
-  const cs: number[] = [];
+  const { soft, hard } = printed();
+  const inBox = (bs: Box[], x: number, y: number) => bs.some((b) => x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1);
+
+  // the paper: grey (unsaturated) samples in a strip just inside the frame, off the printed elements
   const strip = Math.ceil((CARD.frame + 2.5) * CARD_PX);
+  const paperPts: { x: number; y: number; l: number; c: number }[] = [];
   for (let y = band; y < h - band; y += 2) {
     for (let x = band; x < w - band; x += 2) {
       if (x >= strip && y >= strip && x < w - strip && y < h - strip) continue;
+      if (inBox(hard, x / CARD_PX, y / CARD_PX) || inBox(soft, x / CARD_PX, y / CARD_PX)) continue;
       const o = (y * w + x) * 4;
-      ls.push(lum(d, o));
-      cs.push(chroma(d, o));
+      const c = chroma(d, o);
+      if (c < 30) paperPts.push({ x, y, l: lum(d, o), c });
     }
   }
-  ls.sort((a, b) => a - b);
-  cs.sort((a, b) => a - b);
-  const paperLum = ls.length ? ls[Math.floor(ls.length * 0.75)] : 255;
-  const paperChroma = cs.length ? cs[Math.floor(cs.length * 0.25)] : 0;
+  const paper = paperSurface(paperPts, w, h);
+  // the paper's own colourfulness (noise, a slight cast): the median of its grey samples, lifted like the pixels
+  const pcs = paperPts.map((p) => (p.c * 255) / paper(p.x, p.y)).sort((a, b) => a - b);
+  const paperChroma = pcs.length ? pcs[pcs.length >> 1] : 0;
 
-  const { soft, hard } = printed();
-  const inBox = (bs: Box[], x: number, y: number) => bs.some((b) => x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1);
+  // every pixel is lifted so that the paper under it is 255 (the surface is smooth: 8 points per row, interpolated)
+  const lift = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const row = Array.from({ length: 8 }, (_, k) => 255 / paper(((k + 0.5) * w) / 8, y));
+    for (let x = 0; x < w; x++) {
+      const t = Math.min(7, Math.max(0, (x * 8) / w - 0.5));
+      const k = Math.min(6, Math.floor(t));
+      lift[y * w + x] = row[k] + (row[k + 1] - row[k]) * (t - k);
+    }
+  }
+
+  // candidates: darker or more colourful than the paper; `off` = frame band and the name
   const onPrint = new Uint8Array(w * h);
   const off = new Uint8Array(w * h);
-  // dark or colourful pixels; `strict` leaves out what is only dark on the printed elements
-  const all = new Uint8Array(w * h);
-  const strict = new Uint8Array(w * h);
+  const cand = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
@@ -123,15 +192,20 @@ export function freeformMask(img: RGBAImage): Uint8Array {
         off[i] = 1;
         continue;
       }
-      const print = inBox(soft, x / CARD_PX, y / CARD_PX);
-      onPrint[i] = print ? 1 : 0;
+      onPrint[i] = inBox(soft, x / CARD_PX, y / CARD_PX) ? 1 : 0;
       const o = i * 4;
-      const colour = chroma(d, o) - paperChroma > (print ? COLOURFUL_ON_PRINT : COLOURFUL);
-      const dark = paperLum - lum(d, o) > DARKER;
-      all[i] = colour || dark ? 1 : 0;
-      strict[i] = colour || (dark && !print) ? 1 : 0;
+      const f = lift[i];
+      cand[i] = 255 - lum(d, o) * f > DARKER || chroma(d, o) * f - paperChroma > COLOURFUL ? 1 : 0;
     }
   }
+  paintedWater(d, w, band, cand, off, onPrint, lift);
+
+  // on the printed elements only what is wider than the printed strokes: a fill over the arrow stays, the arrow goes
+  const ro = Math.max(1, Math.round(PRINT_STROKE * CARD_PX));
+  const opened = square(square(cand, w, h, ro, false), w, h, ro, true);
+  const strict = new Uint8Array(w * h);
+  for (let i = 0; i < strict.length; i++) strict[i] = onPrint[i] ? opened[i] & cand[i] : cand[i];
+
   const r = Math.max(1, Math.round(CLOSE * CARD_PX));
   /** close small gaps, then only what is inside the frame band and off the name */
   const close = (m: Uint8Array) => {
@@ -147,9 +221,9 @@ export function freeformMask(img: RGBAImage): Uint8Array {
 
   const mask = close(strict);
   fillHoles(mask);
-  // a pencil outline crossing the arrow or the hint is cut there in `strict`: its inside comes from `all`,
-  // unless that inside is just a printed box or a letter
-  fillHoles(close(all), (px) => px.reduce((n, i) => n + onPrint[i], 0) < PRINTED_HOLE * px.length, mask);
+  // a pencil outline crossing the arrow or the hint is cut there in `strict`: its inside comes from all
+  // candidates, unless that inside is just a printed box or a letter
+  fillHoles(close(cand), (px) => px.reduce((n, i) => n + onPrint[i], 0) < PRINTED_HOLE * px.length, mask);
   // the printed lines and words inside the animal leave thin slits there: close them, only on the printed elements
   const r2 = Math.round(SLIT * CARD_PX);
   const wide = square(square(mask, w, h, r2, true), w, h, r2, false);
@@ -161,6 +235,52 @@ export function freeformMask(img: RGBAImage): Uint8Array {
     if (px.length < crumb) for (const i of px) mask[i] = 0;
   });
   return mask;
+}
+
+/**
+ * Painted water: when one colour covers most of the free area and lies all along the frame, it is the background
+ * like the paper, and its pixels are no candidates any more. The animal is what differs from both.
+ */
+function paintedWater(d: Uint8ClampedArray, w: number, band: number, cand: Uint8Array, off: Uint8Array, onPrint: Uint8Array, lift: Float32Array): void {
+  // the free area: inside the band, above the name
+  const bottom = Math.round(labelsFor('freiform').nameBox.y * CARD_PX);
+  const zw = Math.round(WATER_ZONE * CARD_PX);
+  const zonePx: number[] = [];
+  const freePx: number[] = [];
+  for (let y = band; y < bottom; y += 2) {
+    for (let x = band; x < w - band; x += 2) {
+      const i = y * w + x;
+      if (off[i] || onPrint[i]) continue;
+      freePx.push(i);
+      if (x < band + zw || y < band + zw || x >= w - band - zw || y >= bottom - zw) zonePx.push(i);
+    }
+  }
+  const wet = zonePx.filter((i) => cand[i]);
+  if (wet.length < 0.25 * zonePx.length) return;
+  const ch = (i: number, c: number) => d[i * 4 + c] * lift[i];
+  const water = [0, 1, 2].map((c) => wet.map((i) => ch(i, c)).sort((a, b) => a - b)[wet.length >> 1]);
+  const dist = (i: number) => Math.hypot(ch(i, 0) - water[0], ch(i, 1) - water[1], ch(i, 2) - water[2]);
+  // how far crayon water strays from its median colour (streaks, light); the animal is clearly further away.
+  // At most 55: white paper is about 70 away from light blue water and must not count as water.
+  const spread = wet.map(dist).sort((a, b) => a - b)[Math.floor(wet.length * 0.8)];
+  const near = Math.min(55, Math.max(35, 2.5 * spread));
+  const isWater = (i: number) => dist(i) < near;
+  // along the frame: pieces of 6 mm of the zone, each with some water in it
+  const pieces = new Map<string, [number, number]>();
+  for (const i of zonePx) {
+    const x = i % w;
+    const y = (i - x) / w;
+    const side = y < band + zw ? 't' : y >= bottom - zw ? 'b' : x < band + zw ? 'l' : 'r';
+    const key = side + Math.floor((side === 't' || side === 'b' ? x : y) / zw);
+    const p = pieces.get(key) ?? [0, 0];
+    p[0]++;
+    if (isWater(i)) p[1]++;
+    pieces.set(key, p);
+  }
+  const along = [...pieces.values()].filter(([n, k]) => k >= 0.3 * n).length / Math.max(1, pieces.size);
+  const covers = freePx.filter(isWater).length / Math.max(1, freePx.length);
+  if (covers < WATER_SHARE || along < WATER_ALONG) return;
+  for (let i = 0; i < cand.length; i++) if (cand[i] && isWater(i)) cand[i] = 0;
 }
 
 /** share of the free space of the card that is painted (a blank card is near 0) */
