@@ -159,6 +159,44 @@ describe('colouring cards', () => {
     });
   });
 
+  it('never cuts out a left-right symmetric animal mirrored', () => {
+    // the crab is the same mirrored, the jellyfish nearly: the printed texts and the name line tell the sides apart
+    const m = CARD.margin;
+    let n = 0;
+    for (const sp of ['krebs', 'qualle', 'krake', 'kugelfisch'] as SpeciesId[]) {
+      for (const [deg, tilt, look] of [[0, 0, 0], [90, 0.05, 1], [180, 0, 2], [271, 0.03, -1], [-35, 0, 0]] as const) {
+        // -1: a blank card
+        const pic = paperPicture('card', [look < 0 ? { species: sp } : colourful(sp, look)]);
+        const corners = pose(CARD.w + 2 * m, CARD.h + 2 * m, 6, 640, 480, deg, tilt);
+        const img = photo(pic, { width: 1280, height: 960, table: [40, 34, 30], corners, noise: 8 + (n % 3) * 3, texture: 0.3, seed: 100 + n++ });
+        const res = findCards(img);
+        const at = `${sp} ${deg}°`;
+        expect(res.cards.map((c) => c.species), at).toEqual([sp]);
+        // the corners of the card frame lie just inside the corners of the paper, in the same order
+        const q = res.cards[0].quad;
+        for (let i = 0; i < 4; i++) {
+          const near = corners.map((c) => Math.hypot(c[0] - q[i][0], c[1] - q[i][1]));
+          expect(near.indexOf(Math.min(...near)), `${at}, corner ${i}`).toBe(i);
+        }
+      }
+    }
+    expect(n).toBeGreaterThanOrEqual(12);
+  });
+
+  it('reads a mirrored photo (front camera) as mirrored', () => {
+    const m = CARD.margin;
+    const [a, b, c, d] = pose(CARD.w + 2 * m, CARD.h + 2 * m, 6, 640, 480, 20);
+    // the paper's left and right edges swapped: the picture is mirrored
+    const corners = [b, a, d, c];
+    const res = findCards(photo(paperPicture('card', [colourful('krebs', 0)]), { width: 1280, height: 960, table: [40, 34, 30], corners, noise: 8, seed: 7 }));
+    expect(res.cards.map((h) => h.species)).toEqual(['krebs']);
+    const q = res.cards[0].quad;
+    for (let i = 0; i < 4; i++) {
+      const near = corners.map((p) => Math.hypot(p[0] - q[i][0], p[1] - q[i][1]));
+      expect(near.indexOf(Math.min(...near)), `corner ${i}`).toBe(i);
+    }
+  });
+
   /** a sheet of six coloured cards, lying nearly straight in the photo */
   const sheetPhoto = (list: SpeciesId[], looks?: SceneLook[]) =>
     photo(paperPicture('sheet', looks ?? list.map((sp, i) => colourful(sp, i))), {

@@ -2,7 +2,7 @@
 // corners (its outer edge, or its inner edge when the card lies on a dark table), the printed lines tell
 // which animal is on the card and which way up it lies. The card is then cut out straight (homography) at a
 // fixed resolution and its colours are evened out against the white paper.
-import { CARD, CARD_PX, FREEFORM, insidePolygon, lineSamples, onAnimal, toCard, type LineSample } from '../game/paint/fishCard.ts';
+import { CARD, CARD_PX, FREEFORM, insidePolygon, LABELS, lineSamples, onAnimal, toCard, type LineSample } from '../game/paint/fishCard.ts';
 import { freeformShare } from '../game/paint/freeform.ts';
 import { ANIMALS, SPECIES, type SpeciesId } from '../game/paint/species.ts';
 import { label } from './components.ts';
@@ -49,6 +49,8 @@ const MARGIN = 0.04;
 /** every animal is first scored on every n-th sample; only the best few are scored in full */
 const COARSE = 4;
 const FULL = 3;
+/** poses whose animal score is this close to the best one are told apart by the printed texts (symmetric animals) */
+const TIE = 0.1;
 export const THUMB_W = 12;
 export const THUMB_H = 8;
 
@@ -214,6 +216,27 @@ function samplesOf(sp: SpeciesId): { full: LineSample[]; coarse: LineSample[] } 
   return out;
 }
 
+let labelLines: LineSample[] | null = null;
+
+/**
+ * What every card prints on one side only: the right end of the name line, and the middle of the hint (top
+ * right) and of the name text (bottom left) as lines darker than the paper above and below them. A crab is the
+ * same mirrored; these are not.
+ */
+function labelSamples(): LineSample[] {
+  if (labelLines) return labelLines;
+  const out: LineSample[] = [];
+  const row = (x0: number, x1: number, y: number) => {
+    for (let x = x0 + 0.5; x < x1; x += 1) out.push({ x, y, nx: 0, ny: 1 });
+  };
+  const { hint, name, line } = LABELS;
+  row(line.x1 - 28, line.x1, line.y);
+  row(hint.x - 30, hint.x - 1, hint.y - hint.size * 0.35);
+  row(name.x + 1, name.x + 24, name.y - 3.0 * 0.35);
+  labelLines = out;
+  return out;
+}
+
 /** the area (card mm) that is coloured in: around the animal, or the free space of the free-form card */
 function paintBox(sp: SpeciesId): { x0: number; y0: number; x1: number; y1: number } {
   if (sp === 'freiform') return { x0: CARD.frame + 3, y0: FREEFORM.hintBox.y + FREEFORM.hintBox.h + 2, x1: CARD.w - CARD.frame - 3, y1: 70 };
@@ -359,14 +382,14 @@ export function findCards(frame: RGBAImage, opts: FindOptions = {}): CardScan {
     const rough = species0.map((sp) => ({ sp, m: Math.max(...poses.map((Hc) => score(Hc, samplesOf(sp).coarse))) }));
     rough.sort((a, b) => b.m - a.m);
     const ranked = rough.slice(0, FULL).map(({ sp }) => {
-      let m = -1;
-      let H = poses[0];
-      for (const Hc of poses) {
-        const v = score(Hc, samplesOf(sp).full);
-        if (v > m) {
-          m = v;
-          H = Hc;
-        }
+      const v = poses.map((Hc) => score(Hc, samplesOf(sp).full));
+      const m = Math.max(...v);
+      let H = poses[v.indexOf(m)];
+      // a (nearly) symmetric animal scores its mirrored pose about as well: the printed texts decide
+      const close = poses.filter((_, i) => v[i] >= m - TIE * Math.abs(m));
+      if (close.length > 1) {
+        const text = close.map((Hc) => score(Hc, labelSamples()));
+        H = close[text.indexOf(Math.max(...text))];
       }
       return { sp, m, H };
     });
