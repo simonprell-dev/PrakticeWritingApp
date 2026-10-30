@@ -138,7 +138,7 @@ export interface LineSample {
  * their normals, in card mm. The detection looks for them to find out which way up a card lies.
  */
 export function lineSamples(sp: SpeciesId, step = 1): LineSample[] {
-  const { place, parts, lines } = SPECIES[sp];
+  const { place, parts, lines, eyes } = SPECIES[sp];
   const out: LineSample[] = [];
   const add = (poly: Pt[], visible: (x: number, y: number) => boolean) => {
     for (let i = 1; i < poly.length; i++) {
@@ -155,15 +155,16 @@ export function lineSamples(sp: SpeciesId, step = 1): LineSample[] {
         const y = ay + (by - ay) * t;
         const fx = (x - place.x) / place.s;
         const fy = (y - place.y) / place.s;
-        if (visible(fx, fy)) out.push({ x, y, nx, ny });
+        // the eyes are drawn over everything
+        if (visible(fx, fy) && !eyes.some((e) => Math.hypot(fx - e.x, fy - e.y) < e.r)) out.push({ x, y, nx, ny });
       }
     }
   };
   const polys = partPolygons(sp);
   const ids = parts.map((p) => p.id);
-  // the parts behind the body are only visible outside of it
+  // the parts are drawn back to front: an outline is only visible where no later part covers it
   ids.forEach((k, i) => {
-    const front = ids.slice(i + 1).filter((f) => f !== 'pectoral' || k !== 'body');
+    const front = ids.slice(i + 1);
     add(polys[k], (x, y) => !front.some((f) => insidePolygon(polys[f], x, y)));
   });
   for (const d of lines) for (const poly of flatten(d)) add(poly, () => true);
