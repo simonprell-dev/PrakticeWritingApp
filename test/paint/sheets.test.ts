@@ -1,10 +1,10 @@
 import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 import { describe, expect, it } from 'vitest';
 import { drawCard } from '../../src/game/paint/cardArt.ts';
-import { CARD } from '../../src/game/paint/fishCard.ts';
+import { CARD, sheetLayout, SHEET } from '../../src/game/paint/fishCard.ts';
 import { labelsFor, sheetSpecies, sheetTitle, textWidth } from '../../src/game/paint/sheets.ts';
 import { SPECIES, type SpeciesId } from '../../src/game/paint/species.ts';
-import { sheetSvg } from '../../src/ui/printSheet.ts';
+import { FOOTER_Y, sheetSvg } from '../../src/ui/printSheet.ts';
 
 const ALL = Object.keys(SPECIES) as SpeciesId[];
 
@@ -86,5 +86,19 @@ describe('sheets', () => {
     expect(count(sheetSvg('mix-b'))).toBe(6);
     expect(count(sheetSvg('freiform'))).toBe(6);
     expect(sheetSvg('freiform')).toContain('Kopf nach hier');
+  });
+
+  it('prints a discreet footer below the cards', () => {
+    const L = sheetLayout();
+    const bottom = L.y0 + SHEET.rows * L.cellH;
+    expect(FOOTER_Y).toBeGreaterThan(bottom);
+    expect(FOOTER_Y).toBeLessThan(SHEET.h);
+    const withHost = sheetSvg('mix-a', { host: 'example.org' });
+    expect(withHost).toContain('example.org');
+    expect(withHost).toContain('Ein Projekt von PrellDynamics');
+    expect(withHost).toContain(`y="${FOOTER_Y}"`);
+    const plain = sheetSvg('mix-a');
+    expect(plain).toContain('Ein Projekt von PrellDynamics');
+    expect(plain).not.toContain('example.org');
   });
 });

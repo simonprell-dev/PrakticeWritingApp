@@ -1312,7 +1312,7 @@ input[type='range'] {
 /* ---------- Mal-Aquarium ---------- */
 .paint-lobby {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr minmax(0, 360px);
   gap: 24px;
   align-items: start;
 }
@@ -1321,8 +1321,26 @@ input[type='range'] {
     grid-template-columns: 1fr;
   }
 }
+.sheet-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.sheet-chooser {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.sheet-title {
+  margin: 0;
+}
+.sheet-preview {
+  width: min(360px, 100%);
+}
 .card-preview {
-  width: 300px;
+  width: 100%;
   max-width: 100%;
   height: auto;
   transform: rotate(2deg);

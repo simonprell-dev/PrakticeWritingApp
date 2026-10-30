@@ -54,7 +54,7 @@ function teachers(): HTMLElement {
         'span',
         null,
         b('Mal-Aquarium: '),
-        'hier wird gemalt statt geschrieben. Die Kopiervorlage (sechs Fische pro A4-Blatt) drucken Sie in der Spielvorbereitung aus. Jedes Kind malt seinen Fisch an und kann ihm unten einen Namen geben. Unter der Kamera schwimmt der Fisch dann mit genau diesen Farben los – ausgeschnitten oder als ganzes Blatt, Hauptsache der schwarze Rahmen ist ganz zu sehen. Noch weiße Fische und schon bekannte Karten zählen nicht doppelt.',
+        'hier wird gemalt statt geschrieben. Die Kopiervorlage (sechs Tiere pro A4-Blatt) drucken Sie in der Spielvorbereitung aus – zur Wahl stehen zwölf Meerestiere, zwei gemischte Blätter und eine Karte „Eigenes Tier“ zum freien Zeichnen. Jedes Kind malt sein Tier an und kann ihm unten einen Namen geben. Unter der Kamera schwimmt das Tier dann mit genau diesen Farben los – ausgeschnitten oder als ganzes Blatt, Hauptsache der schwarze Rahmen ist ganz zu sehen. Noch weiße und schon bekannte Karten zählen nicht doppelt.',
       ),
     ),
     h('h3', null, 'Weiterspielen, speichern, laden'),
@@ -129,7 +129,7 @@ function keys(): HTMLElement {
     list(
       'Alles hat auch einen Knopf: „Fertig!“, Team-Knöpfe, Neues Blatt, Automatik (👁), Speichern (💾), Vollbild (⛶), Menü (⌂).',
       'Auf Handy und Tablet öffnet „📷 Fertig!“ den Kamera-Sucher; der runde Knopf macht das Foto, ✕ bricht ab.',
-      'Ein Wesen antippen zeigt das Zeichen groß mit Tipp – im Mal-Aquarium den Fisch mit seinem Namen.',
+      'Ein Wesen antippen zeigt das Zeichen groß mit Tipp – im Mal-Aquarium das Tier mit seinem Namen.',
       'Die kleine Schreib-Vorlage oben antippen zeigt die große Vorführung.',
       'Teamfarben werden im Foto angetippt.',
     ),
@@ -143,8 +143,8 @@ function privacy(close: () => void): HTMLElement {
     list(
       'Die Kamerabilder werden nur auf diesem Gerät ausgewertet – nichts wird verschickt. Die Fotos selbst werden nicht gespeichert.',
       'Keine Konten, keine Cookies, kein Tracking, keine Werbung.',
-      'Gespeichert werden in diesem Browser die Einstellungen (z. B. Teamnamen, Übungsbuchstaben) und die Spielstände: die ausgeschnittenen Buchstaben und die ausgemalten Fische (mit dem Fischnamen, falls einer daraufsteht). Löschen: „📂 Spielstände“ oder Einstellungen → „Alle Spielstände löschen“.',
-      'Bitte die Kamera nur auf das Papier richten und als Teamnamen keine Namen von Kindern verwenden. Auf die Fisch-Karten gehört ein Fischname, nicht der Name des Kindes.',
+      'Gespeichert werden in diesem Browser die Einstellungen (z. B. Teamnamen, Übungsbuchstaben) und die Spielstände: die ausgeschnittenen Buchstaben und die ausgemalten Tiere (mit dem Tiernamen, falls einer daraufsteht). Löschen: „📂 Spielstände“ oder Einstellungen → „Alle Spielstände löschen“.',
+      'Bitte die Kamera nur auf das Papier richten und als Teamnamen keine Namen von Kindern verwenden. Auf die Tier-Karten gehört ein Tiername, nicht der Name des Kindes.',
     ),
     h(
       'div',
@@ -168,7 +168,7 @@ export function openGuide(): void {
     { style: 'max-width:820px' },
     h('h2', null, '👩‍🏫 Für Lehrer und Eltern'),
     p(
-      'Krakel & Krone macht Schreibübungen zum Spiel: Die Kinder schreiben mit Stift auf Papier, eine Kamera fotografiert das Blatt, und aus jedem Buchstaben wird ein kleines Wesen. Je sorgfältiger geschrieben, desto prächtiger das Wesen – Krakel werden zu lustigen, zerknitterten Wesen. Jedes Zeichen bekommt ein Wesen und einen freundlichen Tipp. Im Mal-Aquarium wird gemalt statt geschrieben: Ausgemalte Fische schwimmen in ihren eigenen Farben.',
+      'Krakel & Krone macht Schreibübungen zum Spiel: Die Kinder schreiben mit Stift auf Papier, eine Kamera fotografiert das Blatt, und aus jedem Buchstaben wird ein kleines Wesen. Je sorgfältiger geschrieben, desto prächtiger das Wesen – Krakel werden zu lustigen, zerknitterten Wesen. Jedes Zeichen bekommt ein Wesen und einen freundlichen Tipp. Im Mal-Aquarium wird gemalt statt geschrieben: Ausgemalte Meerestiere schwimmen in ihren eigenen Farben.',
     ),
     segmented(
       [
