@@ -46,9 +46,13 @@ function bodyBox(sp: SpeciesId): { x0: number; y0: number; x1: number; y1: numbe
   return Number.isFinite(b.x0) ? b : def.box;
 }
 
-/** k = sprite px per animal unit (every animal is about 100 units long; the free-form card counts in fish units) */
-export function paintedSprite(sp: SpeciesId, img: RGBAImage, k = 2.6, tex: AnyCanvas = canvasFromRGBA(img)): Sprite {
-  if (sp === 'freiform') return freeformSprite(img, k);
+/**
+ * k = sprite px per animal unit (every animal is about 100 units long; the free-form card counts in fish units).
+ * `mask`: the free-form drawing as the detection found it (made here when missing, e.g. for a saved animal).
+ */
+export function paintedSprite(sp: SpeciesId, img: RGBAImage, k = 2.6, tex?: AnyCanvas, mask?: Uint8Array): Sprite {
+  if (sp === 'freiform') return freeformSprite(img, k, mask ?? freeformMask(img));
+  tex ??= canvasFromRGBA(img);
   const def = SPECIES[sp];
   /** mm on the card -> animal units */
   const U = 1 / def.place.s;
@@ -127,9 +131,8 @@ export function paintedSprite(sp: SpeciesId, img: RGBAImage, k = 2.6, tex: AnyCa
 }
 
 /** the free-form animal: what the child drew, cut out of the paper, with a white edge around its outline */
-function freeformSprite(img: RGBAImage, k: number): Sprite {
+function freeformSprite(img: RGBAImage, k: number, mask: Uint8Array): Sprite {
   const { width: w, height: h, data: d } = img;
-  const mask = freeformMask(img);
   let x0 = w;
   let y0 = h;
   let x1 = -1;

@@ -45,51 +45,75 @@ function printed(): { soft: Box[]; hard: Box[] } {
 const lum = (d: Uint8ClampedArray, o: number) => 0.299 * d[o] + 0.587 * d[o + 1] + 0.114 * d[o + 2];
 const chroma = (d: Uint8ClampedArray, o: number) => Math.max(d[o], d[o + 1], d[o + 2]) - Math.min(d[o], d[o + 1], d[o + 2]);
 
-/** max (grow) or min (shrink) over a square of radius r, separable */
+/** max (grow) or min (shrink) over a square of radius r, separable; a running count over each window */
 function square(m: Uint8Array, w: number, h: number, r: number, grow: boolean): Uint8Array {
   const tmp = new Uint8Array(m.length);
   const out = new Uint8Array(m.length);
   const hit = grow ? 1 : 0;
+  // `n` = pixels equal to `hit` in the window [x - r, x + r]
   for (let y = 0; y < h; y++) {
+    const row = y * w;
+    let n = 0;
+    for (let k = 0; k < Math.min(w, r); k++) if (m[row + k] === hit) n++;
     for (let x = 0; x < w; x++) {
-      let v = 1 - hit;
-      for (let k = Math.max(0, x - r); k <= Math.min(w - 1, x + r); k++) if (m[y * w + k] === hit) { v = hit; break; }
-      tmp[y * w + x] = v;
+      if (x + r < w && m[row + x + r] === hit) n++;
+      if (x - r - 1 >= 0 && m[row + x - r - 1] === hit) n--;
+      tmp[row + x] = n > 0 ? hit : 1 - hit;
     }
   }
+  // the columns: one count per column, row by row
+  const col = new Int32Array(w);
+  for (let k = 0; k < Math.min(h, r); k++) for (let x = 0; x < w; x++) if (tmp[k * w + x] === hit) col[x]++;
   for (let y = 0; y < h; y++) {
+    const add = y + r < h ? (y + r) * w : -1;
+    const sub = y - r - 1 >= 0 ? (y - r - 1) * w : -1;
+    const row = y * w;
     for (let x = 0; x < w; x++) {
-      let v = 1 - hit;
-      for (let k = Math.max(0, y - r); k <= Math.min(h - 1, y + r); k++) if (tmp[k * w + x] === hit) { v = hit; break; }
-      out[y * w + x] = v;
+      if (add >= 0 && tmp[add + x] === hit) col[x]++;
+      if (sub >= 0 && tmp[sub + x] === hit) col[x]--;
+      out[row + x] = col[x] > 0 ? hit : 1 - hit;
     }
   }
   return out;
 }
 
-/** 4-connected components of the pixels equal to `v`; calls `each` with the pixel list of every component */
-function components(m: Uint8Array, w: number, h: number, v: number, each: (px: number[], border: boolean) => void): void {
+/**
+ * 4-connected components of the pixels equal to `v`; calls `each` with the pixels of every component (a view
+ * that is only valid during the call)
+ */
+function components(m: Uint8Array, w: number, h: number, v: number, each: (px: Int32Array, border: boolean) => void): void {
   const seen = new Uint8Array(m.length);
-  const stack: number[] = [];
+  // the queue of a breadth-first search is the list of the component's pixels
+  const queue = new Int32Array(m.length);
   for (let s = 0; s < m.length; s++) {
     if (seen[s] || m[s] !== v) continue;
-    const px: number[] = [];
+    let end = 0;
     let border = false;
     seen[s] = 1;
-    stack.push(s);
-    while (stack.length) {
-      const i = stack.pop()!;
-      px.push(i);
+    queue[end++] = s;
+    for (let head = 0; head < end; head++) {
+      const i = queue[head];
       const x = i % w;
       const y = (i - x) / w;
       if (x === 0 || y === 0 || x === w - 1 || y === h - 1) border = true;
-      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, y > 0 ? i - w : -1, y < h - 1 ? i + w : -1]) {
-        if (j < 0 || seen[j] || m[j] !== v) continue;
-        seen[j] = 1;
-        stack.push(j);
+      if (x > 0 && !seen[i - 1] && m[i - 1] === v) {
+        seen[i - 1] = 1;
+        queue[end++] = i - 1;
+      }
+      if (x < w - 1 && !seen[i + 1] && m[i + 1] === v) {
+        seen[i + 1] = 1;
+        queue[end++] = i + 1;
+      }
+      if (y > 0 && !seen[i - w] && m[i - w] === v) {
+        seen[i - w] = 1;
+        queue[end++] = i - w;
+      }
+      if (y < h - 1 && !seen[i + w] && m[i + w] === v) {
+        seen[i + w] = 1;
+        queue[end++] = i + w;
       }
     }
-    each(px, border);
+    each(queue.subarray(0, end), border);
   }
 }
 
@@ -151,7 +175,19 @@ export function freeformMask(img: RGBAImage): Uint8Array {
   const { width: w, height: h, data: d } = img;
   const band = Math.ceil((CARD.frame + 1) * CARD_PX);
   const { soft, hard } = printed();
-  const inBox = (bs: Box[], x: number, y: number) => bs.some((b) => x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1);
+  /** the pixels inside the boxes */
+  const raster = (bs: Box[]) => {
+    const m = new Uint8Array(w * h);
+    for (const b of bs) {
+      for (let y = 0; y < h; y++) {
+        if (y / CARD_PX < b.y0 || y / CARD_PX > b.y1) continue;
+        for (let x = 0; x < w; x++) if (x / CARD_PX >= b.x0 && x / CARD_PX <= b.x1) m[y * w + x] = 1;
+      }
+    }
+    return m;
+  };
+  const inHard = raster(hard);
+  const inSoft = raster(soft);
 
   // the paper: grey (unsaturated) samples in a strip just inside the frame, off the printed elements
   const strip = Math.ceil((CARD.frame + 2.5) * CARD_PX);
@@ -159,7 +195,7 @@ export function freeformMask(img: RGBAImage): Uint8Array {
   for (let y = band; y < h - band; y += 2) {
     for (let x = band; x < w - band; x += 2) {
       if (x >= strip && y >= strip && x < w - strip && y < h - strip) continue;
-      if (inBox(hard, x / CARD_PX, y / CARD_PX) || inBox(soft, x / CARD_PX, y / CARD_PX)) continue;
+      if (inHard[y * w + x] || inSoft[y * w + x]) continue;
       const o = (y * w + x) * 4;
       const c = chroma(d, o);
       if (c < 30) paperPts.push({ x, y, l: lum(d, o), c });
@@ -188,11 +224,11 @@ export function freeformMask(img: RGBAImage): Uint8Array {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      if (x < band || y < band || x >= w - band || y >= h - band || inBox(hard, x / CARD_PX, y / CARD_PX)) {
+      if (x < band || y < band || x >= w - band || y >= h - band || inHard[i]) {
         off[i] = 1;
         continue;
       }
-      onPrint[i] = inBox(soft, x / CARD_PX, y / CARD_PX) ? 1 : 0;
+      onPrint[i] = inSoft[i];
       const o = i * 4;
       const f = lift[i];
       cand[i] = 255 - lum(d, o) * f > DARKER || chroma(d, o) * f - paperChroma > COLOURFUL ? 1 : 0;
@@ -214,7 +250,7 @@ export function freeformMask(img: RGBAImage): Uint8Array {
     return c;
   };
   /** paper not connected to the edge of the card is inside the animal */
-  const fillHoles = (m: Uint8Array, keep: (px: number[]) => boolean = () => true, into = m) =>
+  const fillHoles = (m: Uint8Array, keep: (px: Int32Array) => boolean = () => true, into = m) =>
     components(m, w, h, 0, (px, border) => {
       if (!border && keep(px)) for (const i of px) into[i] = 1;
     });

@@ -3,7 +3,7 @@
 // which animal is on the card and which way up it lies. The card is then cut out straight (homography) at a
 // fixed resolution and its colours are evened out against the white paper.
 import { CARD, CARD_PX, FREEFORM, insidePolygon, LABELS, lineSamples, onAnimal, toCard, type LineSample } from '../game/paint/fishCard.ts';
-import { freeformShare } from '../game/paint/freeform.ts';
+import { freeformMask, freeformShare } from '../game/paint/freeform.ts';
 import { ANIMALS, SPECIES, type SpeciesId } from '../game/paint/species.ts';
 import { label } from './components.ts';
 import { boxBlur, maxFilter } from './filters.ts';
@@ -24,6 +24,8 @@ export interface CardHit {
   colored: number;
   /** 12 × 8 RGB means (0..1) over the animal, to recognise a card again */
   thumb: number[];
+  /** the free-form card: its drawing (1 per texture px), made once here so the sprite does not make it again */
+  mask?: Uint8Array;
 }
 
 export interface CardScan {
@@ -491,7 +493,12 @@ export function cutOut(frame: RGBAImage, Hf: Homography, match: number, species:
   }
   evenOut(out, tw, th, ring, species);
   const image: RGBAImage = { width: tw, height: th, data: out };
-  return { species, quad, image, match: Math.round(match * 1000) / 1000, colored: colouredShare(image, species), thumb: thumbOf(image, species) };
+  const hit: CardHit = { species, quad, image, match: Math.round(match * 1000) / 1000, colored: 0, thumb: thumbOf(image, species) };
+  if (species === 'freiform') {
+    hit.mask = freeformMask(image);
+    hit.colored = freeformShare(image, hit.mask);
+  } else hit.colored = colouredShare(image, species);
+  return hit;
 }
 
 /** median colour of a list of RGB samples (by brightness) */

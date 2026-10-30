@@ -284,10 +284,12 @@ describe('colouring cards', () => {
     expect(res.unsure).toBe(1);
   });
 
-  it('takes at most about twice as long looking for every animal as looking only for the fish (as before)', () => {
+  it('takes at most about twice as long looking for every animal (and on a free-form sheet) as looking only for the fish (as before)', () => {
     // before, only the fish was looked for, on the old fish sheet; the mixed sheet with every animal is the new case
     const old = sheetPhoto(Array(6).fill('fisch'), [ORANGE, {}, GREEN, {}, NIGHT, {}]);
     const mixed = sheetPhoto(MIX_B);
+    // six painted free-form cards: each is cut out along its drawing
+    const free = sheetPhoto(Array(6).fill('freiform'));
     const median = (img: RGBAImage, species?: SpeciesId[]) => {
       const t: number[] = [];
       for (let i = 0; i < 3; i++) {
@@ -304,6 +306,8 @@ describe('colouring cards', () => {
     const now = median(mixed);
     expect(sameSheet, `old sheet: ${sameSheet.toFixed(0)} ms vs ${before.toFixed(0)} ms`).toBeLessThanOrEqual(2.2 * before);
     expect(now, `mixed sheet: ${now.toFixed(0)} ms vs ${before.toFixed(0)} ms`).toBeLessThanOrEqual(2.2 * before);
+    const own = median(free);
+    expect(own, `free-form sheet: ${own.toFixed(0)} ms vs ${before.toFixed(0)} ms`).toBeLessThanOrEqual(2.2 * before);
   });
 
   it('finds nothing on a page with handwriting and no card', () => {

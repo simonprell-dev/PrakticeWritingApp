@@ -202,6 +202,31 @@ describe('sprites of all animals', () => {
     expect(canvas.width).toBeGreaterThan(blobW);
     expect(canvas.width).toBeLessThan(blobW + 60);
   });
+
+  it('the free-form sprite takes the mask the detection made, instead of making it again', () => {
+    const img = freeCard(ellipse(RED));
+    // a 20 × 10 mm piece only: the sprite is cut out along this mask, not along the red blob
+    const mask = new Uint8Array(TW * TH);
+    for (let y = 30 * CARD_PX; y < 40 * CARD_PX; y++) for (let x = 20 * CARD_PX; x < 40 * CARD_PX; x++) mask[y * TW + x] = 1;
+    const own = paintedSprite('freiform', img);
+    const given = paintedSprite('freiform', img, 2.6, undefined, mask);
+    expect(given.canvas.width).toBeLessThan(own.canvas.width - 20);
+    const k = 2.6;
+    expect(given.canvas.width).toBeGreaterThan((20 * k) / 0.82);
+    expect(given.canvas.width).toBeLessThan((20 * k) / 0.82 + 40);
+  });
+
+  it('a free-form card found in a photo brings its mask along; the other cards do not', () => {
+    const m = CARD.margin;
+    const res = findCards(photo(paperPicture('card', [colourful('freiform', 2)]), { width: 1280, height: 960, table: [40, 34, 30], corners: pose(CARD.w + 2 * m, CARD.h + 2 * m, 6, 640, 480, 8), noise: 8 }));
+    const [hit] = res.cards;
+    expect(hit.species).toBe('freiform');
+    expect(hit.mask).toBeInstanceOf(Uint8Array);
+    expect(hit.mask).toEqual(freeformMask(hit.image));
+    const fish = findCards(photo(paperPicture('card', [colourful('fisch', 2)]), { width: 1280, height: 960, table: [40, 34, 30], corners: pose(CARD.w + 2 * m, CARD.h + 2 * m, 6, 640, 480, 8), noise: 8 })).cards[0];
+    expect(fish.species).toBe('fisch');
+    expect(fish.mask).toBeUndefined();
+  });
 });
 
 /** the share of `where` that is in the mask, and the share of everything else (with a margin of `m` mm around `where`) */
