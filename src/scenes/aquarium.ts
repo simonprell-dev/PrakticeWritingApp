@@ -12,6 +12,9 @@ interface Weed {
   width: number;
 }
 
+/** the top of the sand in a picture H px high */
+export const sandLine = (H: number) => H - 120;
+
 export const aquarium: HabitatDef = {
   id: 'meer',
   archetype: 'fish',
@@ -53,7 +56,7 @@ export const aquarium: HabitatDef = {
       ctx.fill();
     }
     // sand
-    const sandY = H - 120;
+    const sandY = sandLine(H);
     const sand = ctx.createLinearGradient(0, sandY - 30, 0, H);
     sand.addColorStop(0, '#f6dfac');
     sand.addColorStop(1, '#d8b06e');

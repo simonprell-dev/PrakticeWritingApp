@@ -6,6 +6,8 @@ import { drawPencil, drawSchoolLines, drawWriting, writeDuration, writtenGlyph, 
 import { makeGenome, type Archetype, type Genome } from '../game/creatures/genome.ts';
 import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
 import { clamp, ease, lerp, TAU } from '../game/math.ts';
+import { poseOf } from '../game/paint/motion.ts';
+import type { SpeciesId } from '../game/paint/species.ts';
 import { Particles } from '../game/particles.ts';
 import { hashBytes } from '../game/rng.ts';
 import { SpawnFx } from '../game/spawnFx.ts';
@@ -52,8 +54,10 @@ export interface Creature {
   bubble?: { text: string; t: number; good: boolean; image?: AnyCanvas };
 }
 
-/** the skin of a fish coloured in on a card */
+/** the skin of an animal coloured in on a card */
 export interface PaintedSkin {
+  /** the animal printed on the card */
+  species: SpeciesId;
   /** the card, cut out straight */
   image: RGBAImage;
   /** 12 × 8 colours to recognise the card again */
@@ -347,7 +351,7 @@ export class HabitatScene implements Scene {
         c.facing = dir as 1 | -1;
         c.vx = lerp(c.vx, dir * 260, dt * 2);
         c.x += c.vx * dt;
-      } else this.def.behave(this, c, dt);
+      } else this.behave(c, dt);
       c.face = lerp(c.face, c.facing, Math.min(1, dt * 6));
       if (c.genome.sparkle && Math.random() < dt * 3) {
         const a = Math.random() * TAU;
@@ -368,6 +372,11 @@ export class HabitatScene implements Scene {
     this.particles.update(dt);
   }
 
+  /** how a creature moves when it is not leaving */
+  protected behave(c: Creature, dt: number): void {
+    this.def.behave(this, c, dt);
+  }
+
   render(ctx: CanvasRenderingContext2D): void {
     if (this.bg) ctx.drawImage(this.bg as CanvasImageSource, 0, 0);
     this.def.renderBack?.(this, ctx);
@@ -384,14 +393,17 @@ export class HabitatScene implements Scene {
   drawCreature(ctx: CanvasRenderingContext2D, c: Creature): void {
     const sp = c.sprite;
     const grow = ease.outBack(c.spawn);
+    // a painted animal moves its own way (Mal-Aquarium); everybody else squashes a little and wags its tail
+    const pose = sp.motion ? poseOf(sp.motion, c.age, c.phase, c.vx) : null;
     const sq = 1 + Math.sin(c.age * 3 + c.phase) * 0.03;
     ctx.save();
-    ctx.translate(c.x, c.y - c.lift);
-    ctx.rotate(c.rot);
+    ctx.translate(c.x, c.y - c.lift + (pose?.dy ?? 0));
+    ctx.rotate(c.rot + (pose?.rot ?? 0));
     const s = c.depth * grow;
-    ctx.scale(c.face * s * (2 - sq), s * sq);
+    if (pose) ctx.scale(c.face * s * pose.sx, s * pose.sy);
+    else ctx.scale(c.face * s * (2 - sq), s * sq);
     if (sp.tail) {
-      const wag = Math.sin(c.age * (6 + Math.abs(c.vx) / 25) + c.phase) * (c.genome.wobble > 0.4 ? 0.5 : 0.3);
+      const wag = pose ? pose.limb : Math.sin(c.age * (6 + Math.abs(c.vx) / 25) + c.phase) * (c.genome.wobble > 0.4 ? 0.5 : 0.3);
       ctx.save();
       ctx.translate(sp.tail.px - sp.ax, sp.tail.py - sp.ay);
       ctx.rotate(wag);
