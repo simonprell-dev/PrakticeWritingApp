@@ -4,18 +4,20 @@
 import type { RGBAImage } from '../../vision/types.ts';
 import { canvasFromRGBA, makeCanvas, makePath, type AnyCanvas, type Ctx } from '../canvas.ts';
 import { INK } from '../paint/cardArt.ts';
-import { BODY_PARTS, CARD_PX, FISH, FISH_TO_CARD, LABELS, LINE } from '../paint/fishCard.ts';
+import { CARD_PX, LABELS, LINE } from '../paint/fishCard.ts';
+import { SPECIES } from '../paint/species.ts';
 import type { Sprite } from './sprite.ts';
 
+const FISH = SPECIES.fisch;
 /** mm on the card -> fish units */
-const U = 1 / FISH_TO_CARD.s;
+const U = 1 / FISH.place.s;
 const PAD = 8;
 
 function texelMean(img: RGBAImage, pts: [number, number][]): [number, number, number] {
   const acc = [0, 0, 0];
   for (const [fx, fy] of pts) {
-    const x = Math.round((FISH_TO_CARD.x + fx * FISH_TO_CARD.s) * CARD_PX);
-    const y = Math.round((FISH_TO_CARD.y + fy * FISH_TO_CARD.s) * CARD_PX);
+    const x = Math.round((FISH.place.x + fx * FISH.place.s) * CARD_PX);
+    const y = Math.round((FISH.place.y + fy * FISH.place.s) * CARD_PX);
     const o = (Math.min(img.height - 1, Math.max(0, y)) * img.width + Math.min(img.width - 1, Math.max(0, x))) * 4;
     acc[0] += img.data[o];
     acc[1] += img.data[o + 1];
@@ -26,7 +28,8 @@ function texelMean(img: RGBAImage, pts: [number, number][]): [number, number, nu
 
 /** k = sprite px per fish unit (the fish is 100 units long) */
 export function paintedFishSprite(img: RGBAImage, k = 2.6, tex: AnyCanvas = canvasFromRGBA(img)): Sprite {
-  const { box, joint, eye } = FISH;
+  const { box, pivot: joint } = FISH;
+  const eye = FISH.eyes[0];
   const W = Math.ceil((box.x1 - box.x0) * k + 2 * PAD);
   const H = Math.ceil((box.y1 - box.y0) * k + 2 * PAD);
   const sx = (x: number) => PAD + (x - box.x0) * k;
@@ -40,7 +43,7 @@ export function paintedFishSprite(img: RGBAImage, k = 2.6, tex: AnyCanvas = canv
   const skin = (ctx: Ctx) => {
     ctx.save();
     ctx.scale(U, U);
-    ctx.translate(-FISH_TO_CARD.x, -FISH_TO_CARD.y);
+    ctx.translate(-FISH.place.x, -FISH.place.y);
     ctx.scale(1 / CARD_PX, 1 / CARD_PX);
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(tex as CanvasImageSource, 0, 0);
@@ -67,13 +70,16 @@ export function paintedFishSprite(img: RGBAImage, k = 2.6, tex: AnyCanvas = canv
   toFish(body.ctx);
   paint(
     body.ctx,
-    BODY_PARTS.map((p) => FISH[p]),
+    FISH.parts.filter((p) => !FISH.moving.includes(p.id)).map((p) => p.d),
   );
   body.ctx.restore();
   const tail = makeCanvas(W, H);
   tail.ctx.save();
   toFish(tail.ctx);
-  paint(tail.ctx, [FISH.tail]);
+  paint(
+    tail.ctx,
+    FISH.parts.filter((p) => FISH.moving.includes(p.id)).map((p) => p.d),
+  );
   tail.ctx.restore();
 
   // the eyelid takes the colour around the eye

@@ -2,13 +2,14 @@
 // The print sheet uses the same geometry as SVG (ui/printSheet.ts).
 import type { RGBAImage } from '../../vision/types.ts';
 import { makeCanvas, makePath, type Ctx } from '../canvas.ts';
-import { CARD, CARD_PX, FISH, FISH_TO_CARD, LABELS, LINE, OUTLINE_PARTS, type FishPart } from './fishCard.ts';
+import { CARD, CARD_PX, LABELS, LINE } from './fishCard.ts';
+import { SPECIES } from './species.ts';
 
 export const INK = '#1d1a24';
 
 export interface CardLook {
   /** colours of the parts (white when missing), 'water' = the area around the fish */
-  fills?: Partial<Record<FishPart | 'water', string>>;
+  fills?: Partial<Record<string, string>>;
   font?: string;
   /** draw the white margin up to the cut line */
   margin?: boolean;
@@ -41,24 +42,25 @@ export function drawCard(ctx: Ctx, k: number, look: CardLook = {}): void {
   ctx.fillRect(w - frame, 0, frame, h);
 
   ctx.save();
-  ctx.translate(FISH_TO_CARD.x, FISH_TO_CARD.y);
-  ctx.scale(FISH_TO_CARD.s, FISH_TO_CARD.s);
-  const u = 1 / FISH_TO_CARD.s;
+  const sp = SPECIES.fisch;
+  ctx.translate(sp.place.x, sp.place.y);
+  ctx.scale(sp.place.s, sp.place.s);
+  const u = 1 / sp.place.s;
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   ctx.strokeStyle = INK;
-  for (const part of OUTLINE_PARTS) {
-    const p = makePath(FISH[part]);
-    ctx.fillStyle = look.fills?.[part] ?? '#ffffff';
+  for (const part of sp.parts) {
+    const p = makePath(part.d);
+    ctx.fillStyle = look.fills?.[part.id] ?? '#ffffff';
     ctx.fill(p);
     ctx.lineWidth = LINE.outline * u;
     ctx.stroke(p);
   }
   ctx.lineWidth = LINE.inner * u;
-  for (const d of FISH.lines) ctx.stroke(makePath(d));
+  for (const d of sp.lines) ctx.stroke(makePath(d));
   ctx.lineWidth = LINE.outline * u * 0.8;
-  ctx.stroke(makePath(FISH.mouth));
-  const { eye, pupil } = FISH;
+  for (const d of sp.strokes) ctx.stroke(makePath(d));
+  const { pupil, ...eye } = sp.eyes[0];
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   ctx.arc(eye.x, eye.y, eye.r, 0, Math.PI * 2);

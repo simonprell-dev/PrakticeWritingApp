@@ -2,12 +2,15 @@
 // corners (its outer edge, or its inner edge when the card lies on a dark table), the printed lines of the
 // fish tell which way up the card lies. The card is then cut out straight (homography) at a fixed
 // resolution and its colours are evened out against the white paper.
-import { CARD, CARD_PX, FISH, FISH_TO_CARD, lineSamples, onFish, type LineSample } from '../game/paint/fishCard.ts';
+import { CARD, CARD_PX, lineSamples, onAnimal, type LineSample } from '../game/paint/fishCard.ts';
+import { SPECIES } from '../game/paint/species.ts';
 import { label } from './components.ts';
 import { boxBlur, maxFilter } from './filters.ts';
 import { convexHull, polygonArea, type Pt } from './geometry.ts';
 import { sampleBilinear } from './image.ts';
 import type { Mask, RGBAImage } from './types.ts';
+
+const FISH = SPECIES.fisch;
 
 export interface CardHit {
   /** corners of the card's outer frame edge in frame px: top-left, top-right, bottom-right, bottom-left */
@@ -193,15 +196,16 @@ let fishPoints: Pt[] | null = null;
 /** points (card mm) on the colourable fish, away from the printed lines and the eye */
 function colourPoints(): Pt[] {
   if (fishPoints) return fishPoints;
-  const lines = samples ?? (samples = lineSamples(1));
+  const lines = samples ?? (samples = lineSamples('fisch', 1));
   const pts: Pt[] = [];
-  const { box, eye } = FISH;
+  const { box } = FISH;
+  const eye = FISH.eyes[0];
   const step = 1.5;
-  for (let y = box.y0; y <= box.y1; y += step / FISH_TO_CARD.s) {
-    for (let x = box.x0; x <= box.x1; x += step / FISH_TO_CARD.s) {
-      if (!onFish(x, y) || Math.hypot(x - eye.x, y - eye.y) < eye.r + 1.5) continue;
-      const cx = FISH_TO_CARD.x + x * FISH_TO_CARD.s;
-      const cy = FISH_TO_CARD.y + y * FISH_TO_CARD.s;
+  for (let y = box.y0; y <= box.y1; y += step / FISH.place.s) {
+    for (let x = box.x0; x <= box.x1; x += step / FISH.place.s) {
+      if (!onAnimal('fisch', x, y) || Math.hypot(x - eye.x, y - eye.y) < eye.r + 1.5) continue;
+      const cx = FISH.place.x + x * FISH.place.s;
+      const cy = FISH.place.y + y * FISH.place.s;
       if (lines.some((s) => Math.abs(s.x - cx) < 1.3 && Math.abs(s.y - cy) < 1.3)) continue;
       pts.push([cx, cy]);
     }
@@ -264,7 +268,7 @@ export function findCards(frame: RGBAImage): CardScan {
     const b = sampleBilinear(bg, w, h, x - 0.5, y - 0.5);
     return b > 1 ? Math.max(0, 1 - sampleBilinear(L, w, h, x - 0.5, y - 0.5) / b) : 0;
   };
-  const lines = samples ?? (samples = lineSamples(1));
+  const lines = samples ?? (samples = lineSamples('fisch', 1));
   const { w: cw, h: ch, frame: fr } = CARD;
   const outer: Pt[] = [
     [0, 0],
@@ -450,13 +454,14 @@ function evenOut(px: Uint8ClampedArray, w: number, h: number, outside: number[][
   const bright = n ? sum.map((v) => v / n) : null;
   // the eye: inside the white circle, outside the pupil and its highlight
   const eye: number[][] = [];
-  const { eye: E, pupil: P } = FISH;
+  const E = FISH.eyes[0];
+  const P = E.pupil;
   for (let a = 0; a < Math.PI * 2; a += 0.15) {
     for (const r of [E.r - 1.1, E.r - 1.8]) {
       const x = E.x + Math.cos(a) * r;
       const y = E.y + Math.sin(a) * r;
       if (Math.hypot(x - P.x, y - P.y) < P.r + 0.8) continue;
-      eye.push(at(FISH_TO_CARD.x + x * FISH_TO_CARD.s, FISH_TO_CARD.y + y * FISH_TO_CARD.s));
+      eye.push(at(FISH.place.x + x * FISH.place.s, FISH.place.y + y * FISH.place.s));
     }
   }
   const ref = bright ? lumOf(bright) : 0;
@@ -499,10 +504,10 @@ export function colouredShare(img: RGBAImage): number {
 export function thumbOf(img: RGBAImage): number[] {
   const { box } = FISH;
   const out: number[] = [];
-  const x0 = FISH_TO_CARD.x + box.x0 * FISH_TO_CARD.s;
-  const y0 = FISH_TO_CARD.y + box.y0 * FISH_TO_CARD.s;
-  const cw = ((box.x1 - box.x0) * FISH_TO_CARD.s) / THUMB_W;
-  const chh = ((box.y1 - box.y0) * FISH_TO_CARD.s) / THUMB_H;
+  const x0 = FISH.place.x + box.x0 * FISH.place.s;
+  const y0 = FISH.place.y + box.y0 * FISH.place.s;
+  const cw = ((box.x1 - box.x0) * FISH.place.s) / THUMB_W;
+  const chh = ((box.y1 - box.y0) * FISH.place.s) / THUMB_H;
   for (let j = 0; j < THUMB_H; j++) {
     for (let i = 0; i < THUMB_W; i++) {
       const acc = [0, 0, 0];

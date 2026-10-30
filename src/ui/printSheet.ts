@@ -1,19 +1,21 @@
 // The copy template of the Mal-Aquarium: an A4 page with six fish cards and cut lines, as SVG.
 // It is printed from the page itself (a print-only element), so no pop-up window is needed.
 import { INK } from '../game/paint/cardArt.ts';
-import { CARD, FISH, FISH_TO_CARD, LABELS, LINE, OUTLINE_PARTS, SHEET, sheetLayout } from '../game/paint/fishCard.ts';
+import { CARD, LABELS, LINE, SHEET, sheetLayout } from '../game/paint/fishCard.ts';
+import { SPECIES } from '../game/paint/species.ts';
 
 /** one card as SVG, its frame's top-left corner at (x, y) mm */
 function cardSvg(x: number, y: number): string {
   const { w, h, frame: f } = CARD;
-  const u = 1 / FISH_TO_CARD.s;
-  const parts = OUTLINE_PARTS.map((p) => `<path d="${FISH[p]}" fill="#fff" stroke="${INK}" stroke-width="${LINE.outline * u}" stroke-linejoin="round"/>`).join('');
-  const lines = FISH.lines.map((d) => `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${LINE.inner * u}" stroke-linecap="round"/>`).join('');
-  const { eye, pupil } = FISH;
+  const sp = SPECIES.fisch;
+  const u = 1 / sp.place.s;
+  const parts = sp.parts.map((p) => `<path d="${p.d}" fill="#fff" stroke="${INK}" stroke-width="${LINE.outline * u}" stroke-linejoin="round"/>`).join('');
+  const lines = sp.lines.map((d) => `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${LINE.inner * u}" stroke-linecap="round"/>`).join('');
+  const { pupil, ...eye } = sp.eyes[0];
   return `<g transform="translate(${x} ${y})">
 <path d="M0 0H${w}V${h}H0Z M${f} ${f}V${h - f}H${w - f}V${f}Z" fill="${INK}" fill-rule="evenodd"/>
-<g transform="translate(${FISH_TO_CARD.x} ${FISH_TO_CARD.y}) scale(${FISH_TO_CARD.s})">${parts}${lines}
-<path d="${FISH.mouth}" fill="none" stroke="${INK}" stroke-width="${LINE.outline * u * 0.8}" stroke-linecap="round"/>
+<g transform="translate(${sp.place.x} ${sp.place.y}) scale(${sp.place.s})">${parts}${lines}
+<path d="${sp.strokes[0]}" fill="none" stroke="${INK}" stroke-width="${LINE.outline * u * 0.8}" stroke-linecap="round"/>
 <circle cx="${eye.x}" cy="${eye.y}" r="${eye.r}" fill="#fff" stroke="${INK}" stroke-width="${LINE.inner * u * 1.3}"/>
 <circle cx="${pupil.x}" cy="${pupil.y}" r="${pupil.r}" fill="${INK}"/>
 <circle cx="${pupil.x - 0.9}" cy="${pupil.y - 1}" r="0.85" fill="#fff"/></g>
