@@ -47,8 +47,9 @@ describe.each(ANIMALS)('the %s', (sp) => {
 
   it('stays inside the frame, clear of the texts', () => {
     const lo = CARD.frame + 2;
-    const hi = { x: CARD.w - CARD.frame - 2, y: Math.min(CARD.h - CARD.frame - 2, labelsFor(sp).line.y - 6) };
-    const { hint } = labelsFor(sp);
+    const { hint, nameBox } = labelsFor(sp);
+    // a millimetre of air above the name box, so a blank card has no name
+    const hi = { x: CARD.w - CARD.frame - 2, y: Math.min(CARD.h - CARD.frame - 2, nameBox.y - 1) };
     const hintX0 = hint.x - textWidth(hint.text, hint.size);
     for (const p of def.parts) {
       for (const [ax, ay] of polys[p.id]) {

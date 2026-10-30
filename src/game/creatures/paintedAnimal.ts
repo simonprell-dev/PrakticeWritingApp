@@ -5,7 +5,7 @@
 import type { RGBAImage } from '../../vision/types.ts';
 import { canvasFromRGBA, makeCanvas, makePath, type AnyCanvas, type Ctx } from '../canvas.ts';
 import { INK } from '../paint/cardArt.ts';
-import { CARD_PX, LINE } from '../paint/fishCard.ts';
+import { CARD_PX, LINE, onAnimal, toCard } from '../paint/fishCard.ts';
 import { freeformMask } from '../paint/freeform.ts';
 import { labelsFor } from '../paint/sheets.ts';
 import { SPECIES, type SpeciesId } from '../paint/species.ts';
@@ -247,6 +247,39 @@ export function animalPicture(sp: Sprite, size: number): AnyCanvas {
   return canvas;
 }
 
+/** how close (mm) to the printed animal a pixel of the name box must not be: tips of arms are no name */
+const NEAR_ANIMAL = 1.5;
+const nearAnimal = new Map<SpeciesId, Uint8Array>();
+
+/** the pixels of the name box (row by row) that lie on or next to the printed animal (made once per animal) */
+function nearAnimalMask(sp: SpeciesId, x0: number, y0: number, w: number, h: number): Uint8Array {
+  let m = nearAnimal.get(sp);
+  if (m && m.length === w * h) return m;
+  m = new Uint8Array(w * h);
+  const def = SPECIES[sp];
+  const [bx0, by0] = toCard(sp, def.box.x0, def.box.y0);
+  const [bx1, by1] = toCard(sp, def.box.x1, def.box.y1);
+  const r = NEAR_ANIMAL;
+  for (let y = 0; y < h; y++) {
+    const cy = (y0 + y + 0.5) / CARD_PX;
+    if (!def.parts.length || cy < by0 - r || cy > by1 + r) continue;
+    for (let x = 0; x < w; x++) {
+      const cx = (x0 + x + 0.5) / CARD_PX;
+      if (cx < bx0 - r || cx > bx1 + r) continue;
+      for (let a = -1; a < 8; a++) {
+        const px = a < 0 ? cx : cx + Math.cos((a * Math.PI) / 4) * r;
+        const py = a < 0 ? cy : cy + Math.sin((a * Math.PI) / 4) * r;
+        if (onAnimal(sp, (px - def.place.x) / def.place.s, (py - def.place.y) / def.place.s)) {
+          m[y * w + x] = 1;
+          break;
+        }
+      }
+    }
+  }
+  nearAnimal.set(sp, m);
+  return m;
+}
+
 /** the handwritten name of the animal, or null when nothing was written on the line */
 export function nameCrop(img: RGBAImage, sp: SpeciesId = 'fisch'): AnyCanvas | null {
   const labels = labelsFor(sp);
@@ -256,6 +289,8 @@ export function nameCrop(img: RGBAImage, sp: SpeciesId = 'fisch'): AnyCanvas | n
   const w = Math.min(img.width - x0, Math.round(nb.w * CARD_PX));
   const h = Math.min(img.height - y0, Math.round(nb.h * CARD_PX));
   const lineY = Math.round(labels.line.y * CARD_PX);
+  // the printed animal does not count either (every animal ends above the box; this keeps it so)
+  const animal = nearAnimalMask(sp, x0, y0, w, h);
   let ink = 0;
   let minX = w;
   let maxX = -1;
@@ -263,6 +298,7 @@ export function nameCrop(img: RGBAImage, sp: SpeciesId = 'fisch'): AnyCanvas | n
     // the printed line does not count
     if (Math.abs(y0 + y - lineY) <= 4) continue;
     for (let x = 0; x < w; x++) {
+      if (animal[y * w + x]) continue;
       const o = ((y0 + y) * img.width + x0 + x) * 4;
       if (img.data[o] + img.data[o + 1] + img.data[o + 2] < 3 * 150) {
         ink++;
@@ -283,7 +319,7 @@ export function nameCrop(img: RGBAImage, sp: SpeciesId = 'fisch'): AnyCanvas | n
       const p = (y * bw + x) * 4;
       // paper becomes transparent, the writing stays
       const dark = 1 - (img.data[o] + img.data[o + 1] + img.data[o + 2]) / 765;
-      const line = Math.abs(y0 + y - lineY) <= 3;
+      const line = Math.abs(y0 + y - lineY) <= 3 || animal[y * w + a + x] === 1;
       id.data[p] = img.data[o];
       id.data[p + 1] = img.data[o + 1];
       id.data[p + 2] = img.data[o + 2];

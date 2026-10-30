@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { nameCrop } from '../../src/game/creatures/paintedAnimal.ts';
 import { cardImage, type CardLook } from '../../src/game/paint/cardArt.ts';
 import { CARD, CARD_PX, LABELS, SHEET } from '../../src/game/paint/fishCard.ts';
-import { MIX_A, MIX_B } from '../../src/game/paint/sheets.ts';
+import { labelsFor, MIX_A, MIX_B } from '../../src/game/paint/sheets.ts';
 import { ANIMALS, type SpeciesId } from '../../src/game/paint/species.ts';
 import { findCards, thumbDistance } from '../../src/vision/cards.ts';
 import type { RGBAImage } from '../../src/vision/types.ts';
@@ -109,6 +109,29 @@ describe('colouring cards', () => {
     const crop = nameCrop({ width: img.width, height: img.height, data: new Uint8ClampedArray(named.data) });
     expect(crop).not.toBeNull();
     expect(crop!.width).toBeGreaterThan(15 * CARD_PX);
+  });
+
+  it('finds no name on a blank card of any animal, and the name when one is written', () => {
+    for (const sp of [...ANIMALS, 'freiform'] as SpeciesId[]) {
+      expect(nameCrop(cardImage({ species: sp }), sp), sp).toBeNull();
+      expect(nameCrop(cardImage(colourful(sp, 3)), sp), `${sp} coloured`).toBeNull();
+    }
+    for (const sp of ['qualle', 'krebs', 'krake', 'seepferdchen'] as SpeciesId[]) {
+      const img = cardImage(colourful(sp, 1));
+      const c = createCanvas(img.width, img.height);
+      const ctx = c.getContext('2d');
+      const id = ctx.createImageData(img.width, img.height);
+      id.data.set(img.data);
+      ctx.putImageData(id, 0, 0);
+      ctx.fillStyle = '#20206a';
+      ctx.font = `${7 * CARD_PX}px sans-serif`;
+      const { line } = labelsFor(sp);
+      ctx.fillText('Blubbi', (line.x0 + 3) * CARD_PX, (line.y - 0.8) * CARD_PX);
+      const named = ctx.getImageData(0, 0, img.width, img.height);
+      const crop = nameCrop({ width: img.width, height: img.height, data: new Uint8ClampedArray(named.data) }, sp);
+      expect(crop, sp).not.toBeNull();
+      expect(crop!.width, sp).toBeGreaterThan(15 * CARD_PX);
+    }
   });
 
   it('tells every animal apart, in any pose', () => {

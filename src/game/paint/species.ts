@@ -355,7 +355,7 @@ const SEEPFERDCHEN: SpeciesDef = {
   strokes: ['M 77 17.5 L 73 18'],
   eyes: [{ x: 56, y: 13, r: 4.6, pupil: { x: 57.2, y: 13.4, r: 2.2 } }],
   box: { x0: 26, y0: -0.5, x1: 81, y1: 80 },
-  place: { s: 0.8, x: 3, y: 11 },
+  place: { s: 0.78, x: 3.5, y: 9 },
   motion: 'bob',
   size: 0.8,
 };
@@ -390,7 +390,7 @@ const QUALLE: SpeciesDef = {
     { x: 59, y: 21, r: 4.8, pupil: { x: 59.6, y: 21.6, r: 2.3 } },
   ],
   box: { x0: 19, y0: 1.5, x1: 81, y1: 76.5 },
-  place: { s: 0.82, x: 6, y: 12 },
+  place: { s: 0.82, x: 6, y: 10 },
   motion: 'pulse',
   size: 0.9,
 };
@@ -434,7 +434,7 @@ const KRAKE: SpeciesDef = {
     { x: 58, y: 32, r: 5.4, pupil: { x: 58.6, y: 32.8, r: 2.6 } },
   ],
   box: { x0: 5.5, y0: 1.5, x1: 94.5, y1: 77 },
-  place: { s: 0.82, x: 6, y: 12 },
+  place: { s: 0.82, x: 6, y: 9.5 },
   motion: 'arms',
   size: 1,
 };
@@ -507,7 +507,7 @@ const KREBS: SpeciesDef = {
     { x: 57, y: 13, r: 5, pupil: { x: 57.6, y: 13.8, r: 2.4 } },
   ],
   box: { x0: 3.5, y0: 4.5, x1: 96.5, y1: 77.5 },
-  place: { s: 0.82, x: 6, y: 12 },
+  place: { s: 0.82, x: 6, y: 9 },
   motion: 'walk',
   size: 0.8,
 };
