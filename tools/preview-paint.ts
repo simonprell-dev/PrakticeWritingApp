@@ -88,7 +88,7 @@ const save = (name: string, c: { toBuffer(t: 'image/png'): Buffer }) => {
   for (let i = 0; i < 24; i++) {
     const c = (k: number) => hues[(i * 3 + k) % hues.length];
     const img = cardImage({ fills: { body: c(0), tail: c(1), dorsal: c(2), anal: c(2), pelvic: c(2), pectoral: c(4) } });
-    const { skin, sprite } = scene.makeSkin(img, thumbOf(img));
+    const { skin, sprite } = scene.makeSkin(img, thumbOf(img, 'fisch'));
     const B = scene.bounds;
     scene.addPainted(skin, sprite, B.x0 + Math.random() * (B.x1 - B.x0), B.y0 + Math.random() * (B.y1 - B.y0), i === 23);
   }

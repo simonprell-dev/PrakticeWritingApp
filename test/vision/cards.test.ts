@@ -159,6 +159,45 @@ describe('colouring cards', () => {
   it('an old fish sheet stays a fish', () => {
     const res = findCards(sheetPhoto(Array(6).fill('fisch'), [ORANGE, {}, GREEN, {}, NIGHT, {}]));
     expect(res.cards.map((c) => c.species)).toEqual(Array(6).fill('fisch'));
+    expect(res.unsure).toBe(0);
+  });
+
+  it('plain paper with a few lines of text on a dark table is no card, not even an unsure one', () => {
+    for (const [wMm, hMm] of [[100, 94], [210, 148], [297, 210]]) {
+      const k = 4;
+      const canvas = createCanvas(wMm * k, hMm * k);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#333';
+      ctx.font = `${5 * k}px sans-serif`;
+      for (let i = 0; i < 4; i++) ctx.fillText('Einkaufen: Milch, Brot, Äpfel', 12 * k, (20 + i * 10) * k);
+      const s = Math.min(1100 / wMm, 820 / hMm);
+      const res = findCards(photo({ canvas, wMm, hMm }, { width: 1280, height: 960, table: [40, 34, 30], corners: pose(wMm, hMm, s, 640, 480, 7), noise: 8 }));
+      expect(res.cards.length, `${wMm} × ${hMm}`).toBe(0);
+      expect(res.unsure, `${wMm} × ${hMm}`).toBe(0);
+    }
+  });
+
+  it('a dark rectangle painted on a free-form card does not hide the card', () => {
+    const pic = paperPicture('card', [{ species: 'freiform' }]);
+    const ctx = pic.canvas.getContext('2d');
+    const k = 6;
+    ctx.fillStyle = '#202030';
+    // off the middle, so it is not taken for the same frame seen from inside
+    ctx.fillRect((CARD.margin + 6) * k, (CARD.margin + 14) * k, 40 * k, 34 * k);
+    // with a few light scribbles in it, so it looks a little like printed lines
+    ctx.strokeStyle = '#f0f0f0';
+    ctx.lineWidth = 0.8 * k;
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo((CARD.margin + 10 + i * 5) * k, (CARD.margin + 18) * k);
+      ctx.lineTo((CARD.margin + 14 + i * 4) * k, (CARD.margin + 44) * k);
+      ctx.stroke();
+    }
+    const res = findCards(photo(pic, { width: 1280, height: 960, table: [40, 34, 30], corners: pose(CARD.w + 2 * CARD.margin, CARD.h + 2 * CARD.margin, 6, 640, 480, 15), noise: 8 }));
+    expect(res.cards.map((c) => c.species)).toEqual(['freiform']);
+    expect(res.unsure).toBe(0);
   });
 
   it('a card half covered by a hand is unsure, not a wrong animal', () => {
@@ -177,29 +216,33 @@ describe('colouring cards', () => {
       expect(res.cards.filter((c) => c.species !== 'karpfen'), `${deg}°`).toEqual([]);
       expect(res.unsure + res.cards.length, `${deg}°`).toBe(1);
     }
-    // nearly all of it covered: the frame is a card, but which animal it is cannot be seen
-    ctx.fillRect((m + 6) * k, (m + 4) * k, (CARD.w - 10) * k, (CARD.h - 8) * k);
+    // all but a strip on the left covered: a card (a little of its lines shows), but which animal cannot be told
+    ctx.fillRect((m + 11) * k, (m + 4) * k, (CARD.w - 15) * k, (CARD.h - 8) * k);
     const res = findCards(photo(pic, { width: 1280, height: 960, table: [40, 34, 30], corners: pose(CARD.w + 2 * m, CARD.h + 2 * m, 6, 640, 480, 30), noise: 8 }));
     expect(res.cards).toEqual([]);
     expect(res.unsure).toBe(1);
   });
 
-  it('takes at most about twice as long on a mixed sheet as on an old fish sheet', () => {
+  it('takes at most about twice as long looking for every animal as looking only for the fish (as before)', () => {
+    // before, only the fish was looked for, on the old fish sheet; the mixed sheet with every animal is the new case
     const old = sheetPhoto(Array(6).fill('fisch'), [ORANGE, {}, GREEN, {}, NIGHT, {}]);
     const mixed = sheetPhoto(MIX_B);
-    const median = (img: RGBAImage) => {
+    const median = (img: RGBAImage, species?: SpeciesId[]) => {
       const t: number[] = [];
       for (let i = 0; i < 3; i++) {
         const t0 = performance.now();
-        findCards(img);
+        findCards(img, species && { species });
         t.push(performance.now() - t0);
       }
       return t.sort((a, b) => a - b)[1];
     };
     findCards(old);
-    const a = median(old);
-    const b = median(mixed);
-    expect(b, `${b.toFixed(0)} ms vs ${a.toFixed(0)} ms`).toBeLessThanOrEqual(2.2 * a);
+    // (looking only for the fish on the mixed sheet cuts out just one card, so the old sheet is the baseline)
+    const before = median(old, ['fisch']);
+    const sameSheet = median(old);
+    const now = median(mixed);
+    expect(sameSheet, `old sheet: ${sameSheet.toFixed(0)} ms vs ${before.toFixed(0)} ms`).toBeLessThanOrEqual(2.2 * before);
+    expect(now, `mixed sheet: ${now.toFixed(0)} ms vs ${before.toFixed(0)} ms`).toBeLessThanOrEqual(2.2 * before);
   });
 
   it('finds nothing on a page with handwriting and no card', () => {

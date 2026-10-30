@@ -41,6 +41,8 @@ const DETECT = 1280;
 /** a black frame pixel is this much darker than the paper around it */
 const DARK = 0.42;
 const MIN_MATCH = 0.1;
+/** below this not even one animal shows a little: plain paper (the dark table makes its frame), no card */
+const NOT_A_CARD = 0.04;
 /** the best animal must beat the second best (another animal) by this much */
 const MARGIN = 0.04;
 /** every animal is first scored on every n-th sample; only the best few are scored in full */
@@ -266,8 +268,14 @@ function greyDown(frame: RGBAImage, w: number, h: number): Float32Array {
   return out;
 }
 
+export interface FindOptions {
+  /** the animals to look for (default: all); the tests time the search against the fish alone */
+  species?: SpeciesId[];
+}
+
 /** Finds all colouring cards in the frame. */
-export function findCards(frame: RGBAImage): CardScan {
+export function findCards(frame: RGBAImage, opts: FindOptions = {}): CardScan {
+  const species0 = opts.species ?? SPECIES_IDS;
   const t0 = performance.now();
   const { width: W, height: H } = frame;
   const f = Math.min(1, DETECT / Math.max(W, H));
@@ -351,7 +359,7 @@ export function findCards(frame: RGBAImage): CardScan {
     }
     if (!poses.length) continue;
     // every animal in every pose on a few of its samples, then the best few animals in full
-    const rough = SPECIES_IDS.map((sp) => ({ sp, m: Math.max(...poses.map((Hc) => score(Hc, samplesOf(sp).coarse))) }));
+    const rough = species0.map((sp) => ({ sp, m: Math.max(...poses.map((Hc) => score(Hc, samplesOf(sp).coarse))) }));
     rough.sort((a, b) => b.m - a.m);
     const ranked = rough.slice(0, FULL).map(({ sp }) => {
       let m = -1;
@@ -367,8 +375,9 @@ export function findCards(frame: RGBAImage): CardScan {
     });
     ranked.sort((a, b) => b.m - a.m);
     const [first, second] = ranked;
+    if (first.m < NOT_A_CARD) continue;
     // a frame without a clear winner is still a card: it is counted as unsure, but not taken as an animal
-    const species = first.m >= MIN_MATCH && first.m - second.m >= MARGIN ? first.sp : null;
+    const species = first.m >= MIN_MATCH && first.m - (second?.m ?? 0) >= MARGIN ? first.sp : null;
     const best = first.m;
     const bestH = first.H;
     const corners = outer.map(([x, y]) => project(bestH, x, y));
@@ -384,8 +393,10 @@ export function findCards(frame: RGBAImage): CardScan {
     }
     found.push({ H: bestH, species, match: best, corners, cx, cy, size });
   }
-  // the frames of a whole sheet of cards also make a big frame around all of them: that is not a card
-  const frames = found.filter((o) => !found.some((p) => p.size < 0.7 * o.size && insidePolygon(o.corners, p.cx, p.cy)));
+  // the frames of a whole sheet of cards also make a big frame around a sure card: that is not a card. A dark
+  // rectangle painted on a card is no sure card, so it neither hides the card nor counts as a card of its own
+  const inside = (big: (typeof found)[number], small: (typeof found)[number]) => small.size < 0.7 * big.size && insidePolygon(big.corners, small.cx, small.cy);
+  const frames = found.filter((o) => !found.some((p) => (p.species && inside(o, p)) || (!o.species && p.species && inside(p, o))));
   // reading order: top to bottom, left to right
   frames.sort((a, b) => (Math.abs(a.cy - b.cy) > 0.4 * Math.min(a.size, b.size) ? a.cy - b.cy : a.cx - b.cx));
   const cards = frames.flatMap((o) => {
@@ -399,7 +410,7 @@ export function findCards(frame: RGBAImage): CardScan {
 }
 
 /** Cuts the card out of the frame (straight, CARD_PX per mm) and evens out its colours. */
-export function cutOut(frame: RGBAImage, Hf: Homography, match: number, species: SpeciesId = 'fisch'): CardHit {
+export function cutOut(frame: RGBAImage, Hf: Homography, match: number, species: SpeciesId): CardHit {
   const tw = Math.round(CARD.w * CARD_PX);
   const th = Math.round(CARD.h * CARD_PX);
   const quad = ([[0, 0], [CARD.w, 0], [CARD.w, CARD.h], [0, CARD.h]] as Pt[]).map(([x, y]) => project(Hf, x, y));
@@ -543,7 +554,7 @@ function texel(img: RGBAImage, x: number, y: number): [number, number, number] {
 }
 
 /** share of the animal that is coloured in (blank cards on a full sheet do not become animals) */
-export function colouredShare(img: RGBAImage, sp: SpeciesId = 'fisch'): number {
+export function colouredShare(img: RGBAImage, sp: SpeciesId): number {
   const pts = colourPoints(sp);
   let n = 0;
   for (const [x, y] of pts) {
@@ -556,7 +567,7 @@ export function colouredShare(img: RGBAImage, sp: SpeciesId = 'fisch'): number {
   return pts.length ? n / pts.length : 0;
 }
 
-export function thumbOf(img: RGBAImage, sp: SpeciesId = 'fisch'): number[] {
+export function thumbOf(img: RGBAImage, sp: SpeciesId): number[] {
   const { x0, y0, x1, y1 } = paintBox(sp);
   const out: number[] = [];
   const cw = (x1 - x0) / THUMB_W;
