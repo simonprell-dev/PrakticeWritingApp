@@ -64,21 +64,21 @@ const FISCH: SpeciesDef = {
 };
 
 // the other animals follow with their own artwork; until then they share the fish
-const like = (id: SpeciesId): SpeciesDef => ({ ...FISCH, id });
+const like = (id: SpeciesId, name: string, article: SpeciesDef['article']): SpeciesDef => ({ ...FISCH, id, name, article });
 
 export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   fisch: FISCH,
-  clownfisch: like('clownfisch'),
-  doktorfisch: like('doktorfisch'),
-  kugelfisch: like('kugelfisch'),
-  karpfen: like('karpfen'),
-  hecht: like('hecht'),
-  hai: like('hai'),
-  seepferdchen: like('seepferdchen'),
-  qualle: like('qualle'),
-  krake: like('krake'),
-  schildkroete: like('schildkroete'),
-  krebs: like('krebs'),
+  clownfisch: like('clownfisch', 'Clownfisch', 'der'),
+  doktorfisch: like('doktorfisch', 'Doktorfisch', 'der'),
+  kugelfisch: like('kugelfisch', 'Kugelfisch', 'der'),
+  karpfen: like('karpfen', 'Karpfen', 'der'),
+  hecht: like('hecht', 'Hecht', 'der'),
+  hai: like('hai', 'Hai', 'der'),
+  seepferdchen: like('seepferdchen', 'Seepferdchen', 'das'),
+  qualle: like('qualle', 'Qualle', 'die'),
+  krake: like('krake', 'Krake', 'der'),
+  schildkroete: like('schildkroete', 'Schildkröte', 'die'),
+  krebs: like('krebs', 'Krebs', 'der'),
   freiform: { ...FISCH, id: 'freiform', name: 'Freiform', parts: [], moving: [], lines: [], strokes: [], eyes: [] },
 };
 
