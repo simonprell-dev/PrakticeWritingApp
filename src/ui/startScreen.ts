@@ -7,7 +7,7 @@ import { legalLinks, legalWarning } from './legal.ts';
 import { continueBanner } from './savesPanel.ts';
 import { tilePreview, type TileKind } from './previews.ts';
 
-const DONATE_URL = 'https://www.paypal.com/donate/?hosted_button_id=S9NDLBWM4BZ6G';
+const DONATE_URL = 'https://www.paypal.com/donate/?hosted_button_id=8PTR5EKKK72WW';
 
 export interface StartDeps {
   settings: Settings;
