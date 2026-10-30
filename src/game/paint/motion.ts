@@ -124,6 +124,7 @@ function walk(c: Creature, dt: number, B: Bounds, sandY: number): void {
   c.vx = lerp(c.vx, want, Math.min(1, dt * 4));
   c.vy = 0;
   c.x = clamp(c.x + c.vx * dt, B.x0, B.x1);
+  // (not clamped to the bounds on purpose: the crab walks on the sand, which may lie below the swimming area)
   c.y = lerp(c.y, sandY, Math.min(1, dt * 1.5));
   c.rot = 0;
 }

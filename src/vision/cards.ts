@@ -4,6 +4,7 @@
 // fixed resolution and its colours are evened out against the white paper.
 import { CARD, CARD_PX, FREEFORM, insidePolygon, LABELS, lineSamples, onAnimal, toCard, type LineSample } from '../game/paint/fishCard.ts';
 import { freeformMask, freeformShare } from '../game/paint/freeform.ts';
+import { labelsFor } from '../game/paint/sheets.ts';
 import { ANIMALS, SPECIES, type SpeciesId } from '../game/paint/species.ts';
 import { label } from './components.ts';
 import { boxBlur, maxFilter } from './filters.ts';
@@ -239,9 +240,9 @@ function labelSamples(): LineSample[] {
   return out;
 }
 
-/** the area (card mm) that is coloured in: around the animal, or the free space of the free-form card */
+/** the area (card mm) that is coloured in: around the animal, or the free space of the free-form card (above its name) */
 function paintBox(sp: SpeciesId): { x0: number; y0: number; x1: number; y1: number } {
-  if (sp === 'freiform') return { x0: CARD.frame + 3, y0: FREEFORM.hintBox.y + FREEFORM.hintBox.h + 2, x1: CARD.w - CARD.frame - 3, y1: 70 };
+  if (sp === 'freiform') return { x0: CARD.frame + 3, y0: FREEFORM.hintBox.y + FREEFORM.hintBox.h + 2, x1: CARD.w - CARD.frame - 3, y1: labelsFor('freiform').nameBox.y - 3.5 };
   const { box } = SPECIES[sp];
   const [x0, y0] = toCard(sp, box.x0, box.y0);
   const [x1, y1] = toCard(sp, box.x1, box.y1);

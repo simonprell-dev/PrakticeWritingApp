@@ -170,7 +170,34 @@ describe('saved Mal-Aquarium', () => {
     expect(scan([hit('freiform', card('freiform'), t(4))])).toBe('Ein neues Tier!');
     expect(scan([hit('krebs', card('krebs'), t(5)), hit('krake', card('krake'), t(6)), hit('hecht', card('hecht'), t(7))])).toBe('3 neue Tiere!');
     expect(toasts).toEqual([]);
-    expect(scan([], 2)).toBe('Keine Karte gefunden');
+    // a card was there, but not clear: the photo does not say there was none
+    expect(scan([], 2)).toBe('Karte nicht erkannt');
     expect(toasts).toEqual(['Diese Karte erkenne ich nicht sicher – bitte flach und ganz ins Bild legen']);
+    expect(scan([])).toBe('Keine Karte gefunden');
+  });
+
+  it('remembers which animal each known card is, across a save', async () => {
+    toasts.length = 0;
+    const scene = new PaintScene(host, 1920);
+    const t = (n: number) => Array.from({ length: 12 * 8 * 3 }, (_, i) => ((i * n) % 13) / 13);
+    const fills = { body: '#ff8a2a', tail: '#2f9bff', dorsal: '#ffd23c' };
+    scene.handleCards({ frameW: 640, frameH: 480, cards: [hit('hai', card('hai'), t(1)), hit('karpfen', card('karpfen', fills), t(2))], unsure: 0, ms: 1 }, snap);
+    // (the new animals are still flying into the aquarium: one that is already in it, so there is a save)
+    const { skin, sprite } = scene.makeSkin(card('hai'), t(1), undefined, 'hai');
+    scene.addPainted(skin, sprite, 500, 400, false);
+    const saved = JSON.parse(JSON.stringify((await scene.saveState())!.state)) as PaintSave;
+    expect(saved.knownSpecies).toEqual(['hai', 'karpfen']);
+
+    const again = new PaintScene(host, 1920);
+    await again.restoreState(saved);
+    expect(again.known.map((k) => k.species)).toEqual(['hai', 'karpfen']);
+    const scan = (cards: CardHit[]) => {
+      again.handleCards({ frameW: 640, frameH: 480, cards, unsure: 0, ms: 1 }, snap);
+      return again.fx.polaroid?.label;
+    };
+    // the shark is known after the restore
+    expect(scan([hit('hai', card('hai'), t(1))])).toBe('1 kenne ich schon');
+    // a clownfish with the thumbnail of the known carp is a new animal
+    expect(scan([hit('clownfisch', card('clownfisch', fills), t(2))])).toBe('Ein neuer Clownfisch!');
   });
 });

@@ -40,7 +40,7 @@ export interface PaintSave {
   fish: { image: string; thumb: number[]; k: number; x: number; y: number; facing: 1 | -1; species?: SpeciesId }[];
   /** thumbnails of all cards seen, so they do not hatch again */
   known: number[][];
-  /** the animal of each of them (missing in old saves: fisch) */
+  /** the animal of each of them, parallel to `known` (same length and order; missing in old saves: fisch) */
   knownSpecies?: SpeciesId[];
   away: number;
 }
@@ -146,7 +146,9 @@ export class PaintScene extends HabitatScene {
       again ? `${again} kenne ich schon` : '',
       blank ? `${blank} noch nicht ausgemalt` : '',
     ].filter(Boolean);
-    this.fx.show(snap, this.W, parts.length ? parts.join(' · ') : 'Keine Karte gefunden', items);
+    // a card that was there but not clear is no „Keine Karte“
+    const nothing = res.unsure > 0 ? 'Karte nicht erkannt' : 'Keine Karte gefunden';
+    this.fx.show(snap, this.W, parts.length ? parts.join(' · ') : nothing, items);
     // one toast per scan at most: a card that was not clear matters most (it did not hatch)
     if (res.unsure > 0) this.host.toast(UNSURE, 'warn');
     else if (!res.cards.length) this.host.toast('Ich sehe keine Karte. Liegt sie ganz im Bild, mit dem schwarzen Rahmen?', 'warn');
