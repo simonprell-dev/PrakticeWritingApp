@@ -2,7 +2,7 @@
 // The print sheet uses the same geometry as SVG (ui/printSheet.ts).
 import type { RGBAImage } from '../../vision/types.ts';
 import { makeCanvas, makePath, type Ctx } from '../canvas.ts';
-import { CARD, CARD_PX, LINE } from './fishCard.ts';
+import { CARD, CARD_PX, FREEFORM, LINE } from './fishCard.ts';
 import { labelsFor } from './sheets.ts';
 import { SPECIES, type SpeciesId } from './species.ts';
 
@@ -92,6 +92,20 @@ export function drawCard(ctx: Ctx, k: number, look: CardLook = {}): void {
   ctx.font = `600 ${labels.name.size}px ${font}`;
   ctx.textAlign = 'left';
   ctx.fillText(labels.name.text, labels.name.x, labels.name.y);
+  if (labels.arrow) {
+    // the free-form card: a box around the hint and a drawn arrow, so the camera knows which way up it lies
+    const { hintBox: b, arrow: a } = FREEFORM;
+    ctx.strokeStyle = '#4a4458';
+    ctx.lineWidth = FREEFORM.width;
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+    ctx.beginPath();
+    ctx.moveTo(a.x0, a.y);
+    ctx.lineTo(a.x1, a.y);
+    ctx.moveTo(a.x1 - a.head, a.y - a.head * 0.75);
+    ctx.lineTo(a.x1, a.y);
+    ctx.lineTo(a.x1 - a.head, a.y + a.head * 0.75);
+    ctx.stroke();
+  }
   ctx.strokeStyle = '#6d6680';
   ctx.lineWidth = 0.35;
   ctx.beginPath();

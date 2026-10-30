@@ -1,7 +1,7 @@
 // The copy template of the Mal-Aquarium: an A4 page with six cards and cut lines, as SVG.
 // It is printed from the page itself (a print-only element), so no pop-up window is needed.
 import { INK } from '../game/paint/cardArt.ts';
-import { CARD, LINE, SHEET, sheetLayout } from '../game/paint/fishCard.ts';
+import { CARD, FREEFORM, LINE, SHEET, sheetLayout } from '../game/paint/fishCard.ts';
 import { labelsFor, sheetSpecies, type SheetId } from '../game/paint/sheets.ts';
 import { SPECIES, type SpeciesId } from '../game/paint/species.ts';
 
@@ -26,10 +26,16 @@ function cardSvg(sp: SpeciesId, x: number, y: number): string {
   // the free-form card has no animal; the inner group is a matrix, so only the cards count as translate(...)
   const animal = def.parts.length ? `<g transform="matrix(${def.place.s} 0 0 ${def.place.s} ${def.place.x} ${def.place.y})">${parts}${lines}${strokes}${eyes}</g>
 ` : '';
+  // the free-form card: a box around the hint and a drawn arrow (they tell the camera which way up it lies)
+  const { hintBox: b, arrow: a } = FREEFORM;
+  const marks = L.arrow
+    ? `<g fill="none" stroke="#4a4458" stroke-width="${FREEFORM.width}" stroke-linecap="round" stroke-linejoin="round"><rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"/><path d="M${a.x0} ${a.y}H${a.x1} M${a.x1 - a.head} ${a.y - a.head * 0.75}L${a.x1} ${a.y}L${a.x1 - a.head} ${a.y + a.head * 0.75}"/></g>
+`
+    : '';
   return `<g transform="translate(${x} ${y})">
 <path d="M0 0H${w}V${h}H0Z M${f} ${f}V${h - f}H${w - f}V${f}Z" fill="${INK}" fill-rule="evenodd"/>
 ${animal}${text(L.hint, L.hint.size, 'end')}
-${L.arrow ? text(L.arrow, L.hint.size, 'end') + '\n' : ''}${text(L.name, L.name.size, 'start')}
+${L.arrow ? text(L.arrow, L.hint.size, 'end') + '\n' + marks : ''}${text(L.name, L.name.size, 'start')}
 <line x1="${L.line.x0}" y1="${L.line.y}" x2="${L.line.x1}" y2="${L.line.y}" stroke="#6d6680" stroke-width="0.35"/>
 </g>`;
 }

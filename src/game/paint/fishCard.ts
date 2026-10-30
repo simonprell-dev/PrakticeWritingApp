@@ -27,6 +27,17 @@ export const LABELS = {
   nameBox: { x: 39, y: 73.5, w: CARD.w - 43.5, h: 11 },
 } as const;
 
+/**
+ * The printed marks of the free-form card (card mm): a box around the hint at the top and an arrow under
+ * „Kopf nach hier →“. The card has no animal outline, so these marks (and the name line) tell which way up it lies.
+ */
+export const FREEFORM = {
+  hintBox: { x: 40.5, y: 5, w: 49, h: 5.8 },
+  /** shaft from x0 to x1, the head at x1 */
+  arrow: { x0: 64, x1: 88, y: 48, head: 3 },
+  width: 0.6,
+} as const;
+
 /** a point of the animal (its own units) on the card, in mm */
 export function toCard(sp: SpeciesId, x: number, y: number): Pt {
   const { place } = SPECIES[sp];
@@ -138,6 +149,7 @@ export interface LineSample {
  * their normals, in card mm. The detection looks for them to find out which way up a card lies.
  */
 export function lineSamples(sp: SpeciesId, step = 1): LineSample[] {
+  if (sp === 'freiform') return freeformSamples(step);
   const { place, parts, lines, eyes } = SPECIES[sp];
   const out: LineSample[] = [];
   const add = (poly: Pt[], visible: (x: number, y: number) => boolean) => {
@@ -168,5 +180,30 @@ export function lineSamples(sp: SpeciesId, step = 1): LineSample[] {
     add(polys[k], (x, y) => !front.some((f) => insidePolygon(polys[f], x, y)));
   });
   for (const d of lines) for (const poly of flatten(d)) add(poly, () => true);
+  return out;
+}
+
+/** samples along a polyline in card mm */
+function along(poly: Pt[], step: number, out: LineSample[]): void {
+  for (let i = 1; i < poly.length; i++) {
+    const [ax, ay] = poly[i - 1];
+    const [bx, by] = poly[i];
+    const len = Math.hypot(bx - ax, by - ay);
+    const n = Math.max(1, Math.round(len / step));
+    for (let k = 0; k < n; k++) {
+      const t = (k + 0.5) / n;
+      out.push({ x: ax + (bx - ax) * t, y: ay + (by - ay) * t, nx: -(by - ay) / len, ny: (bx - ax) / len });
+    }
+  }
+}
+
+/** the free-form card: its hint box, its arrow and the right part of the name line (the same on every card) */
+function freeformSamples(step: number): LineSample[] {
+  const { hintBox: b, arrow: a } = FREEFORM;
+  const out: LineSample[] = [];
+  along([[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h], [b.x, b.y + b.h], [b.x, b.y]], step, out);
+  along([[a.x0, a.y], [a.x1, a.y]], step, out);
+  along([[a.x1 - a.head, a.y - a.head * 0.75], [a.x1, a.y], [a.x1 - a.head, a.y + a.head * 0.75]], step, out);
+  along([[LABELS.line.x1 - 28, LABELS.line.y], [LABELS.line.x1, LABELS.line.y]], step, out);
   return out;
 }

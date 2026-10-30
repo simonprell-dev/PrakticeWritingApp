@@ -1,27 +1,27 @@
 // Finds the colouring cards of the Mal-Aquarium in a camera frame. The thick black frame gives the four
-// corners (its outer edge, or its inner edge when the card lies on a dark table), the printed lines of the
-// fish tell which way up the card lies. The card is then cut out straight (homography) at a fixed
-// resolution and its colours are evened out against the white paper.
-import { CARD, CARD_PX, lineSamples, onAnimal, type LineSample } from '../game/paint/fishCard.ts';
-import { SPECIES } from '../game/paint/species.ts';
+// corners (its outer edge, or its inner edge when the card lies on a dark table), the printed lines tell
+// which animal is on the card and which way up it lies. The card is then cut out straight (homography) at a
+// fixed resolution and its colours are evened out against the white paper.
+import { CARD, CARD_PX, FREEFORM, insidePolygon, lineSamples, onAnimal, toCard, type LineSample } from '../game/paint/fishCard.ts';
+import { ANIMALS, SPECIES, type SpeciesId } from '../game/paint/species.ts';
 import { label } from './components.ts';
 import { boxBlur, maxFilter } from './filters.ts';
 import { convexHull, polygonArea, type Pt } from './geometry.ts';
 import { sampleBilinear } from './image.ts';
 import type { Mask, RGBAImage } from './types.ts';
 
-const FISH = SPECIES.fisch;
-
 export interface CardHit {
+  /** the animal on the card */
+  species: SpeciesId;
   /** corners of the card's outer frame edge in frame px: top-left, top-right, bottom-right, bottom-left */
   quad: Pt[];
   /** the card cut out straight: CARD_PX px per mm, colours evened out */
   image: RGBAImage;
-  /** how clearly the printed fish lines were found (contrast, about 0.1 .. 0.8) */
+  /** how clearly the printed lines of the animal were found (contrast, about 0.1 .. 0.8) */
   match: number;
-  /** share of the fish that is coloured in (0..1) */
+  /** share of the animal that is coloured in (0..1) */
   colored: number;
-  /** 12 × 8 RGB means (0..1) over the fish, to recognise a card again */
+  /** 12 × 8 RGB means (0..1) over the animal, to recognise a card again */
   thumb: number[];
 }
 
@@ -29,6 +29,8 @@ export interface CardScan {
   frameW: number;
   frameH: number;
   cards: CardHit[];
+  /** frames found whose animal was not clear (covered, bent, blurred); they are not in `cards` */
+  unsure: number;
   ms: number;
 }
 
@@ -39,6 +41,11 @@ const DETECT = 1280;
 /** a black frame pixel is this much darker than the paper around it */
 const DARK = 0.42;
 const MIN_MATCH = 0.1;
+/** the best animal must beat the second best (another animal) by this much */
+const MARGIN = 0.04;
+/** every animal is first scored on every n-th sample; only the best few are scored in full */
+const COARSE = 4;
+const FULL = 3;
 export const THUMB_W = 12;
 export const THUMB_H = 8;
 
@@ -190,27 +197,54 @@ function candidates(m: Mask, inner: boolean, minSide: number): Candidate[] {
   return out;
 }
 
-let samples: LineSample[] | null = null;
-let fishPoints: Pt[] | null = null;
+const SPECIES_IDS: SpeciesId[] = [...ANIMALS, 'freiform'];
+const samples = new Map<SpeciesId, { full: LineSample[]; coarse: LineSample[] }>();
 
-/** points (card mm) on the colourable fish, away from the printed lines and the eye */
-function colourPoints(): Pt[] {
-  if (fishPoints) return fishPoints;
-  const lines = samples ?? (samples = lineSamples('fisch', 1));
-  const pts: Pt[] = [];
-  const { box } = FISH;
-  const eye = FISH.eyes[0];
+/** the printed line samples of an animal, all of them and every COARSE-th one (made once) */
+function samplesOf(sp: SpeciesId): { full: LineSample[]; coarse: LineSample[] } {
+  let out = samples.get(sp);
+  if (!out) {
+    const full = lineSamples(sp, 1);
+    out = { full, coarse: full.filter((_, i) => i % COARSE === 0) };
+    samples.set(sp, out);
+  }
+  return out;
+}
+
+/** the area (card mm) that is coloured in: around the animal, or the free space of the free-form card */
+function paintBox(sp: SpeciesId): { x0: number; y0: number; x1: number; y1: number } {
+  if (sp === 'freiform') return { x0: CARD.frame + 3, y0: FREEFORM.hintBox.y + FREEFORM.hintBox.h + 2, x1: CARD.w - CARD.frame - 3, y1: 70 };
+  const { box } = SPECIES[sp];
+  const [x0, y0] = toCard(sp, box.x0, box.y0);
+  const [x1, y1] = toCard(sp, box.x1, box.y1);
+  return { x0, y0, x1, y1 };
+}
+
+const colourPts = new Map<SpeciesId, Pt[]>();
+
+/** points (card mm) on the colourable animal, away from the printed lines and the eyes */
+function colourPoints(sp: SpeciesId): Pt[] {
+  let pts = colourPts.get(sp);
+  if (pts) return pts;
+  const def = SPECIES[sp];
+  const lines = samplesOf(sp).full;
+  const b = paintBox(sp);
+  const a = FREEFORM.arrow;
   const step = 1.5;
-  for (let y = box.y0; y <= box.y1; y += step / FISH.place.s) {
-    for (let x = box.x0; x <= box.x1; x += step / FISH.place.s) {
-      if (!onAnimal('fisch', x, y) || Math.hypot(x - eye.x, y - eye.y) < eye.r + 1.5) continue;
-      const cx = FISH.place.x + x * FISH.place.s;
-      const cy = FISH.place.y + y * FISH.place.s;
+  pts = [];
+  for (let cy = b.y0; cy <= b.y1; cy += step) {
+    for (let cx = b.x0; cx <= b.x1; cx += step) {
+      const x = (cx - def.place.x) / def.place.s;
+      const y = (cy - def.place.y) / def.place.s;
+      if (sp === 'freiform') {
+        // not the arrow and its words
+        if (cx > a.x0 - 3 && cy > a.y - 9 && cy < a.y + 4) continue;
+      } else if (!onAnimal(sp, x, y) || def.eyes.some((e) => Math.hypot(x - e.x, y - e.y) < e.r + 1.5)) continue;
       if (lines.some((s) => Math.abs(s.x - cx) < 1.3 && Math.abs(s.y - cy) < 1.3)) continue;
       pts.push([cx, cy]);
     }
   }
-  fishPoints = pts;
+  colourPts.set(sp, pts);
   return pts;
 }
 
@@ -268,7 +302,6 @@ export function findCards(frame: RGBAImage): CardScan {
     const b = sampleBilinear(bg, w, h, x - 0.5, y - 0.5);
     return b > 1 ? Math.max(0, 1 - sampleBilinear(L, w, h, x - 0.5, y - 0.5) / b) : 0;
   };
-  const lines = samples ?? (samples = lineSamples('fisch', 1));
   const { w: cw, h: ch, frame: fr } = CARD;
   const outer: Pt[] = [
     [0, 0],
@@ -286,11 +319,21 @@ export function findCards(frame: RGBAImage): CardScan {
   const ring: Pt[] = [];
   for (let x = 2; x < cw - 1; x += 2) ring.push([x, fr / 2], [x, ch - fr / 2]);
   for (let y = 2; y < ch - 1; y += 2) ring.push([fr / 2, y], [cw - fr / 2, y]);
-  const found: { H: Homography; match: number; cx: number; cy: number; size: number }[] = [];
+  // the printed lines are darker than the paper (or the colours) next to them
+  const score = (Hc: Homography, lines: LineSample[]) => {
+    let sum = 0;
+    for (const s of lines) {
+      const [u, v] = project(Hc, s.x, s.y);
+      const [u1, v1] = project(Hc, s.x + 2 * s.nx, s.y + 2 * s.ny);
+      const [u2, v2] = project(Hc, s.x - 2 * s.nx, s.y - 2 * s.ny);
+      sum += darkness(u, v) - 0.5 * (darkness(u1, v1) + darkness(u2, v2));
+    }
+    return sum / lines.length;
+  };
+  const found: { H: Homography; species: SpeciesId | null; match: number; corners: Pt[]; cx: number; cy: number; size: number }[] = [];
   for (const c of cands) {
     const card = c.inner ? innerC : outer;
-    let bestH: Homography | null = null;
-    let best = -1;
+    const poses: Homography[] = [];
     for (let mirror = 0; mirror < 2; mirror++) {
       for (let k = 0; k < 4; k++) {
         const img = [0, 1, 2, 3].map((j) => c.quad[mirror ? (k - j + 4) % 4 : (k + j) % 4]);
@@ -303,48 +346,60 @@ export function findCards(frame: RGBAImage): CardScan {
           const iy = Math.floor(v);
           if (ix >= 0 && iy >= 0 && ix < w && iy < h && dark.data[iy * w + ix]) onFrame++;
         }
-        if (onFrame < 0.8 * ring.length) continue;
-        // the printed fish lines are darker than the paper (or the colours) next to them
-        let sum = 0;
-        for (const s of lines) {
-          const [u, v] = project(Hc, s.x, s.y);
-          const [u1, v1] = project(Hc, s.x + 2 * s.nx, s.y + 2 * s.ny);
-          const [u2, v2] = project(Hc, s.x - 2 * s.nx, s.y - 2 * s.ny);
-          sum += darkness(u, v) - 0.5 * (darkness(u1, v1) + darkness(u2, v2));
-        }
-        const match = sum / lines.length;
-        if (match > best) {
-          best = match;
-          bestH = Hc;
-        }
+        if (onFrame >= 0.8 * ring.length) poses.push(Hc);
       }
     }
-    if (!bestH || best < MIN_MATCH) continue;
-    const corners = outer.map(([x, y]) => project(bestH!, x, y));
+    if (!poses.length) continue;
+    // every animal in every pose on a few of its samples, then the best few animals in full
+    const rough = SPECIES_IDS.map((sp) => ({ sp, m: Math.max(...poses.map((Hc) => score(Hc, samplesOf(sp).coarse))) }));
+    rough.sort((a, b) => b.m - a.m);
+    const ranked = rough.slice(0, FULL).map(({ sp }) => {
+      let m = -1;
+      let H = poses[0];
+      for (const Hc of poses) {
+        const v = score(Hc, samplesOf(sp).full);
+        if (v > m) {
+          m = v;
+          H = Hc;
+        }
+      }
+      return { sp, m, H };
+    });
+    ranked.sort((a, b) => b.m - a.m);
+    const [first, second] = ranked;
+    // a frame without a clear winner is still a card: it is counted as unsure, but not taken as an animal
+    const species = first.m >= MIN_MATCH && first.m - second.m >= MARGIN ? first.sp : null;
+    const best = first.m;
+    const bestH = first.H;
+    const corners = outer.map(([x, y]) => project(bestH, x, y));
     const cx = corners.reduce((s, p) => s + p[0], 0) / 4;
     const cy = corners.reduce((s, p) => s + p[1], 0) / 4;
     const size = Math.hypot(corners[0][0] - corners[2][0], corners[0][1] - corners[2][1]);
-    // the same card found from the outside and the inside of its frame: keep the clearer one
+    // the same card found from the outside and the inside of its frame: keep the sure one, else the clearer one
     const twin = found.find((o) => Math.hypot(o.cx - cx, o.cy - cy) < 0.25 * Math.min(size, o.size));
     if (twin) {
-      if (twin.match >= best) continue;
+      const keep = !!twin.species === !!species ? twin.match >= best : !!twin.species;
+      if (keep) continue;
       found.splice(found.indexOf(twin), 1);
     }
-    found.push({ H: bestH, match: best, cx, cy, size });
+    found.push({ H: bestH, species, match: best, corners, cx, cy, size });
   }
+  // the frames of a whole sheet of cards also make a big frame around all of them: that is not a card
+  const frames = found.filter((o) => !found.some((p) => p.size < 0.7 * o.size && insidePolygon(o.corners, p.cx, p.cy)));
   // reading order: top to bottom, left to right
-  found.sort((a, b) => (Math.abs(a.cy - b.cy) > 0.4 * Math.min(a.size, b.size) ? a.cy - b.cy : a.cx - b.cx));
-  const cards = found.map((o) => {
+  frames.sort((a, b) => (Math.abs(a.cy - b.cy) > 0.4 * Math.min(a.size, b.size) ? a.cy - b.cy : a.cx - b.cx));
+  const cards = frames.flatMap((o) => {
+    if (!o.species) return [];
     // detection px -> frame px
     const Hf = o.H.slice();
     for (let i = 0; i < 6; i++) Hf[i] /= f;
-    return cutOut(frame, Hf, o.match);
+    return [cutOut(frame, Hf, o.match, o.species)];
   });
-  return { frameW: W, frameH: H, cards, ms: Math.round(performance.now() - t0) };
+  return { frameW: W, frameH: H, cards, unsure: frames.length - cards.length, ms: Math.round(performance.now() - t0) };
 }
 
 /** Cuts the card out of the frame (straight, CARD_PX per mm) and evens out its colours. */
-export function cutOut(frame: RGBAImage, Hf: Homography, match: number): CardHit {
+export function cutOut(frame: RGBAImage, Hf: Homography, match: number, species: SpeciesId = 'fisch'): CardHit {
   const tw = Math.round(CARD.w * CARD_PX);
   const th = Math.round(CARD.h * CARD_PX);
   const quad = ([[0, 0], [CARD.w, 0], [CARD.w, CARD.h], [0, CARD.h]] as Pt[]).map(([x, y]) => project(Hf, x, y));
@@ -403,9 +458,9 @@ export function cutOut(frame: RGBAImage, Hf: Homography, match: number): CardHit
       ring.push(a);
     }
   }
-  evenOut(out, tw, th, ring);
+  evenOut(out, tw, th, ring, species);
   const image: RGBAImage = { width: tw, height: th, data: out };
-  return { quad, image, match: Math.round(match * 1000) / 1000, colored: colouredShare(image), thumb: thumbOf(image) };
+  return { species, quad, image, match: Math.round(match * 1000) / 1000, colored: colouredShare(image, species), thumb: thumbOf(image, species) };
 }
 
 /** median colour of a list of RGB samples (by brightness) */
@@ -422,7 +477,7 @@ const lumOf = (c: number[]) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
  * The paper is the white margin around the frame (missing when the card is cut at the frame and lies on a
  * table), else the white of the printed eye, else the brightest part of the card (children colour everything).
  */
-function evenOut(px: Uint8ClampedArray, w: number, h: number, outside: number[][]): void {
+function evenOut(px: Uint8ClampedArray, w: number, h: number, outside: number[][], sp: SpeciesId): void {
   const at = (x: number, y: number) => {
     const o = (Math.round(y * CARD_PX) * w + Math.round(x * CARD_PX)) * 4;
     return [px[o], px[o + 1], px[o + 2]];
@@ -454,14 +509,14 @@ function evenOut(px: Uint8ClampedArray, w: number, h: number, outside: number[][
   const bright = n ? sum.map((v) => v / n) : null;
   // the eye: inside the white circle, outside the pupil and its highlight
   const eye: number[][] = [];
-  const E = FISH.eyes[0];
-  const P = E.pupil;
-  for (let a = 0; a < Math.PI * 2; a += 0.15) {
+  // (the free-form card has no eye)
+  const E = SPECIES[sp].eyes[0];
+  for (let a = 0; E && a < Math.PI * 2; a += 0.15) {
     for (const r of [E.r - 1.1, E.r - 1.8]) {
       const x = E.x + Math.cos(a) * r;
       const y = E.y + Math.sin(a) * r;
-      if (Math.hypot(x - P.x, y - P.y) < P.r + 0.8) continue;
-      eye.push(at(FISH.place.x + x * FISH.place.s, FISH.place.y + y * FISH.place.s));
+      if (Math.hypot(x - E.pupil.x, y - E.pupil.y) < E.pupil.r + 0.8) continue;
+      eye.push(at(...toCard(sp, x, y)));
     }
   }
   const ref = bright ? lumOf(bright) : 0;
@@ -487,9 +542,9 @@ function texel(img: RGBAImage, x: number, y: number): [number, number, number] {
   return [img.data[o], img.data[o + 1], img.data[o + 2]];
 }
 
-/** share of the fish that is coloured in (blank cards on a full sheet do not become fish) */
-export function colouredShare(img: RGBAImage): number {
-  const pts = colourPoints();
+/** share of the animal that is coloured in (blank cards on a full sheet do not become animals) */
+export function colouredShare(img: RGBAImage, sp: SpeciesId = 'fisch'): number {
+  const pts = colourPoints(sp);
   let n = 0;
   for (const [x, y] of pts) {
     const [r, g, b] = texel(img, x, y);
@@ -501,13 +556,11 @@ export function colouredShare(img: RGBAImage): number {
   return pts.length ? n / pts.length : 0;
 }
 
-export function thumbOf(img: RGBAImage): number[] {
-  const { box } = FISH;
+export function thumbOf(img: RGBAImage, sp: SpeciesId = 'fisch'): number[] {
+  const { x0, y0, x1, y1 } = paintBox(sp);
   const out: number[] = [];
-  const x0 = FISH.place.x + box.x0 * FISH.place.s;
-  const y0 = FISH.place.y + box.y0 * FISH.place.s;
-  const cw = ((box.x1 - box.x0) * FISH.place.s) / THUMB_W;
-  const chh = ((box.y1 - box.y0) * FISH.place.s) / THUMB_H;
+  const cw = (x1 - x0) / THUMB_W;
+  const chh = (y1 - y0) / THUMB_H;
   for (let j = 0; j < THUMB_H; j++) {
     for (let i = 0; i < THUMB_W; i++) {
       const acc = [0, 0, 0];
