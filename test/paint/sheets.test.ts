@@ -26,6 +26,9 @@ describe('sheets', () => {
 
   it('writes the texts of the cards', () => {
     expect(labelsFor('seepferdchen').name.text).toBe('Mein Seepferdchen heißt:');
+    expect(labelsFor('qualle').name.text).toBe('Meine Qualle heißt:');
+    expect(labelsFor('schildkroete').name.text).toBe('Meine Schildkröte heißt:');
+    expect(labelsFor('krake').name.text).toBe('Mein Krake heißt:');
     expect(labelsFor('fisch').name.text).toBe('Mein Fisch heißt:');
     const f = labelsFor('freiform');
     expect(f.name.text).toBe('Mein Tier heißt:');

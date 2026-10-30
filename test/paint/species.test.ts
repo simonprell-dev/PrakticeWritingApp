@@ -103,9 +103,13 @@ describe.each(ANIMALS)('the %s', (sp) => {
     }
   });
 
-  const forward = ['qualle', 'krake', 'krebs', 'seepferdchen'].includes(sp);
-  it.skipIf(forward)('looks to the right', () => {
+  // the jellyfish, the octopus and the crab look at the child; all others look to the right
+  const forward = ['qualle', 'krake', 'krebs'].includes(sp);
+  it(forward ? 'looks forward, its eyes on the animal' : 'looks to the right', () => {
+    for (const e of def.eyes) expect(Object.values(polys).some((poly) => insidePolygon(poly, e.x, e.y))).toBe(true);
     const mean = def.eyes.reduce((s, e) => s + e.x, 0) / def.eyes.length;
-    expect(mean).toBeGreaterThan((def.box.x0 + def.box.x1) / 2);
+    const mid = (def.box.x0 + def.box.x1) / 2;
+    if (forward) expect(Math.abs(mean - mid)).toBeLessThan(0.1 * (def.box.x1 - def.box.x0));
+    else expect(mean).toBeGreaterThan(mid);
   });
 });

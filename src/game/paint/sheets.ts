@@ -46,7 +46,9 @@ const GAP = 3;
  */
 export function labelsFor(sp: SpeciesId): CardLabels {
   const free = sp === 'freiform';
-  const text = `Mein ${free ? 'Tier' : SPECIES[sp].name} heißt:`;
+  // „Meine Qualle“, „Mein Hai“
+  const my = !free && SPECIES[sp].article === 'die' ? 'Meine' : 'Mein';
+  const text = `${my} ${free ? 'Tier' : SPECIES[sp].name} heißt:`;
   const { x, y } = LABELS.name;
   let size: number = LABELS.name.size;
   // the fish is already printed on many sheets: its layout stays exactly as it was
