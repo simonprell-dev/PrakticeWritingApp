@@ -2,6 +2,7 @@
 // and the animal moves into the aquarium in the child's colours (with its handwritten name, if there is one).
 import { dataURLToRGBA, encodeOnce, rememberEncoded, rgbaToDataURL } from '../app/imageCodec.ts';
 import { sfx } from '../game/audio.ts';
+import type { AnyCanvas } from '../game/canvas.ts';
 import { makeGenome } from '../game/creatures/genome.ts';
 import { animalPicture, nameCrop, paintedSprite } from '../game/creatures/paintedAnimal.ts';
 import type { Sprite } from '../game/creatures/sprite.ts';
@@ -45,7 +46,13 @@ export interface PaintSave {
   away: number;
 }
 
-const UNSURE = 'Diese Karte erkenne ich nicht sicher – bitte flach und ganz ins Bild legen';
+/** what the "all animals" view shows */
+export interface PaintGallery {
+  animals: { picture: AnyCanvas; name: AnyCanvas | null; gone: boolean; show?: () => void }[];
+  unseen: number;
+}
+
+const UNSURE ='Diese Karte erkenne ich nicht sicher – bitte flach und ganz ins Bild legen';
 
 /** a species from a saved game; old saves (and unknown animals) are the fish */
 const savedSpecies = (sp: unknown): SpeciesId => (typeof sp === 'string' && Object.hasOwn(SPECIES, sp) ? (sp as SpeciesId) : 'fisch');
@@ -228,6 +235,19 @@ export class PaintScene extends HabitatScene {
     });
     this.known = s.known.map((thumb, i) => ({ thumb, species: savedSpecies(s.knownSpecies?.[i]), cx: -1e9, cy: -1e9, size: 0, fish: 0, seen: -10 }));
     this.awayBefore = s.away;
+  }
+
+  /** all animals scanned in this game, the first one first; the ones that swam away are `gone` (tapping one that is here shows it big) */
+  gallery(): PaintGallery {
+    const all = [...this.creatures, ...this.album].filter((c) => c.painted).sort((a, b) => a.id - b.id);
+    return {
+      animals: all.map((c) => {
+        const gone = c.leaving || !this.creatures.includes(c);
+        return { picture: c.painted!.picture, name: c.painted!.name, gone, show: gone ? undefined : () => this.showCreature(c) };
+      }),
+      // swam away in a game before it was saved: only counted, no pictures
+      unseen: this.awayBefore,
+    };
   }
 
   /** "12 Tiere" (there are not only fish) */

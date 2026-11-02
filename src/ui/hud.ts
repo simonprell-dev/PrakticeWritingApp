@@ -5,6 +5,7 @@ import { drawPencil, drawSchoolLines, drawWriting, writeDuration, writtenGlyph }
 import { withArticle } from '../recog/classes.ts';
 import type { PlayerId } from '../vision/types.ts';
 import { button, h } from './dom.ts';
+import { fairBadge } from './fairBadge.ts';
 
 export interface HudDeps {
   title: string;
@@ -28,6 +29,8 @@ export interface HudDeps {
   /** team modes: one button per team takes the photo for that team (like the number keys) */
   teams?: { id: PlayerId; name: string; color: string }[];
   onTeamScan?: (id: PlayerId) => void;
+  /** the counter was tapped (Mal-Aquarium: show all animals) */
+  onCounter?: () => void;
 }
 
 export class Hud {
@@ -42,6 +45,7 @@ export class Hud {
   private writeStart = 0;
   private raf = 0;
   private counter: HTMLElement;
+  private fair: HTMLElement | null = null;
   private cam: HTMLCanvasElement;
   private autoBtn: HTMLButtonElement;
   private ring: SVGCircleElement;
@@ -84,7 +88,7 @@ export class Hud {
     }
     this.goLabel = h('span', null, 'Fertig!');
     this.go = button([h('span', { class: 'spin' }), h('span', { class: 'go-icon' }), this.goLabel], d.onScan, 'btn primary go-btn', 'Foto machen (Leertaste)');
-    this.counter = h('div', { class: 'counter' });
+    this.counter = d.onCounter ? button('', d.onCounter, 'counter clickable', 'Alle Tiere ansehen') : h('div', { class: 'counter' });
     this.root = h(
       'div',
       { class: 'hud' },
@@ -160,6 +164,13 @@ export class Hud {
       tmp.height = img.height;
       c.putImageData(img, 0, 0);
     }
+  }
+
+  /** trade fair mode: QR code and web address in the corner */
+  setFair(on: boolean): void {
+    this.fair?.remove();
+    this.fair = on ? fairBadge() : null;
+    if (this.fair) this.root.append(this.fair);
   }
 
   setTitle(t: string): void {

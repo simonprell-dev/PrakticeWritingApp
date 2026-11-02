@@ -37,7 +37,8 @@ function squeeze(t: number, phase: number): number {
 
 /** how the animal looks at time t (seconds) while moving with speed vx */
 export function poseOf(m: Motion, t: number, phase: number, vx: number): Pose {
-  const wag = (amp: number) => Math.sin(t * (6 + Math.abs(vx) / 25) + phase) * amp;
+  // calm fins: a little faster when the animal swims fast
+  const wag = (amp: number) => Math.sin(t * (3.5 + Math.abs(vx) / 45) + phase) * amp;
   switch (m) {
     case 'swim': {
       const b = 1 + Math.sin(t * 3 + phase) * 0.015;
@@ -54,7 +55,7 @@ export function poseOf(m: Motion, t: number, phase: number, vx: number): Pose {
     }
     case 'bob':
       // the seahorse stands upright, rocks up and down, its little fin flutters
-      return { sx: 1, sy: 1, rot: Math.sin(t * 0.9 + phase) * 0.06, dy: Math.sin(t * 1.8 + phase) * 12, limb: Math.sin(t * 14 + phase) * 0.25 };
+      return { sx: 1, sy: 1, rot: Math.sin(t * 0.9 + phase) * 0.06, dy: Math.sin(t * 1.8 + phase) * 12, limb: Math.sin(t * 8 + phase) * 0.25 };
     case 'pulse': {
       const c = squeeze(t, phase);
       // the tentacles follow the bell a little later

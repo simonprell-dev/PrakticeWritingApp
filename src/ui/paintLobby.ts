@@ -4,6 +4,7 @@ import { drawCard } from '../game/paint/cardArt.ts';
 import { CARD } from '../game/paint/fishCard.ts';
 import { sheetSpecies, sheetTitle, type SheetId } from '../game/paint/sheets.ts';
 import { ANIMALS, SPECIES } from '../game/paint/species.ts';
+import type { PaintGallery } from '../scenes/paintScene.ts';
 import { button, clear, h, modal, segmented } from './dom.ts';
 import { printSheet } from './printSheet.ts';
 
@@ -136,6 +137,51 @@ export function openPaintLobby(start: () => void, openCamera: () => void): void 
         'btn primary',
       ),
     ),
+  );
+  const m = modal(content);
+}
+
+/** a canvas copied into the page (the pictures may be offscreen canvases) */
+function copyCanvas(src: AnyCanvas, cls: string): HTMLCanvasElement {
+  const c = h('canvas', { width: src.width, height: src.height, class: cls });
+  c.getContext('2d')!.drawImage(src as CanvasImageSource, 0, 0);
+  return c;
+}
+
+/** all animals scanned in this game; tapping one that is still here shows it big */
+export function openPaintGallery(g: PaintGallery): void {
+  const here = g.animals.filter((a) => !a.gone).length;
+  const tiles = g.animals.map((a, i) => {
+    const tile = button(
+      [
+        copyCanvas(a.picture, ''),
+        a.name ? copyCanvas(a.name, 'tile-name') : null,
+        h('small', null, a.gone ? `Nr. ${i + 1} · weggeschwommen` : `Nr. ${i + 1}`),
+      ],
+      () => {
+        if (!a.show) return;
+        m.close();
+        a.show();
+      },
+      `tile${a.gone ? ' gone' : ''}`,
+      a.gone ? 'Schon weggeschwommen' : 'Groß ansehen',
+    );
+    return tile;
+  });
+  const content = h(
+    'div',
+    { style: 'min-width:min(760px,90vw)' },
+    h('h2', null, '🐠 Alle Tiere'),
+    h(
+      'p',
+      { class: 'help' },
+      g.animals.length
+        ? `${g.animals.length} ${g.animals.length === 1 ? 'Tier' : 'Tiere'} gescannt, ${here} ${here === 1 ? 'schwimmt' : 'schwimmen'} gerade im Aquarium.`
+        : 'Noch keine Tiere – leg eine ausgemalte Karte unter die Kamera!',
+    ),
+    tiles.length ? h('div', { class: 'painted-gallery' }, ...tiles) : null,
+    g.unseen ? h('p', { class: 'help' }, `Dazu ${g.unseen} ${g.unseen === 1 ? 'Tier' : 'Tiere'} aus dem gespeicherten Spiel, die schon vorher weggeschwommen sind.`) : null,
+    h('div', { class: 'actions' }, button('Schließen', () => m.close(), 'btn primary')),
   );
   const m = modal(content);
 }

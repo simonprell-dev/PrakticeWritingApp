@@ -22,7 +22,7 @@ import { showDebug } from '../ui/debugView.ts';
 import { button, clear, h, isModalOpen, modal } from '../ui/dom.ts';
 import { openDuelLobby } from '../ui/duelLobby.ts';
 import { openGlyphCard } from '../ui/glyphCard.ts';
-import { openPaintedCard, openPaintLobby } from '../ui/paintLobby.ts';
+import { openPaintedCard, openPaintGallery, openPaintLobby } from '../ui/paintLobby.ts';
 import { openContinue, openKeepQuestion, openSaveDialog, openSavesList } from '../ui/savesPanel.ts';
 import { openWelcome } from '../ui/welcome.ts';
 import { LEGAL_PATHS, openLegal } from '../ui/legal.ts';
@@ -578,6 +578,7 @@ export class App {
       },
       () => {
         if (this.mode.kind === 'start') this.showStart();
+        if (this.mode.kind === 'paint') this.hud?.setFair(this.settings.game.fair);
         this.auto.setEnabled(this.autoAllowed() && this.mode.kind !== 'start');
       },
     );
@@ -679,7 +680,9 @@ export class App {
       onFullscreen: () => this.toggleFullscreen(),
       onCamera: () => this.cameraSetup(),
       onSave: () => this.openSaveGame(),
+      onCounter: () => openPaintGallery(scene.gallery()),
     });
+    this.hud.setFair(this.settings.game.fair);
     this.updateProgress();
     this.auto.setEnabled(this.autoAllowed());
     if (!resuming) toast('Ausgemalte Karte unter die Kamera legen und „Fertig!“ drücken!', 'info', 5000);

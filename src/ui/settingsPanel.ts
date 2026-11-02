@@ -146,6 +146,19 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       ),
     ),
     row('Lautstärke', vol),
+    h(
+      'div',
+      null,
+      h(
+        'div',
+        { class: 'row' },
+        toggle('Messemodus', s.game.fair, (on) => {
+          s.game.fair = on;
+          d.save();
+        }),
+      ),
+      h('div', { class: 'help', style: 'margin:-4px 0 8px' }, 'Blendet im Mal-Aquarium einen QR-Code und die Webadresse ein, damit Besucher das Spiel zu Hause wiederfinden.'),
+    ),
     h('h3', null, 'Spielstände'),
     h(
       'div',
