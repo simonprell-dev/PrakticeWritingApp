@@ -274,6 +274,8 @@ body {
 }
 .logo {
   align-items: flex-end;
+  /* the brand name reads left to right in every language (also Arabic and Hebrew) */
+  direction: ltr;
 }
 .logo-word {
   display: inline-flex;
