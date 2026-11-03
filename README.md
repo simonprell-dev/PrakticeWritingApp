@@ -157,6 +157,8 @@ npm run build
 npm start                        # http://localhost:3000 – Tabellen werden beim Start angelegt
 # Admin: http://localhost:3000/admin
 ```
+Läuft auf dem Rechner schon ein anderes Postgres auf Port 5432, den Container mit `KRAKEL_DB_PORT=5433 docker compose up -d db` starten und in `.env` den Port in `DATABASE_URL` anpassen.
+
 Zum Entwickeln mit Hot Reload: `npm run dev:api` startet `server.js` (API auf Port 3000, liest `.env`, startet bei Änderungen in `server/` neu) und Vite, das `/api` dorthin weiterleitet. Admin-Seite dann unter http://localhost:5173/admin.
 
 | Route | Zweck |

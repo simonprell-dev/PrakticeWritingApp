@@ -9,7 +9,8 @@ services:
       POSTGRES_PASSWORD: krakel
       POSTGRES_DB: krakel
     ports:
-      - '5432:5432'
+      # another Postgres already on 5432? KRAKEL_DB_PORT=5433 docker compose up -d db (and the port in DATABASE_URL)
+      - '${KRAKEL_DB_PORT:-5432}:5432'
     volumes:
       - krakel-db:/var/lib/postgresql/data
     healthcheck:
