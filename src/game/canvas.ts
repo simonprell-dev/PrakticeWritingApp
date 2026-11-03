@@ -27,9 +27,14 @@ export function makePath(d?: string): Path2D {
   return d === undefined ? new PathImpl() : new PathImpl(d);
 }
 
+/**
+ * A canvas that is painted once and drawn many times (background, sprite, sticker). It lives in main
+ * memory: a GPU canvas is wiped when the graphics driver resets (standby, driver update, a long day on
+ * a school PC) and nothing would paint it again – the background vanished and the walkers smeared.
+ */
 export function makeCanvas(w: number, h: number): { canvas: AnyCanvas; ctx: Ctx } {
   const canvas = factory(Math.max(1, Math.ceil(w)), Math.max(1, Math.ceil(h)));
-  const ctx = canvas.getContext('2d') as Ctx;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }) as Ctx;
   return { canvas, ctx };
 }
 
