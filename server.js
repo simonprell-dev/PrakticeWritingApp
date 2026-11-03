@@ -133,6 +133,8 @@ const server = createServer(async (req, res) => {
   // the admin page is its own small page (admin.html), never cached, never indexed
   const admin = urlPath === '/admin' || urlPath === '/admin/';
   if (admin) urlPath = '/admin.html';
+  // the presentation film for teachers and parents
+  if (urlPath === '/vorstellung' || urlPath === '/vorstellung/') urlPath = '/vorstellung.html';
   if (urlPath.endsWith('/')) urlPath += 'index.html';
   const file = normalize(join(ROOT, urlPath));
   if (!file.startsWith(ROOT.endsWith(sep) ? ROOT : ROOT + sep)) {
