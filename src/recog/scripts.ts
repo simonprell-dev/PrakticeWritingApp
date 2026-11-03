@@ -111,7 +111,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
   kyrillisch: {
     id: 'kyrillisch', name: tk('Kyrillisch'), sample: 'Бб', chars: RU_UP + RU_LO,
     // capitals and small letters that only differ in size
-    groups: ['Вв', 'Гг', 'Жж', 'Зз', 'Ии', 'Йй', 'Кк', 'Лл', 'Мм', 'Нн', 'Оо', 'Пп', 'Сс', 'Тт', 'Хх', 'Цц', 'Чч', 'Шш', 'Щщ', 'Ъъ', 'Ыы', 'Ьь', 'Ээ', 'Юю', 'Яя'],
+    groups: ['Вв', 'Гг', 'Дд', 'Жж', 'Зз', 'Ии', 'Йй', 'Кк', 'Лл', 'Мм', 'Нн', 'Оо', 'Пп', 'Рр', 'Сс', 'Тт', 'Уу', 'Фф', 'Хх', 'Цц', 'Чч', 'Шш', 'Щщ', 'Ъъ', 'Ыы', 'Ьь', 'Ээ', 'Юю', 'Яя'],
     practice: [
       { label: tk('Großbuchstaben'), chars: RU_UP },
       { label: tk('Kleinbuchstaben'), chars: RU_LO },
@@ -123,7 +123,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
     modelDir: 'arabisch/', font: "KK-arabisch, 'Noto Naskh Arabic', 'Segoe UI', sans-serif", lang: 'ar', region: 'arabisch',
   },
   devanagari: {
-    id: 'devanagari', name: tk('Devanagari (Hindi)'), sample: 'क', chars: DEVA_VOWELS + DEVA_CONS, groups: [],
+    id: 'devanagari', name: tk('Devanagari (Hindi)'), sample: 'क', chars: DEVA_VOWELS + DEVA_CONS, groups: ['घध', 'बव', 'भम'],
     practice: [
       { label: tk('Vokale'), chars: DEVA_VOWELS },
       { label: tk('Konsonanten'), chars: DEVA_CONS },
@@ -131,7 +131,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
     dir: 'ltr', seg: 'block', modelDir: 'devanagari/', font: "KK-devanagari, 'Nirmala UI', 'Noto Sans Devanagari', sans-serif", lang: 'hi', region: 'devanagari',
   },
   griechisch: {
-    id: 'griechisch', name: tk('Griechisch'), sample: 'Ωω', chars: GR_UP + GR_LO, groups: ['Οο'],
+    id: 'griechisch', name: tk('Griechisch'), sample: 'Ωω', chars: GR_UP + GR_LO, groups: ['Οο', 'Κκ', 'Χχ', 'Ψψ', 'Ππ', 'Ττ', 'Ιι', 'Θθ', 'Φφ', 'Ρρ', 'Ββ'],
     practice: [
       { label: tk('Großbuchstaben'), chars: GR_UP },
       { label: tk('Kleinbuchstaben'), chars: GR_LO },
@@ -139,7 +139,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
     dir: 'ltr', seg: 'block', modelDir: 'griechisch/', font: "KK-griechisch, system-ui, sans-serif", lang: 'el', region: 'griechisch',
   },
   hebraeisch: {
-    id: 'hebraeisch', name: tk('Hebräisch'), sample: 'א', chars: HE_LETTERS + HE_FINAL, groups: [],
+    id: 'hebraeisch', name: tk('Hebräisch'), sample: 'א', chars: HE_LETTERS + HE_FINAL, groups: ['וין', 'דרך', 'הח', 'בכ', 'סם'],
     practice: [
       { label: tk('Buchstaben'), chars: HE_LETTERS },
       { label: tk('Endformen'), chars: HE_FINAL },
@@ -156,7 +156,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
     dir: 'ltr', seg: 'block', modelDir: 'hangul/', font: "KK-hangul, 'Malgun Gothic', 'Noto Sans KR', sans-serif", lang: 'ko', region: 'hangul',
   },
   thai: {
-    id: 'thai', name: tk('Thailändisch'), sample: 'ก', chars: THAI, groups: [], practice: [{ label: tk('Konsonanten'), chars: THAI }], dir: 'ltr', seg: 'block',
+    id: 'thai', name: tk('Thailändisch'), sample: 'ก', chars: THAI, groups: ['ขฃ', 'คฅ'], practice: [{ label: tk('Konsonanten'), chars: THAI }], dir: 'ltr', seg: 'block',
     modelDir: 'thai/', font: "KK-thai, 'Leelawadee UI', 'Noto Sans Thai', sans-serif", lang: 'th', region: 'thai',
   },
 };

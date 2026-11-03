@@ -348,6 +348,23 @@ function lizenzen(): HTMLElement {
           ' ',
           licenceText('/fonts/OFL-Druckvorlage-Andika.txt'),
         ],
+        ['Playwrite DE SAS – Copyright 2023 The Playwrite Project Authors (TypeTogether). ', licenceText('/fonts/OFL-schreib-PlaywriteDESAS.txt')],
+        ['Klee One – Copyright 2020 The Klee Project Authors. ', licenceText('/fonts/OFL-hiragana-KleeOne.txt')],
+        [
+          t('„{name}“ – eine verkleinerte, umbenannte Fassung (Modified Version) der Schrift {font}, {copyright}. Die reservierten Schriftnamen werden für diese Fassung nicht verwendet.', { name: 'Vorlage Kyrillisch', font: 'Andika', copyright: 'Copyright (c) 2004–2022 SIL International' }),
+          ' ',
+          licenceText('/fonts/OFL-kyrillisch-Andika.txt'),
+        ],
+        ['Noto Naskh Arabic – Copyright 2022 The Noto Project Authors. ', licenceText('/fonts/OFL-arabisch-NotoNaskhArabic.txt')],
+        ['Baloo 2 – Copyright 2019 The Baloo 2 Project Authors. ', licenceText('/fonts/OFL-devanagari-Baloo2.txt')],
+        ['Didact Gothic – Copyright (c) 2009, 2010, 2011 Daniel Johnson. ', licenceText('/fonts/OFL-griechisch-DidactGothic.txt')],
+        [
+          t('„{name}“ – eine verkleinerte, umbenannte Fassung (Modified Version) der Schrift {font}, {copyright}. Die reservierten Schriftnamen werden für diese Fassung nicht verwendet.', { name: 'Vorlage Hebraeisch', font: 'Varela Round', copyright: 'Copyright 2023 The Varela Round Project Authors' }),
+          ' ',
+          licenceText('/fonts/OFL-hebraeisch-VarelaRound.txt'),
+        ],
+        ['Gowun Dodum – Copyright 2021 The Gowun Dodum Project Authors. ', licenceText('/fonts/OFL-hangul-GowunDodum.txt')],
+        ['Mali – Copyright 2018 The Mali Project Authors. ', licenceText('/fonts/OFL-thai-Mali.txt')],
       ]),
     ),
     section(
@@ -376,6 +393,23 @@ function lizenzen(): HTMLElement {
       p(
         t('Zusätzliche Übungsbeispiele und die Vergleichsvorlagen wurden aus frei lizenzierten Schriften (SIL Open Font License bzw. Apache License 2.0) erzeugt, u. a. Andika, Playwrite DE Grund, Patrick Hand, Schoolbell, Comic Neue, Playpen Sans, Delius, Short Stack, Indie Flower, Gochi Hand, Kalam, Just Another Hand, Architects Daughter, Coming Soon, Sue Ellen Francisco, Handlee, Neucha, Mali, Itim und Sniglet.'),
       ),
+      p(t('Jede andere Schrift hat ihr eigenes Erkennungsmodell. Diese Modelle wurden ebenso aus frei lizenzierten Schriften (SIL Open Font License bzw. Apache License 2.0) erzeugt, dazu aus zwei Handschrift-Datensätzen:')),
+      list([
+        rich(
+          t('Kyrillisch: CoMNIST von Gregory Vial, {site}. Lizenz: {licence}. Änderungen: Aus den Daten wurde ein eigenes Erkennungsmodell trainiert; es steht unter derselben Lizenz.'),
+          {
+            site: ext('https://github.com/GregVial/CoMNIST', 'github.com/GregVial/CoMNIST'),
+            licence: ext('https://creativecommons.org/licenses/by-sa/4.0/deed.de', 'CC BY-SA 4.0'),
+          },
+        ),
+        rich(
+          t('Devanagari: Devanagari Handwritten Character Dataset (S. Acharya, A. K. Pant, P. K. Gyawali), UCI Machine Learning Repository, {site}. Lizenz: {licence}. Änderungen: Aus den Daten wurde ein eigenes Erkennungsmodell trainiert (abgeleitetes Werk).'),
+          {
+            site: ext('https://archive.ics.uci.edu/dataset/389/devanagari+handwritten+character+dataset', 'archive.ics.uci.edu/dataset/389'),
+            licence: ext('https://creativecommons.org/licenses/by/4.0/deed.de', 'CC BY 4.0'),
+          },
+        ),
+      ]),
     ),
     section(
       t('Programm'),

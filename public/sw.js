@@ -1,5 +1,5 @@
 // Offline support: after the first visit the app also runs without internet (school Wi-Fi).
-const CACHE = 'krakel-krone-v3';
+const CACHE = 'krakel-krone-v4';
 const PRECACHE = [
   '/',
   '/manifest.webmanifest',

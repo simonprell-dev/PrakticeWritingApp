@@ -1,0 +1,173 @@
+{
+ "version": "v1",
+ "script": "schreib",
+ "input": [
+  28,
+  28
+ ],
+ "classes": [
+  "0",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J",
+  "K",
+  "L",
+  "M",
+  "N",
+  "O",
+  "P",
+  "Q",
+  "R",
+  "S",
+  "T",
+  "U",
+  "V",
+  "W",
+  "X",
+  "Y",
+  "Z",
+  "a",
+  "b",
+  "c",
+  "d",
+  "e",
+  "f",
+  "g",
+  "h",
+  "i",
+  "j",
+  "k",
+  "l",
+  "m",
+  "n",
+  "o",
+  "p",
+  "q",
+  "r",
+  "s",
+  "t",
+  "u",
+  "v",
+  "w",
+  "x",
+  "y",
+  "z",
+  "ß"
+ ],
+ "groups": [
+  "0Oo",
+  "1Il",
+  "cC",
+  "kK",
+  "mM",
+  "pP",
+  "sS",
+  "uU",
+  "vV",
+  "wW",
+  "xX",
+  "yY",
+  "zZ",
+  "jJ"
+ ],
+ "dtype": "f16",
+ "temperature": 0.6993,
+ "preprocess": {
+  "size": 28,
+  "fit": 24,
+  "strokePx": 2.3,
+  "blur": 0.6
+ },
+ "layers": [
+  {
+   "type": "conv",
+   "in": 1,
+   "out": 16,
+   "k": 3,
+   "relu": true,
+   "w": 0,
+   "b": 144
+  },
+  {
+   "type": "conv",
+   "in": 16,
+   "out": 16,
+   "k": 3,
+   "relu": true,
+   "w": 160,
+   "b": 2464
+  },
+  {
+   "type": "maxpool",
+   "k": 2
+  },
+  {
+   "type": "conv",
+   "in": 16,
+   "out": 32,
+   "k": 3,
+   "relu": true,
+   "w": 2480,
+   "b": 7088
+  },
+  {
+   "type": "conv",
+   "in": 32,
+   "out": 32,
+   "k": 3,
+   "relu": true,
+   "w": 7120,
+   "b": 16336
+  },
+  {
+   "type": "maxpool",
+   "k": 2
+  },
+  {
+   "type": "conv",
+   "in": 32,
+   "out": 64,
+   "k": 3,
+   "relu": true,
+   "w": 16368,
+   "b": 34800
+  },
+  {
+   "type": "maxpool",
+   "k": 2
+  },
+  {
+   "type": "dense",
+   "in": 576,
+   "out": 63,
+   "w": 34864,
+   "b": 71152
+  }
+ ],
+ "accuracy": {
+  "top1": 0.7795,
+  "group": 0.9154,
+  "real_top1": 0.7373,
+  "fonts_top1": 0.9691,
+  "real_group": 0.8973,
+  "fonts_group": 0.9967,
+  "n_real": 15000,
+  "n_fonts": 3338
+ }
+}

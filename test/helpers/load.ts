@@ -36,3 +36,14 @@ export function loadRecognizer(withNet = true): Recognizer {
   if (existsSync(MODEL + 'calib-v1.json')) calib = JSON.parse(readFileSync(MODEL + 'calib-v1.json', 'utf8')).median ?? {};
   return new Recognizer(loadBank(), withNet ? loadNet() : null, calib);
 }
+
+/** the model of another script (public/model/<dir>/), uncached */
+export function loadScriptModel(dir: string): { bank: TemplateBank; net: GlyphNet } {
+  const base = MODEL + dir;
+  const tMeta = JSON.parse(readFileSync(base + 'templates-v1.json', 'utf8')) as TemplateMeta;
+  const nMeta = JSON.parse(readFileSync(base + 'glyphnet-v1.json', 'utf8')) as GlyphNetMeta;
+  return {
+    bank: new TemplateBank(tMeta, toAB(readFileSync(base + 'templates-v1.bin'))),
+    net: new GlyphNet(nMeta, toAB(readFileSync(base + 'glyphnet-v1.bin'))),
+  };
+}
