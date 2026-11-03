@@ -166,6 +166,19 @@ describe('pipeline on synthetic pages', () => {
     expect(shifted.glyphs.filter((g) => g.isNew).map((g) => g.score.char)).toEqual(['f']);
   });
 
+  it('slips: other letters in the same place are new (team 2 puts its slips where team 1 had them)', () => {
+    const memory = new GlyphMemory('slips');
+    const opts: Partial<VisionOptions> = { dedup: 'slips' };
+    const first = scan({ width: 1280, height: 640, glyphs: row('ABCDEF', 300) }, opts, memory);
+    expect(first.glyphs.filter((g) => g.isNew).length).toBe(6);
+    const other = scan({ width: 1280, height: 640, glyphs: row('KLMNPR', 300), seed: 5 }, opts, memory);
+    expect(other.glyphs.length).toBe(6);
+    expect(other.glyphs.filter((g) => g.isNew).length).toBe(6);
+    // the same slips again are still known
+    const again = scan({ width: 1280, height: 640, glyphs: row('KLMNPR', 300), seed: 7 }, opts, memory);
+    expect(again.glyphs.filter((g) => g.isNew).length).toBe(0);
+  });
+
   it('knows the letters again when the paper was shifted and turned', () => {
     const W = 1280;
     const H = 800;
@@ -190,7 +203,7 @@ describe('pipeline on synthetic pages', () => {
       expect(first.glyphs.filter((g) => g.isNew).length).toBe(10);
       const again = scan({ width: W, height: H, glyphs: turned(a, dx, dy), seed: 9 }, {}, memory);
       expect(again.glyphs.length).toBe(10);
-      expect(again.glyphs.filter((g) => g.isNew).length).toBe(0);
+    expect(again.glyphs.filter((g) => g.isNew).length).toBe(0);
       // one new letter on the turned sheet is the only new one
       const extra = turned(a, dx, dy);
       const p = turned(a, dx, dy)[4];

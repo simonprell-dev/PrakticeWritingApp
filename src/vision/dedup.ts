@@ -110,7 +110,8 @@ export class GlyphMemory {
     this.items = [];
   }
 
-  match(glyphs: MemGlyph[]): MatchResult {
+  /** `same(old, i)`: may current glyph i be this remembered one (slips: the recognition saw the same letter)? */
+  match(glyphs: MemGlyph[], same: (old: MemGlyph, i: number) => boolean = () => true): MatchResult {
     const n = glyphs.length;
     const allNew = (newSheet: boolean): MatchResult => ({ isNew: glyphs.map(() => true), matched: glyphs.map(() => null), shift: { dx: 0, dy: 0 }, newSheet });
     if (!this.items.length || !n) return allNew(false);
@@ -121,10 +122,10 @@ export class GlyphMemory {
     const bin = Math.max(2, H * 0.25);
     const votes = new Map<string, { n: number; dx: number; dy: number }>();
     for (const o of this.items) {
-      for (const g of glyphs) {
+      for (const [gi, g] of glyphs.entries()) {
         const r = g.box.h / o.box.h;
         if (r < 0.7 || r > 1.4) continue;
-        if (softDice(o.thumb, g.thumb) < minDice) continue;
+        if (softDice(o.thumb, g.thumb) < minDice || !same(o, gi)) continue;
         const dx = g.box.x + g.box.w / 2 - (o.box.x + o.box.w / 2);
         const dy = g.box.y + g.box.h / 2 - (o.box.y + o.box.h / 2);
         const key = `${Math.round(dx / bin)},${Math.round(dy / bin)}`;
@@ -144,7 +145,7 @@ export class GlyphMemory {
       shift = { dx: best.dx / best.n, dy: best.dy / best.n };
     }
     const usedOld = new Set<number>();
-    let matched = glyphs.map((g) => {
+    let matched = glyphs.map((g, gi) => {
       for (let i = 0; i < this.items.length; i++) {
         if (usedOld.has(i)) continue;
         const o = this.items[i];
@@ -152,7 +153,7 @@ export class GlyphMemory {
         if (iou(ob, g.box) < minIou) continue;
         if (softDice(o.thumb, g.thumb) < minDice) continue;
         // dots added later ("Punkte nicht vergessen!"): u becomes ü, a new letter
-        if (gainedDots(o, g)) continue;
+        if (gainedDots(o, g) || !same(o, gi)) continue;
         usedOld.add(i);
         return o;
       }
@@ -165,7 +166,7 @@ export class GlyphMemory {
       // the turn whose glyphs look most alike wins (on an even grid a quarter turn also fits the positions)
       let bestScore = matchedOld;
       for (const t of this.turns(glyphs, H)) {
-        const { matched: m, score } = this.pairTurned(glyphs, t, H, minDice);
+        const { matched: m, score } = this.pairTurned(glyphs, t, H, minDice, same);
         if (score > bestScore) {
           matched = m;
           matchedOld = m.filter(Boolean).length;
@@ -252,13 +253,19 @@ export class GlyphMemory {
   }
 
   /** current glyphs matched to the old ones moved by the turn (the old picture turned along) */
-  private pairTurned(glyphs: MemGlyph[], t: Turn, H: number, minDice: number): { matched: (MemGlyph | null)[]; score: number } {
+  private pairTurned(
+    glyphs: MemGlyph[],
+    t: Turn,
+    H: number,
+    minDice: number,
+    same: (old: MemGlyph, i: number) => boolean,
+  ): { matched: (MemGlyph | null)[]; score: number } {
     const c = Math.cos(t.a);
     const s = Math.sin(t.a);
     const used = new Set<number>();
     const thumbs = new Map<number, Uint8Array>();
     let score = 0;
-    const matched = glyphs.map((g) => {
+    const matched = glyphs.map((g, gi) => {
       const [gx, gy] = centre(g.box);
       for (let i = 0; i < this.items.length; i++) {
         if (used.has(i)) continue;
@@ -272,7 +279,7 @@ export class GlyphMemory {
         // turning a 16 × 16 picture blurs it a little
         const d = softDice(th, g.thumb);
         if (d < minDice - 0.08) continue;
-        if (gainedDots(o, g)) continue;
+        if (gainedDots(o, g) || !same(o, gi)) continue;
         used.add(i);
         score += d;
         return o;

@@ -446,9 +446,19 @@ export function segmentFrame(frame: RGBAImage, opts: VisionOptions): FrameSegmen
   return { frame: { width: frame.width, height: frame.height }, scale, dw, dh, regions, glyphs, lines, masks, ink: np.ink, timings: tm.timings };
 }
 
-/** a glyph needs the recognition unless an earlier scan already recognised it */
-function needsAnalysis(m: MatchResult, i: number): boolean {
-  return m.isNew[i] || !m.matched[i]?.known;
+/**
+ * a glyph needs the recognition unless an earlier scan already recognised it. Slips are always
+ * recognised: the next team puts its slips where the last ones lay, and in a 16x16 thumbnail a K
+ * looks much like an A – only the recognition tells them apart (there are few slips, so it is cheap).
+ */
+function needsAnalysis(m: MatchResult, i: number, memory: GlyphMemory): boolean {
+  return memory.mode === 'slips' || m.isNew[i] || !m.matched[i]?.known;
+}
+
+/** a slip found again shows the same letter (upper/lower case and a likely second guess count too) */
+function sameLetter(known: Analysis, now: Analysis): boolean {
+  const k = known.char.toLowerCase();
+  return now.char.toLowerCase() === k || !!now.top3?.some((c) => c.p >= 0.2 && c.char.toLowerCase() === k);
 }
 
 /**
@@ -458,7 +468,7 @@ function needsAnalysis(m: MatchResult, i: number): boolean {
 export function matchKnown(seg: FrameSegmentation, memory: GlyphMemory): GlyphJob[] {
   seg.match = memory.match(seg.glyphs.map((g) => ({ box: g.box, thumb: g.thumb, dots: g.dots })));
   const m = seg.match;
-  return seg.glyphs.filter((_, i) => needsAnalysis(m, i)).map((g) => g.job);
+  return seg.glyphs.filter((_, i) => needsAnalysis(m, i, memory)).map((g) => g.job);
 }
 
 /** Phase 2 for a list of glyph jobs (any worker). */
@@ -486,11 +496,22 @@ export function finishScan(
   const glyphs = seg.glyphs;
   // without matchKnown() the caller has analysed every glyph
   const matchedBefore = !!seg.match;
-  const match = seg.match ?? deps.memory.match(glyphs.map((g) => ({ box: g.box, thumb: g.thumb, dots: g.dots })));
-  const fresh = glyphs.map((_, i) => !matchedBefore || needsAnalysis(match, i));
+  let match = seg.match ?? deps.memory.match(glyphs.map((g) => ({ box: g.box, thumb: g.thumb, dots: g.dots })));
   let k = 0;
+  const analysed = glyphs.map((_, i) => (!matchedBefore || needsAnalysis(match, i, deps.memory) ? analyses[k++] : null));
+  if (matchedBefore && deps.memory.mode === 'slips') {
+    // slips are found again only with the same letter; a known slip keeps its first result
+    match = deps.memory.match(
+      glyphs.map((g) => ({ box: g.box, thumb: g.thumb, dots: g.dots })),
+      (o, i) => !o.known || sameLetter(o.known.analysis, analysed[i]!),
+    );
+    glyphs.forEach((_, i) => {
+      if (match.matched[i]?.known) analysed[i] = null;
+    });
+  }
+  const fresh = analysed.map((a) => !!a);
   // stored analyses are copied: the scan-wide scoring adjusts them
-  const all = glyphs.map((_, i) => (fresh[i] ? analyses[k++] : structuredClone(match.matched[i]!.known!.analysis)));
+  const all = glyphs.map((_, i) => analysed[i] ?? structuredClone(match.matched[i]!.known!.analysis));
   const scores = deps.recognizer.finalize(all, { target: opts.target, strictness: opts.strictness, style: opts.style, noMirror: opts.noMirror });
   // the setting may have changed since a known glyph was scored
   const final = glyphs.map((_, i) => {
