@@ -2300,19 +2300,29 @@ input[type='range'] {
 }
 .script-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
   gap: 10px;
 }
+/* long names ("Devanagari (Hindi)", other languages) wrap inside the button instead of running out */
 .script-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   justify-content: flex-start;
   text-align: start;
+  white-space: normal;
+  min-width: 0;
+  padding: 0.45em 0.9em;
+  line-height: 1.15;
+}
+.script-btn > span:last-child {
+  min-width: 0;
+  hyphens: auto;
 }
 .script-btn .script-sample {
   font-size: 1.7rem;
-  min-width: 2.2em;
+  min-width: 1.6em;
+  flex: none;
   text-align: center;
 }
 .script-btn.on {
