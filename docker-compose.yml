@@ -1,0 +1,23 @@
+# Local Postgres for the statistics, contact form and admin page (see README, "Mit Datenbank").
+#   docker compose up -d db
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: krakel
+      POSTGRES_PASSWORD: krakel
+      POSTGRES_DB: krakel
+    ports:
+      # another Postgres already on 5432? KRAKEL_DB_PORT=5433 docker compose up -d db (and the port in DATABASE_URL)
+      - '${KRAKEL_DB_PORT:-5432}:5432'
+    volumes:
+      - krakel-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U krakel -d krakel']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  krakel-db:

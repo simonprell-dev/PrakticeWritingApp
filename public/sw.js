@@ -37,6 +37,8 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin || url.pathname === '/healthz') return;
+  // the API and the admin page always go to the network (and the admin page must not become the cached '/')
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin')) return;
 
   if (req.mode === 'navigate') {
     // network first, so updates arrive; cached page when offline

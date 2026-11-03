@@ -12,10 +12,15 @@
 | **Spielstände** (ausgeschnittene Buchstaben mit Bewertung, ausgemalte Fisch-Karten mit dem darauf geschriebenen Fischnamen, Vorschaubild, Spieleinstellungen) | `IndexedDB` des Browsers | keine (nur wenn jemand selbst eine Datei herunterlädt) | das letzte Spiel jeder Spielart nur, wenn „Spiele merken“ ausdrücklich gewählt wurde, bis zum nächsten Spiel dieser Art; benannte Spielstände bis zum Löschen (einzeln, „Alle Spielstände löschen“, „Alles zurücksetzen“ oder Websitedaten löschen) |
 | **Einstellungen** (Kamera, Bildausschnitt, Strenge, Teamnamen, Übungsbuchstabe) | `localStorage` des Browsers | keine | bis „Alles zurücksetzen“ oder Löschen der Websitedaten |
 | **App-Dateien** (Offline-Betrieb) | Cache des Service Workers | keine | bis zur nächsten Aktualisierung |
+| **Kontaktformular** (Nachricht, Datum/Uhrzeit, App-Sprache; Name und E-Mail nur wenn angegeben) | Postgres-Datenbank beim Hoster **Railway** | keine | bis erledigt (Löschen im Admin-Bereich), spätestens **12 Monate** – der Server löscht ältere Nachrichten automatisch (beim Start und täglich) |
+| **Anonyme Nutzungsstatistik** (Ereignis „App geöffnet / Spiel gestartet / beendet / Foto ausgewertet“, Spielart, Schrift, Sprache, Anzahl Zeichen, Spieldauer, **nur der Kalendertag**) | Postgres-Datenbank beim Hoster **Railway** | keine | **13 Monate**, dann automatisch gelöscht; keine IP, keine Kennung, kein Cookie; abschaltbar in den Einstellungen |
+| **Admin-Sitzung** (nur für den Betreiber) | Cookie `kk_admin` (HttpOnly, SameSite=Strict, nur für `/api/admin`) | keine | 12 Stunden |
 | **Verbindungsdaten** (IP-Adresse, Zeit, URL, Statuscode, Datenmenge, Browser) | beim Hoster **Railway** (Auftragsverarbeiter) | Railway Corporation, USA | 7 Tage (Railway-Tarife Trial/Hobby) bzw. 30 Tage (Pro) |
 
 Außerdem:
-- **Es gibt keine Cookies, kein Tracking, keine Analyse, keine Werbung und keine Konten.**
+- **Es gibt keine Cookies für Besucher, kein Tracking über Seiten hinweg, keine Analysedienste Dritter, keine Werbung und keine Konten.** Einziges Cookie ist die Anmeldung des Betreibers auf `/admin`.
+- **Nutzungsstatistik ohne Personenbezug:** Die App meldet an `POST /api/event` nur Ereignistyp, Spielart, Schrift, Sprache, Zeichenanzahl und Dauer. Der Server speichert dazu nur den Kalendertag (keine Uhrzeit, keine IP, keine Kennung). Die IP-Adresse wird nur im Arbeitsspeicher für die Missbrauchsbremse (Rate-Limit) genutzt. Abschaltbar unter **Einstellungen → Über → „Anonyme Nutzungsstatistik senden“** (Standard: an, Widerspruchslösung). Ob für diese Meldungen § 25 TDDDG eine Einwilligung verlangt, ist umstritten – die App liest dafür nichts vom Gerät aus und speichert nichts darauf; wer ganz sicher gehen will, kann den Standard in `src/app/settings.ts` (`game.telemetry`) auf `false` stellen.
+- **Kontaktformular:** Nachricht Pflicht, Name/E-Mail freiwillig, kein Speichern der IP. Ein verstecktes Feld (Honeypot) und eine Mindest-Ausfüllzeit halten Bots ab. Nachrichten im Admin-Bereich nach Erledigung löschen; nach 12 Monaten löscht der Server sie automatisch.
 - **Es werden keine Dienste Dritter eingebunden.** Schriften, Modell und Programm liegen auf dem eigenen Server. Die Content-Security-Policy (`default-src 'self'`) erzwingt das technisch.
   - Hintergrund zu den Schriften: Das LG München I (Urteil vom 20.01.2022, Az. 3 O 17493/20) hat die Einbindung von Google Fonts über Googles Server als Datenschutzverstoß gewertet.
 - **Der eigene Server (`server.js`) schreibt keine Zugriffsprotokolle.** Die Protokolle entstehen nur auf der Plattform von Railway.
@@ -25,6 +30,8 @@ Außerdem:
   - Der Service-Worker-Cache enthält nur Programmdateien.
 - **Kamera erst auf Wunsch:** Beim ersten Besuch erscheint die Übersicht mit einem Willkommensfenster; die Kamera-Berechtigung wird erst beim Einrichten oder beim ersten Spiel angefragt.
 - **Spielstände enthalten Handschrift der Kinder** (ausgeschnittene Buchstaben, ausgemalte Bilder). Sie bleiben im Browser des Geräts. Auf gemeinsam genutzten Geräten in den Einstellungen „Letztes Spiel merken“ ausschalten oder die Spielstände nach dem Unterricht löschen. Heruntergeladene Spielstand-Dateien wie andere Schülerarbeiten behandeln.
+
+**Löschfristen (automatisch, `server/db.js` → `cleanup()`, beim Start und alle 24 Stunden):** Nachrichten älter als 12 Monate, Statistik-Ereignisse älter als 13 Monate.
 
 **In der App:**
 - Datenschutzerklärung, Impressum und Lizenzhinweise sind auf der Startseite unten verlinkt.
@@ -55,6 +62,7 @@ Außerdem:
 - [ ] **EU-U.S. Data Privacy Framework prüfen:**
   - Auf [dataprivacyframework.gov/list](https://www.dataprivacyframework.gov/list) nachsehen, ob „Railway Corporation“ zertifiziert ist.
   - Wenn nicht, gelten die Standardvertragsklauseln. Dann ggf. ein Transfer Impact Assessment mit der/dem Datenschutzbeauftragten besprechen.
+- [ ] **Datenbank (optional):** Für Statistik, Kontaktformular und `/admin` im Projekt **+ New → Database → PostgreSQL** anlegen (gleiche EU-Region). Im App-Service die Variablen `DATABASE_URL` (Verweis `${{Postgres.DATABASE_URL}}`, privates Netz, kein TLS nötig) und `ADMIN_PASSWORD` (langes, zufälliges Passwort) setzen, optional `ADMIN_SECRET`. Ohne `DATABASE_URL` läuft die App wie bisher; Kontaktformular und Statistik antworten dann mit „nicht erreichbar“.
 - [ ] **Protokoll-Aufbewahrung:** `LEGAL_LOG_DAYS` passend zum Tarif setzen: **7** bei Trial/Hobby, **30** bei Pro ([Railway-Doku](https://docs.railway.com/guides/logs)).
 
 ### Pflichtangaben

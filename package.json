@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "vite --open",
     "build": "tsc --noEmit && vite build",
-    "start": "node server.js",
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev:api": "node tools/dev-api.ts",
     "preview": "npm run build && npm start",
     "test": "vitest run",
     "lab": "vite --open /lab.html",
@@ -26,6 +27,7 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
+    "pg": "^8.23.1",
     "qrcode-generator": "^1.4.4"
   }
 }

@@ -2,6 +2,7 @@ import type { AnyCanvas } from '../game/canvas.ts';
 import type { DuelResult, DuelTeamResult } from '../scenes/duelScene.ts';
 import type { SiegeResult } from '../scenes/siegeScene.ts';
 import type { TowerResult } from '../scenes/towerScene.ts';
+import { donateBlock } from './donate.ts';
 import { button, h, modal } from './dom.ts';
 
 function stickerCanvas(st: AnyCanvas): HTMLCanvasElement {
@@ -53,6 +54,7 @@ export function openVictory(r: DuelResult, again: () => void, menu: () => void):
     ),
     h('p', { class: 'help', style: 'font-size:1.1rem;margin-top:-.4em' }, 'Ihr habt toll geschrieben! Hier sind eure schönsten Zeichen:'),
     h('div', { class: 'teams' }, teamCol(a, r.winner === 'A'), teamCol(b, r.winner === 'B')),
+    donateBlock(),
     h(
       'div',
       { class: 'actions', style: 'justify-content:center' },
@@ -107,6 +109,7 @@ export function openTowerResult(r: TowerResult, again: () => void, menu: () => v
       ` Spielzeit: ${minutes ? minutes + ' Min ' : ''}${Math.floor(r.seconds % 60)} s.`,
     ),
     rows,
+    donateBlock(),
     h(
       'div',
       { class: 'actions', style: 'justify-content:center' },
@@ -148,6 +151,7 @@ export function openSiegeResult(r: SiegeResult, again: () => void, menu: () => v
           : null,
       ),
     ),
+    donateBlock(),
     h(
       'div',
       { class: 'actions', style: 'justify-content:center' },

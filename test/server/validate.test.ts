@@ -1,0 +1,167 @@
+import { describe, expect, it } from 'vitest';
+import { makeToken, readCookie, safeEqual, SESSION_MS, verifyToken } from '../../server/session.js';
+import {
+  clientIp,
+  MAX_MESSAGE,
+  MIN_FILL_MS,
+  parseDays,
+  parseJson,
+  RateLimiter,
+  validateContact,
+  validateEvent,
+  validateMessageAction,
+} from '../../server/validate.js';
+
+describe('validateEvent', () => {
+  it('accepts a full game_end event and keeps only the known fields', () => {
+    const v = validateEvent({ type: 'game_end', mode: 'meer', script: 'druck', lang: 'de', chars: 12, durationS: 93.4 });
+    expect(v).toEqual({ ok: true, value: { type: 'game_end', mode: 'meer', script: 'druck', lang: 'de', chars: 12, durationS: 93 } });
+  });
+
+  it('accepts a visit without mode', () => {
+    expect(validateEvent({ type: 'visit', script: 'druck', lang: 'en' }).ok).toBe(true);
+  });
+
+  it('needs a mode for game events', () => {
+    expect(validateEvent({ type: 'game_start' }).ok).toBe(false);
+  });
+
+  it('refuses unknown types, values and fields', () => {
+    expect(validateEvent({ type: 'click' }).ok).toBe(false);
+    expect(validateEvent({ type: 'game_start', mode: 'schach' }).ok).toBe(false);
+    expect(validateEvent({ type: 'visit', script: 'klingonisch' }).ok).toBe(false);
+    expect(validateEvent({ type: 'visit', lang: 'xx' }).ok).toBe(false);
+    expect(validateEvent({ type: 'visit', userId: 'abc' }).ok).toBe(false);
+    expect(validateEvent(null).ok).toBe(false);
+    expect(validateEvent([]).ok).toBe(false);
+    expect(validateEvent('visit').ok).toBe(false);
+  });
+
+  it('checks the numbers', () => {
+    expect(validateEvent({ type: 'scan', mode: 'meer', chars: -1 }).ok).toBe(false);
+    expect(validateEvent({ type: 'scan', mode: 'meer', chars: 1.5 }).ok).toBe(false);
+    expect(validateEvent({ type: 'scan', mode: 'meer', chars: 999999 }).ok).toBe(false);
+    expect(validateEvent({ type: 'scan', mode: 'meer', chars: '3' }).ok).toBe(false);
+    expect(validateEvent({ type: 'game_end', mode: 'meer', durationS: Infinity }).ok).toBe(false);
+    // a game left open overnight counts as one day at most
+    const long = validateEvent({ type: 'game_end', mode: 'meer', durationS: 10 ** 7 });
+    expect(long.value?.durationS).toBe(86400);
+  });
+});
+
+describe('validateContact', () => {
+  const base = { message: 'Tolles Spiel!', elapsedMs: MIN_FILL_MS + 500 };
+
+  it('accepts a message with optional name and e-mail', () => {
+    const v = validateContact({ ...base, name: ' Simon ', email: 'a@b.de', lang: 'de', website: '' });
+    expect(v).toEqual({ ok: true, spam: false, value: { message: 'Tolles Spiel!', name: 'Simon', email: 'a@b.de', lang: 'de' } });
+  });
+
+  it('needs a message', () => {
+    expect(validateContact({ ...base, message: '   ' }).ok).toBe(false);
+    expect(validateContact({ elapsedMs: 5000 }).ok).toBe(false);
+  });
+
+  it('caps the lengths', () => {
+    expect(validateContact({ ...base, message: 'x'.repeat(MAX_MESSAGE) }).ok).toBe(true);
+    expect(validateContact({ ...base, message: 'x'.repeat(MAX_MESSAGE + 1) }).ok).toBe(false);
+    expect(validateContact({ ...base, name: 'x'.repeat(101) }).ok).toBe(false);
+  });
+
+  it('checks the e-mail address only when given', () => {
+    expect(validateContact({ ...base, email: 'keine-adresse' }).ok).toBe(false);
+    expect(validateContact({ ...base, email: '' }).ok).toBe(true);
+  });
+
+  it('marks bots as spam: honeypot filled or sent too fast', () => {
+    expect(validateContact({ ...base, website: 'http://spam' })).toEqual({ ok: true, spam: true });
+    expect(validateContact({ ...base, elapsedMs: 200 })).toEqual({ ok: true, spam: true });
+    expect(validateContact({ message: 'hi' })).toEqual({ ok: true, spam: true });
+  });
+
+  it('removes control characters and refuses unknown fields and types', () => {
+    const v = validateContact({ ...base, message: 'a\u0000b\r\nc' });
+    expect(v.value?.message).toBe('ab\nc');
+    expect(validateContact({ ...base, extra: 1 }).ok).toBe(false);
+    expect(validateContact({ ...base, message: 42 }).ok).toBe(false);
+    expect(validateContact({ ...base, lang: 'xx' }).ok).toBe(false);
+  });
+});
+
+describe('small helpers', () => {
+  it('parseDays clamps to 1..400 with 30 as default', () => {
+    expect(parseDays(null)).toBe(30);
+    expect(parseDays('abc')).toBe(30);
+    expect(parseDays('7')).toBe(7);
+    expect(parseDays('0')).toBe(1);
+    expect(parseDays('100000')).toBe(400);
+  });
+
+  it('validateMessageAction knows status changes and delete', () => {
+    expect(validateMessageAction({ status: 'done' })).toEqual({ ok: true, value: { status: 'done' } });
+    expect(validateMessageAction({ delete: true })).toEqual({ ok: true, value: { delete: true } });
+    expect(validateMessageAction({ status: 'gone' }).ok).toBe(false);
+    expect(validateMessageAction({ status: 'done', delete: true }).ok).toBe(false);
+  });
+
+  it('clientIp takes the first forwarded address', () => {
+    expect(clientIp({ 'x-forwarded-for': '1.2.3.4, 10.0.0.1' }, '10.0.0.1')).toBe('1.2.3.4');
+    expect(clientIp({}, '::1')).toBe('::1');
+  });
+
+  it('parseJson returns undefined for broken JSON', () => {
+    expect(parseJson(Buffer.from('{"a":1}'))).toEqual({ a: 1 });
+    expect(parseJson(Buffer.from('{a'))).toBeUndefined();
+  });
+});
+
+describe('RateLimiter', () => {
+  it('lets `limit` requests through per window and key', () => {
+    let t = 0;
+    const rl = new RateLimiter(3, 1000, () => t);
+    expect([rl.hit('a'), rl.hit('a'), rl.hit('a'), rl.hit('a')]).toEqual([true, true, true, false]);
+    expect(rl.hit('b')).toBe(true);
+    t = 1000;
+    expect(rl.hit('a')).toBe(true);
+  });
+
+  it('prune forgets finished windows', () => {
+    let t = 0;
+    const rl = new RateLimiter(1, 1000, () => t);
+    rl.hit('a');
+    rl.hit('b');
+    t = 1500;
+    rl.hit('c');
+    rl.prune();
+    expect([...rl.hits.keys()]).toEqual(['c']);
+  });
+});
+
+describe('admin session', () => {
+  it('compares passwords', () => {
+    expect(safeEqual('geheim', 'geheim')).toBe(true);
+    expect(safeEqual('geheim', 'geheim!')).toBe(false);
+    expect(safeEqual('', 'x')).toBe(false);
+  });
+
+  it('signs tokens that expire after 12 hours', () => {
+    const tok = makeToken('s3cret', 1000);
+    expect(verifyToken('s3cret', tok, 2000)).toBe(true);
+    expect(verifyToken('s3cret', tok, 1000 + SESSION_MS + 1)).toBe(false);
+    expect(verifyToken('other', tok, 2000)).toBe(false);
+  });
+
+  it('refuses tampered tokens', () => {
+    const [payload, mac] = makeToken('s3cret', 1000).split('.');
+    const forged = Buffer.from(JSON.stringify({ exp: 9e15 })).toString('base64url');
+    expect(verifyToken('s3cret', `${forged}.${mac}`, 2000)).toBe(false);
+    expect(verifyToken('s3cret', `${payload}.${mac}x`, 2000)).toBe(false);
+    expect(verifyToken('s3cret', `${payload}`, 2000)).toBe(false);
+    expect(verifyToken('s3cret', null, 2000)).toBe(false);
+  });
+
+  it('reads one cookie from the header', () => {
+    expect(readCookie('a=1; kk_admin=tok.en; b=2', 'kk_admin')).toBe('tok.en');
+    expect(readCookie(undefined, 'kk_admin')).toBeNull();
+  });
+});

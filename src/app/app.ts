@@ -19,6 +19,7 @@ import { savanna } from '../scenes/savanna.ts';
 import type { Scene, SceneHost, Snapshot } from '../scenes/scene.ts';
 import { space } from '../scenes/space.ts';
 import { openCameraSetup } from '../ui/cameraSetup.ts';
+import { openDonateThanks } from '../ui/donate.ts';
 import { showDebug } from '../ui/debugView.ts';
 import { button, clear, h, isModalOpen, modal } from '../ui/dom.ts';
 import { openDuelLobby } from '../ui/duelLobby.ts';
@@ -42,6 +43,7 @@ import type { PlayerId, ScanResult, VisionOptions } from '../vision/types.ts';
 import { packTyped, unpackTyped } from './imageCodec.ts';
 import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSaves, loadSave, MODES, newSaveId, putSave, readSaveFile, type GameMode, type SaveGame } from './saves.ts';
 import { firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
+import { GameTally, track, useTelemetrySettings } from './telemetry.ts';
 
 const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna };
 /** the paper setting as the recognition sees it: Lineatur 1 and 2 have the same four-line shape */
@@ -90,6 +92,8 @@ export class App {
   private cameraOff = 0;
   private saveEvery = 0;
   private saving: Promise<void> | null = null;
+  /** anonymous statistics of the game running now */
+  private tally = new GameTally();
 
   constructor(canvas: HTMLCanvasElement, ui: HTMLElement) {
     this.ui = ui;
@@ -140,6 +144,8 @@ export class App {
     });
     this.showStart();
     void this.boot();
+    useTelemetrySettings(() => this.settings);
+    track('visit');
   }
 
   private async boot(): Promise<void> {
@@ -204,6 +210,8 @@ export class App {
    * kept on this device (nothing is kept before that).
    */
   private toMenu(): void {
+    if (this.thankFirst()) return;
+    this.tally.end();
     const scene = this.scene;
     if (this.settings.game.autosave !== null || !scene?.saveState || this.frozen) return this.showStart();
     void scene.saveState().then(
@@ -218,6 +226,20 @@ export class App {
       },
       () => this.showStart(),
     );
+  }
+
+  /**
+   * A free game (habitats, Mal-Aquarium) with at least one creature is left: once per game a thank-you
+   * with the donate button comes first, then the way to the menu goes on.
+   */
+  private thankFirst(): boolean {
+    const scene = this.scene;
+    if (!(scene instanceof HabitatScene || scene instanceof PaintScene) || this.frozen || this.tally.thanked || !scene.count()) return false;
+    this.tally.thanked = true;
+    openDonateThanks(() => {
+      if (this.scene === scene) this.toMenu();
+    });
+    return true;
   }
 
   /** the camera is held in the hand (phone, tablet): photos through the viewfinder */
@@ -638,6 +660,7 @@ export class App {
   startHabitat(id: HabitatId, resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'habitat', id };
+    this.tally.start(this.gameMode()!);
     this.settings.game.habitat = id;
     this.save();
     const def = HABITATS[id];
@@ -679,6 +702,7 @@ export class App {
   startPaint(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'paint' };
+    this.tally.start(this.gameMode()!);
     const scene = new PaintScene(this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
@@ -706,6 +730,7 @@ export class App {
   startDuel(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'duel' };
+    this.tally.start(this.gameMode()!);
     const scene = new DuelScene(this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
@@ -735,6 +760,7 @@ export class App {
   startSiege(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'siege' };
+    this.tally.start(this.gameMode()!);
     this.scene = new SiegeScene(this.host(), this.stage.worldW);
     this.hud = new Hud(this.ui, {
       title: '🏰 Riesenburg',
@@ -760,6 +786,7 @@ export class App {
   startTowers(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'tower' };
+    this.tally.start(this.gameMode()!);
     this.scene = new TowerScene(this.host(), this.stage.worldW);
     this.hud = new Hud(this.ui, {
       title: '🏗️ Türme bauen',
@@ -812,6 +839,7 @@ export class App {
       },
       finished: (r) => {
         this.forgetGame();
+        this.tally.end();
         if (this.mode.kind === 'siege') this.siegeFinished(r as SiegeResult);
         else if (this.mode.kind === 'tower') this.towerFinished(r as TowerResult);
         else this.duelFinished(r as DuelResult);
@@ -1022,6 +1050,7 @@ export class App {
       snap.detH = res.frameH / res.scale;
       if (opt.team) for (const g of res.glyphs) g.team = opt.team;
       this.scene.handleScan(res, snap);
+      this.tally.scan(res.glyphs.filter((g) => g.isNew && !g.score.rejected).length);
       const mirrored = res.glyphs.filter((g) => g.isNew && g.score.rejected).length;
       if (mirrored) {
         toast(
@@ -1055,6 +1084,7 @@ export class App {
       snap.detW = res.frameW;
       snap.detH = res.frameH;
       scene.handleCards(res, snap);
+      this.tally.scan(res.cards.length);
       this.auto.markScanned();
     } catch (e) {
       scene.cancelCapture();
