@@ -26,14 +26,15 @@ describe('the scripts of the world map', () => {
     }
   });
 
-  it('Druck-, Grundschrift and the kana have writing animations', () => {
+  it('every script has writing animations', () => {
     expect(strokeStyle('druck', 'druck')).toBe('druck');
     expect(strokeStyle('druck', 'beide')).toBe('grund');
     expect(strokeStyle('grund', 'druck')).toBe('grund');
-    expect(strokeStyle('schreib', 'beide')).toBeNull();
+    expect(strokeStyle('schreib', 'beide')).toBe('schreib');
     expect(strokeStyle('hiragana', 'beide')).toBe('kana');
     expect(strokeStyle('katakana', 'druck')).toBe('kana');
-    expect(strokeStyle('kyrillisch', 'beide')).toBeNull();
+    expect(strokeStyle('kyrillisch', 'beide')).toBe('kyrillisch');
+    for (const id of SCRIPT_IDS) expect(strokeStyle(id, 'beide'), id).not.toBeNull();
   });
 
   it('surprise characters come from the same script and are never confusable with the practised one', () => {

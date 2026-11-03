@@ -476,7 +476,7 @@ export class HabitatScene implements Scene {
   /** the stroke template of a letter in the chosen script (Grundschrift with its small hooks) */
   private template(ch: string): WrittenGlyph | null {
     const st = strokeStyle(this.host.settings.script, this.host.settings.recog.style);
-    return st ? writtenGlyph(ch, st === 'grund') : null;
+    return st ? writtenGlyph(ch, st) : null;
   }
 
   /** Lineatur 3 has only the two lines of the middle band */

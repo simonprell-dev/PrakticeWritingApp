@@ -18,7 +18,7 @@ export type ScriptId =
   | 'thai';
 
 /** which writing animation a script gets (src/game/strokes.ts) */
-export type StrokeStyle = 'druck' | 'grund' | 'kana';
+export type StrokeStyle = 'druck' | 'grund' | 'kana' | 'schreib' | 'kyrillisch' | 'griechisch' | 'hebraeisch' | 'arabisch' | 'devanagari' | 'hangul' | 'thai';
 
 export interface PracticeSet {
   /** German label (translated in the UI) */
@@ -49,7 +49,7 @@ export interface ScriptDef {
   font: string;
   /** BCP 47 language of the characters (lang attribute, so the browser picks matching glyph forms) */
   lang: string;
-  /** writing animations exist (src/game/strokes.ts): Druckschrift, Grundschrift and kana (KanjiVG) */
+  /** writing animations exist: Druckschrift and Grundschrift (src/game/strokes.ts), kana (KanjiVG), the others in src/game/scriptStrokes/ */
   strokes?: StrokeStyle;
   /** world map region the script belongs to (src/ui/worldMapData.ts) */
   region: string;
@@ -98,7 +98,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
   },
   schreib: {
     id: 'schreib', name: tk('Schreibschrift'), sample: 'Aa', chars: LATIN, groups: LATIN_GROUPS, practice: latinSets, dir: 'ltr', seg: 'latin',
-    modelDir: 'schreib/', font: "KK-schreib, Grundschrift, cursive", lang: 'de', region: 'latin',
+    modelDir: 'schreib/', font: "KK-schreib, Grundschrift, cursive", lang: 'de', strokes: 'schreib', region: 'latin',
   },
   hiragana: {
     id: 'hiragana', name: tk('Hiragana'), sample: 'あ', chars: HIRAGANA, groups: [], practice: kanaRows(HIRAGANA, KANA_ROWS), dir: 'ltr', seg: 'block',
@@ -116,11 +116,11 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
       { label: tk('Großbuchstaben'), chars: RU_UP },
       { label: tk('Kleinbuchstaben'), chars: RU_LO },
     ],
-    dir: 'ltr', seg: 'block', modelDir: 'kyrillisch/', font: "KK-kyrillisch, Fredoka, system-ui, sans-serif", lang: 'ru', region: 'kyrillisch',
+    dir: 'ltr', seg: 'block', modelDir: 'kyrillisch/', font: "KK-kyrillisch, Fredoka, system-ui, sans-serif", lang: 'ru', strokes: 'kyrillisch', region: 'kyrillisch',
   },
   arabisch: {
     id: 'arabisch', name: tk('Arabisch'), sample: 'ب', chars: ARABIC, groups: [], practice: [{ label: tk('Buchstaben'), chars: ARABIC }], dir: 'rtl', seg: 'block',
-    modelDir: 'arabisch/', font: "KK-arabisch, 'Noto Naskh Arabic', 'Segoe UI', sans-serif", lang: 'ar', region: 'arabisch',
+    modelDir: 'arabisch/', font: "KK-arabisch, 'Noto Naskh Arabic', 'Segoe UI', sans-serif", lang: 'ar', strokes: 'arabisch', region: 'arabisch',
   },
   devanagari: {
     id: 'devanagari', name: tk('Devanagari (Hindi)'), sample: 'क', chars: DEVA_VOWELS + DEVA_CONS, groups: ['घध', 'बव', 'भम'],
@@ -128,7 +128,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
       { label: tk('Vokale'), chars: DEVA_VOWELS },
       { label: tk('Konsonanten'), chars: DEVA_CONS },
     ],
-    dir: 'ltr', seg: 'block', modelDir: 'devanagari/', font: "KK-devanagari, 'Nirmala UI', 'Noto Sans Devanagari', sans-serif", lang: 'hi', region: 'devanagari',
+    dir: 'ltr', seg: 'block', modelDir: 'devanagari/', font: "KK-devanagari, 'Nirmala UI', 'Noto Sans Devanagari', sans-serif", lang: 'hi', strokes: 'devanagari', region: 'devanagari',
   },
   griechisch: {
     id: 'griechisch', name: tk('Griechisch'), sample: 'Ωω', chars: GR_UP + GR_LO, groups: ['Οο', 'Κκ', 'Χχ', 'Ψψ', 'Ππ', 'Ττ', 'Ιι', 'Θθ', 'Φφ', 'Ρρ', 'Ββ'],
@@ -136,7 +136,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
       { label: tk('Großbuchstaben'), chars: GR_UP },
       { label: tk('Kleinbuchstaben'), chars: GR_LO },
     ],
-    dir: 'ltr', seg: 'block', modelDir: 'griechisch/', font: "KK-griechisch, system-ui, sans-serif", lang: 'el', region: 'griechisch',
+    dir: 'ltr', seg: 'block', modelDir: 'griechisch/', font: "KK-griechisch, system-ui, sans-serif", lang: 'el', strokes: 'griechisch', region: 'griechisch',
   },
   hebraeisch: {
     id: 'hebraeisch', name: tk('Hebräisch'), sample: 'א', chars: HE_LETTERS + HE_FINAL, groups: ['וין', 'דרך', 'הח', 'בכ', 'סם'],
@@ -144,7 +144,7 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
       { label: tk('Buchstaben'), chars: HE_LETTERS },
       { label: tk('Endformen'), chars: HE_FINAL },
     ],
-    dir: 'rtl', seg: 'block', modelDir: 'hebraeisch/', font: "KK-hebraeisch, Fredoka, 'Segoe UI', sans-serif", lang: 'he', region: 'hebraeisch',
+    dir: 'rtl', seg: 'block', modelDir: 'hebraeisch/', font: "KK-hebraeisch, Fredoka, 'Segoe UI', sans-serif", lang: 'he', strokes: 'hebraeisch', region: 'hebraeisch',
   },
   hangul: {
     id: 'hangul', name: tk('Hangul (Koreanisch)'), sample: '한', chars: KO_CONS + KO_VOW + KO_SYL, groups: [],
@@ -153,11 +153,11 @@ export const SCRIPTS: Record<ScriptId, ScriptDef> = {
       { label: tk('Vokale'), chars: KO_VOW },
       { label: tk('Silben'), chars: KO_SYL },
     ],
-    dir: 'ltr', seg: 'block', modelDir: 'hangul/', font: "KK-hangul, 'Malgun Gothic', 'Noto Sans KR', sans-serif", lang: 'ko', region: 'hangul',
+    dir: 'ltr', seg: 'block', modelDir: 'hangul/', font: "KK-hangul, 'Malgun Gothic', 'Noto Sans KR', sans-serif", lang: 'ko', strokes: 'hangul', region: 'hangul',
   },
   thai: {
     id: 'thai', name: tk('Thailändisch'), sample: 'ก', chars: THAI, groups: ['ขฃ', 'คฅ'], practice: [{ label: tk('Konsonanten'), chars: THAI }], dir: 'ltr', seg: 'block',
-    modelDir: 'thai/', font: "KK-thai, 'Leelawadee UI', 'Noto Sans Thai', sans-serif", lang: 'th', region: 'thai',
+    modelDir: 'thai/', font: "KK-thai, 'Leelawadee UI', 'Noto Sans Thai', sans-serif", lang: 'th', strokes: 'thai', region: 'thai',
   },
 };
 

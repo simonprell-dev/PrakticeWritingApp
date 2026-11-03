@@ -202,7 +202,7 @@ export class Hud {
       this.writeChar = target;
       this.writeStart = performance.now();
     }
-    const known = !!stroke && !!writtenGlyph(target, false);
+    const known = !!stroke && !!writtenGlyph(target, stroke);
     this.task.append(
       // the letter itself follows as its own element (animated template or glyph)
       h('span', null, isDigit(target) ? t('Schreibe {n}× die', { n: count }) : t('Schreibe {n}× das', { n: count })),
@@ -226,7 +226,7 @@ export class Hud {
     if (!cv || !cv.isConnected || !this.writeChar) return;
     const s = this.d.settings;
     const st = strokeStyle(s.script, s.recog.style);
-    const g = st ? writtenGlyph(this.writeChar, st === 'grund') : null;
+    const g = st ? writtenGlyph(this.writeChar, st) : null;
     if (!g) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const cssH = cv.clientHeight || 60;

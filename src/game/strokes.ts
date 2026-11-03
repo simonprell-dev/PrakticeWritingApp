@@ -16,6 +16,7 @@
 // tools/make-kana-strokes.ts) and sit in a square writing box from the top line to the base line.
 
 import { KANA_BOX, KANA_STROKES } from './kanaStrokes.ts';
+import { SCRIPT_STROKES } from './scriptStrokes/index.ts';
 
 interface GlyphDef {
   w: number;
@@ -186,10 +187,21 @@ function measure(pts: Pt[], dot: boolean): WrittenStroke {
 
 const cache = new Map<string, WrittenGlyph | null>();
 
-/** the strokes of a character, null if it is unknown; \`grund\` adds the Grundschrift exit hooks */
-export function writtenGlyph(ch: string, grund: boolean): WrittenGlyph | null {
-  const key = ch + (grund ? 'G' : 'D');
+/**
+ * The strokes of a character, null if it is unknown. \`style\`: true/'grund' adds the Grundschrift exit
+ * hooks, false/'druck' is the Druckschrift, a script id ('kyrillisch', 'hangul' …) takes that script's table.
+ */
+export function writtenGlyph(ch: string, style: boolean | string): WrittenGlyph | null {
+  const grund = style === true || style === 'grund';
+  const table = typeof style === 'string' ? SCRIPT_STROKES[style] : undefined;
+  const key = ch + (table ? style : grund ? 'G' : 'D');
   if (cache.has(key)) return cache.get(key)!;
+  if (table) {
+    const def = table[ch];
+    const g: WrittenGlyph | null = def ? { char: ch, w: def.w, strokes: def.strokes.map(flatten).map((s) => measure(s.pts, s.dot)), ...(def.box ? { box: true as const } : {}) } : null;
+    cache.set(key, g);
+    return g;
+  }
   const base = UMLAUT_BASE[ch] ?? ch;
   const def = GLYPHS[base];
   if (!def) {
