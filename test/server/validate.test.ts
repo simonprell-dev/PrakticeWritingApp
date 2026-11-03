@@ -2,50 +2,32 @@ import { describe, expect, it } from 'vitest';
 import { makeToken, readCookie, safeEqual, SESSION_MS, verifyToken } from '../../server/session.js';
 import {
   clientIp,
+  countsAsVisit,
   MAX_MESSAGE,
   MIN_FILL_MS,
   parseDays,
   parseJson,
   RateLimiter,
   validateContact,
-  validateEvent,
   validateMessageAction,
 } from '../../server/validate.js';
 
-describe('validateEvent', () => {
-  it('accepts a full game_end event and keeps only the known fields', () => {
-    const v = validateEvent({ type: 'game_end', mode: 'meer', script: 'druck', lang: 'de', chars: 12, durationS: 93.4 });
-    expect(v).toEqual({ ok: true, value: { type: 'game_end', mode: 'meer', script: 'druck', lang: 'de', chars: 12, durationS: 93 } });
+describe('countsAsVisit', () => {
+  const browser = { accept: 'text/html,application/xhtml+xml,*/*;q=0.8', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/140.0 Safari/537.36' };
+
+  it('counts a browser opening the page', () => {
+    expect(countsAsVisit('GET', browser, '')).toBe(true);
+    expect(countsAsVisit('GET', browser, '?lab')).toBe(true);
   });
 
-  it('accepts a visit without mode', () => {
-    expect(validateEvent({ type: 'visit', script: 'druck', lang: 'en' }).ok).toBe(true);
-  });
-
-  it('needs a mode for game events', () => {
-    expect(validateEvent({ type: 'game_start' }).ok).toBe(false);
-  });
-
-  it('refuses unknown types, values and fields', () => {
-    expect(validateEvent({ type: 'click' }).ok).toBe(false);
-    expect(validateEvent({ type: 'game_start', mode: 'schach' }).ok).toBe(false);
-    expect(validateEvent({ type: 'visit', script: 'klingonisch' }).ok).toBe(false);
-    expect(validateEvent({ type: 'visit', lang: 'xx' }).ok).toBe(false);
-    expect(validateEvent({ type: 'visit', userId: 'abc' }).ok).toBe(false);
-    expect(validateEvent(null).ok).toBe(false);
-    expect(validateEvent([]).ok).toBe(false);
-    expect(validateEvent('visit').ok).toBe(false);
-  });
-
-  it('checks the numbers', () => {
-    expect(validateEvent({ type: 'scan', mode: 'meer', chars: -1 }).ok).toBe(false);
-    expect(validateEvent({ type: 'scan', mode: 'meer', chars: 1.5 }).ok).toBe(false);
-    expect(validateEvent({ type: 'scan', mode: 'meer', chars: 999999 }).ok).toBe(false);
-    expect(validateEvent({ type: 'scan', mode: 'meer', chars: '3' }).ok).toBe(false);
-    expect(validateEvent({ type: 'game_end', mode: 'meer', durationS: Infinity }).ok).toBe(false);
-    // a game left open overnight counts as one day at most
-    const long = validateEvent({ type: 'game_end', mode: 'meer', durationS: 10 ** 7 });
-    expect(long.value?.durationS).toBe(86400);
+  it('does not count HEAD requests, non-pages, prefetches, crawlers and test runs', () => {
+    expect(countsAsVisit('HEAD', browser, '')).toBe(false);
+    expect(countsAsVisit('GET', { ...browser, accept: '*/*' }, '')).toBe(false);
+    expect(countsAsVisit('GET', { ...browser, 'sec-purpose': 'prefetch' }, '')).toBe(false);
+    expect(countsAsVisit('GET', { ...browser, 'user-agent': 'Googlebot/2.1 (+http://www.google.com/bot.html)' }, '')).toBe(false);
+    expect(countsAsVisit('GET', { ...browser, 'user-agent': 'Mozilla/5.0 HeadlessChrome/140.0' }, '')).toBe(false);
+    expect(countsAsVisit('GET', { ...browser, 'user-agent': 'curl/8.4.0' }, '')).toBe(false);
+    expect(countsAsVisit('GET', browser, '?e2e')).toBe(false);
   });
 });
 

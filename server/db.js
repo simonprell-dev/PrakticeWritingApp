@@ -30,9 +30,21 @@ const MIGRATIONS = [
       CREATE INDEX messages_created ON messages (created_at DESC);
     `,
   },
+  {
+    // the usage events became a plain counter of page views per day
+    version: 2,
+    sql: `
+      CREATE TABLE visits (
+        day date PRIMARY KEY,
+        n integer NOT NULL DEFAULT 0
+      );
+      INSERT INTO visits (day, n) SELECT day, count(*) FROM events WHERE type = 'visit' GROUP BY day;
+      DROP TABLE events;
+    `,
+  },
 ];
 
-/** the day of an event in German time (one bucket per calendar day, no time of day is stored) */
+/** the day of a page view in German time (one bucket per calendar day, no time of day is stored) */
 const TODAY = `(now() AT TIME ZONE 'Europe/Berlin')::date`;
 
 export class Db {
@@ -79,67 +91,36 @@ export class Db {
     this.ready = true;
   }
 
-  /** messages after 12 months, raw events after 13 months */
+  /** messages after 12 months (the page view counts say nothing about anybody and stay) */
   async cleanup() {
     const m = await this.pool.query(`DELETE FROM messages WHERE created_at < now() - interval '12 months'`);
-    const e = await this.pool.query(`DELETE FROM events WHERE day < ${TODAY} - interval '13 months'`);
-    if (m.rowCount || e.rowCount) console.log(`Datenbank: ${m.rowCount} alte Nachrichten und ${e.rowCount} alte Ereignisse gelöscht.`);
+    if (m.rowCount) console.log(`Datenbank: ${m.rowCount} alte Nachrichten gelöscht.`);
   }
 
-  async addEvent(ev) {
-    await this.pool.query(`INSERT INTO events (day, type, mode, script, lang, chars, duration_s) VALUES (${TODAY}, $1, $2, $3, $4, $5, $6)`, [
-      ev.type,
-      ev.mode,
-      ev.script,
-      ev.lang,
-      ev.chars,
-      ev.durationS,
-    ]);
+  /** one more page view today */
+  async addVisit() {
+    await this.pool.query(`INSERT INTO visits (day, n) VALUES (${TODAY}, 1) ON CONFLICT (day) DO UPDATE SET n = visits.n + 1`);
   }
 
   async addMessage(msg) {
     await this.pool.query('INSERT INTO messages (name, email, message, lang) VALUES ($1, $2, $3, $4)', [msg.name, msg.email, msg.message, msg.lang]);
   }
 
-  /** usage of the last `days` days (today included) */
+  /** page views of the last `days` days (today included), and in all since the first one */
   async stats(days) {
     const since = `${TODAY} - ($1::int - 1)`;
-    const q = (sql) => this.pool.query(sql, [days]).then((r) => r.rows);
-    const [perDay, perMode, perScript, perLang, totals] = await Promise.all([
-      q(`SELECT to_char(day, 'YYYY-MM-DD') AS day,
-                count(*) FILTER (WHERE type = 'visit')::int AS visits,
-                count(*) FILTER (WHERE type = 'game_start')::int AS starts,
-                count(*) FILTER (WHERE type = 'game_end')::int AS ends,
-                count(*) FILTER (WHERE type = 'scan')::int AS scans,
-                coalesce(sum(chars) FILTER (WHERE type = 'scan'), 0)::int AS chars
-           FROM events WHERE day >= ${since} GROUP BY day ORDER BY day`),
-      q(`SELECT mode,
-                count(*) FILTER (WHERE type = 'game_start')::int AS starts,
-                count(*) FILTER (WHERE type = 'game_end')::int AS ends,
-                coalesce(sum(chars) FILTER (WHERE type = 'scan'), 0)::int AS chars,
-                coalesce(round(avg(duration_s) FILTER (WHERE type = 'game_end')), 0)::int AS avg_duration_s
-           FROM events WHERE day >= ${since} AND mode IS NOT NULL GROUP BY mode ORDER BY starts DESC`),
-      q(`SELECT coalesce(script, '?') AS script,
-                count(*) FILTER (WHERE type = 'game_start')::int AS starts,
-                coalesce(sum(chars) FILTER (WHERE type = 'scan'), 0)::int AS chars
-           FROM events WHERE day >= ${since} AND type IN ('game_start', 'scan') GROUP BY 1 ORDER BY starts DESC`),
-      q(`SELECT coalesce(lang, '?') AS lang,
-                count(*) FILTER (WHERE type = 'visit')::int AS visits,
-                count(*) FILTER (WHERE type = 'game_start')::int AS starts
-           FROM events WHERE day >= ${since} GROUP BY 1 ORDER BY visits DESC`),
-      q(`SELECT count(*) FILTER (WHERE type = 'visit')::int AS visits,
-                count(*) FILTER (WHERE type = 'game_start')::int AS starts,
-                count(*) FILTER (WHERE type = 'game_end')::int AS ends,
-                count(*) FILTER (WHERE type = 'scan')::int AS scans,
-                coalesce(sum(chars) FILTER (WHERE type = 'scan'), 0)::int AS chars
-           FROM events WHERE day >= ${since}`),
+    const [perDay, head] = await Promise.all([
+      this.pool.query(`SELECT to_char(day, 'YYYY-MM-DD') AS day, n AS visits FROM visits WHERE day >= ${since} ORDER BY day`, [days]),
+      this.pool.query(
+        `SELECT to_char(${since}, 'YYYY-MM-DD') AS "from", to_char(${TODAY}, 'YYYY-MM-DD') AS "to",
+                (SELECT coalesce(sum(n), 0)::int FROM visits WHERE day >= ${since}) AS visits,
+                (SELECT coalesce(sum(n), 0)::int FROM visits) AS "allTime",
+                (SELECT to_char(min(day), 'YYYY-MM-DD') FROM visits) AS "firstDay",
+                (SELECT count(*)::int FROM messages WHERE status = 'new') AS unread`,
+        [days],
+      ),
     ]);
-    const { rows } = await this.pool.query(
-      `SELECT to_char(${TODAY} - ($1::int - 1), 'YYYY-MM-DD') AS "from", to_char(${TODAY}, 'YYYY-MM-DD') AS "to",
-              (SELECT count(*)::int FROM messages WHERE status = 'new') AS unread`,
-      [days],
-    );
-    return { days, ...rows[0], totals: totals[0], perDay, perMode, perScript, perLang };
+    return { days, ...head.rows[0], perDay: perDay.rows };
   }
 
   async messages(page, pageSize, status) {

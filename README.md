@@ -148,7 +148,7 @@ npm install
 npm run dev          # http://localhost:5173  (Kamera funktioniert auf localhost)
 ```
 
-### Mit Datenbank: Statistik, Kontaktformular, Admin (lokal testen)
+### Mit Datenbank: Aufrufzähler, Kontaktformular, Admin (lokal testen)
 Ohne `DATABASE_URL` läuft alles wie bisher; `/api/*` antwortet dann mit 503. Zum Ausprobieren mit Postgres (Docker):
 ```bash
 docker compose up -d db          # Postgres 17 auf localhost:5432 (Benutzer/Passwort/DB: krakel)
@@ -163,13 +163,14 @@ Zum Entwickeln mit Hot Reload: `npm run dev:api` startet `server.js` (API auf Po
 
 | Route | Zweck |
 |---|---|
-| `POST /api/event` | anonyme Nutzungsstatistik `{type: visit\|game_start\|game_end\|scan, mode, script, lang, chars?, durationS?}` – keine IP, kein Cookie, nur der Kalendertag wird gespeichert |
 | `POST /api/contact` | Kontaktformular `{message, name?, email?}` (Honeypot `website`, Mindest-Ausfüllzeit) |
 | `POST /api/admin/login` | `{password}` gegen `ADMIN_PASSWORD` → Sitzungs-Cookie (HttpOnly, SameSite=Strict, 12 h) |
-| `GET /api/admin/stats?days=30` | Besuche, Spiele, Zeichen pro Tag, Spielart, Schrift, Sprache |
+| `GET /api/admin/stats?days=30` | Aufrufe pro Tag, im Zeitraum und insgesamt |
 | `GET /api/admin/messages?page=1&status=new` · `POST /api/admin/messages/:id` | Posteingang; `{status: new\|read\|done}` oder `{delete: true}` |
 
-Schutz: 2 KB Größenlimit (Kontakt 24 KB), Rate-Limits pro IP nur im Arbeitsspeicher, strenge Whitelists. Der Server löscht Nachrichten nach 12 und Statistik nach 13 Monaten (beim Start und täglich). Code: `server/` (`api.js`, `db.js` mit versionierten Migrationen, `validate.js`, `session.js`).
+Schutz: 2 KB Größenlimit (Kontakt 24 KB), Rate-Limits pro IP nur im Arbeitsspeicher, strenge Whitelists. Der Server löscht Nachrichten nach 12 Monaten (beim Start und täglich).
+
+Aufrufzähler: `server.js` zählt jedes Ausliefern der App-Seite an einen Browser als einen Aufruf (eine Zahl pro Tag in der Tabelle `visits`; Crawler, Prefetches und `?e2e` zählen nicht, siehe `countsAsVisit` in `server/validate.js`). Die App selbst sendet dafür nichts. Im Vite-Dev-Server wird nicht gezählt, nur mit `npm start`. Code: `server/` (`api.js`, `db.js` mit versionierten Migrationen, `validate.js`, `session.js`).
 
 ### Auf Railway
 Railway erkennt das Projekt über `railway.json`:
@@ -182,7 +183,7 @@ Railway erkennt das Projekt über `railway.json`:
 3. Im Service: **Settings → Region → EU West (Amsterdam)** wählen (Datenschutz).
 4. Im Service: **Variables** mit den Angaben für Impressum und Datenschutz anlegen (`LEGAL_NAME`, `LEGAL_ADDRESS`, `LEGAL_EMAIL`, …), siehe **[RECHTLICHES.md](RECHTLICHES.md)**.
 5. Im Service: **Settings → Networking → Generate Domain**. Railway liefert HTTPS; das ist für den Kamerazugriff nötig.
-6. Optional für Statistik, Kontaktformular und `/admin`: im Projekt **+ New → Database → PostgreSQL** (gleiche Region), im App-Service `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` und ein langes `ADMIN_PASSWORD` setzen (optional `ADMIN_SECRET`).
+6. Optional für Aufrufzähler, Kontaktformular und `/admin`: im Projekt **+ New → Database → PostgreSQL** (gleiche Region), im App-Service `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` und ein langes `ADMIN_PASSWORD` setzen (optional `ADMIN_SECRET`).
 7. Den Auftragsverarbeitungsvertrag (DPA) mit Railway abschließen und die Checkliste in **[RECHTLICHES.md](RECHTLICHES.md)** durchgehen.
 
 Alternativ mit der CLI: `npm i -g @railway/cli`, dann `railway login` und `railway up`.

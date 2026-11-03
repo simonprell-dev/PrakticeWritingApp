@@ -1,8 +1,5 @@
 // Pure validation and rate-limit helpers for the API (no I/O, tested in test/server/).
 
-export const EVENT_TYPES = ['visit', 'game_start', 'game_end', 'scan'];
-export const MODES = ['meer', 'weltraum', 'savanne', 'malen', 'duell', 'riesenburg', 'tuerme'];
-export const SCRIPTS = ['druck', 'grund', 'schreib', 'hiragana', 'katakana', 'kyrillisch', 'arabisch', 'devanagari', 'griechisch', 'hebraeisch', 'hangul', 'thai'];
 export const LANGS = ['de', 'en', 'fr', 'es', 'it', 'pt', 'nl', 'pl', 'tr', 'uk', 'ru', 'el', 'he', 'ar', 'hi', 'th', 'ko', 'ja'];
 
 export const MAX_BODY = 2048;
@@ -11,44 +8,24 @@ export const MAX_CONTACT_BODY = 24 * 1024;
 export const MAX_MESSAGE = 4000;
 export const MAX_NAME = 100;
 export const MAX_EMAIL = 200;
-export const MAX_CHARS = 5000;
-export const MAX_DURATION = 24 * 3600;
 /** a human needs at least this long to write a message (bots fill forms instantly) */
 export const MIN_FILL_MS = 3000;
 
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const isInt = (v) => typeof v === 'number' && Number.isInteger(v);
 
+const BOT = /bot|crawl|spider|slurp|preview|monitor|uptime|curl|wget|python|headless|lighthouse/i;
+
 /**
- * A usage event from the app. Returns { ok: true, value } with exactly the stored fields, or
- * { ok: false, error }. Unknown fields, unknown values and out-of-range numbers are refused.
+ * Whether serving the app page counts as one page view: a browser opening the page (not a prefetch,
+ * not a crawler or uptime check, not an end-to-end test run with ?e2e).
  */
-export function validateEvent(body) {
-  if (!isObj(body)) return { ok: false, error: 'not an object' };
-  const allowed = new Set(['type', 'mode', 'script', 'lang', 'chars', 'durationS']);
-  for (const k of Object.keys(body)) if (!allowed.has(k)) return { ok: false, error: `unknown field ${k}` };
-  const { type, mode, script, lang, chars, durationS } = body;
-  if (!EVENT_TYPES.includes(type)) return { ok: false, error: 'type' };
-  if (mode !== undefined && mode !== null && !MODES.includes(mode)) return { ok: false, error: 'mode' };
-  if (type !== 'visit' && !mode) return { ok: false, error: 'mode missing' };
-  if (script !== undefined && script !== null && !SCRIPTS.includes(script)) return { ok: false, error: 'script' };
-  if (lang !== undefined && lang !== null && !LANGS.includes(lang)) return { ok: false, error: 'lang' };
-  if (chars !== undefined && chars !== null && (!isInt(chars) || chars < 0 || chars > MAX_CHARS)) return { ok: false, error: 'chars' };
-  if (durationS !== undefined && durationS !== null && (typeof durationS !== 'number' || !Number.isFinite(durationS) || durationS < 0)) {
-    return { ok: false, error: 'durationS' };
-  }
-  return {
-    ok: true,
-    value: {
-      type,
-      mode: mode || null,
-      script: script || null,
-      lang: lang || null,
-      chars: isInt(chars) ? chars : null,
-      // a game left open overnight still counts, but at most one day
-      durationS: typeof durationS === 'number' ? Math.min(MAX_DURATION, Math.round(durationS)) : null,
-    },
-  };
+export function countsAsVisit(method, headers, search) {
+  if (method !== 'GET') return false;
+  if (!String(headers.accept || '').includes('text/html')) return false;
+  if (headers['sec-purpose'] || headers.purpose) return false;
+  if (BOT.test(String(headers['user-agent'] || ''))) return false;
+  return !new URLSearchParams(search).has('e2e');
 }
 
 const EMAIL = /^[^\s@<>()[\]\\,;:"]+@[^\s@<>()[\]\\,;:"]+\.[^\s@<>()[\]\\,;:"]{2,}$/;

@@ -1,4 +1,4 @@
-// The /api routes: anonymous usage events, the contact form and the admin area.
+// The /api routes: the contact form and the admin area, plus the page view counter (called by server.js).
 // No IP address is stored and no cookie is set except the admin's own session cookie.
 import { Db } from './db.js';
 import { clearCookie, COOKIE, makeToken, readCookie, safeEqual, sessionCookie, sessionSecret, verifyToken } from './session.js';
@@ -11,7 +11,6 @@ import {
   parseJson,
   RateLimiter,
   validateContact,
-  validateEvent,
   validateMessageAction,
 } from './validate.js';
 
@@ -82,7 +81,6 @@ export function createApi(env = process.env) {
   const adminPassword = env.ADMIN_PASSWORD || '';
   const secret = sessionSecret(env);
   const limits = {
-    event: new RateLimiter(120, 60_000),
     contact: new RateLimiter(5, 15 * 60_000),
     login: new RateLimiter(8, 15 * 60_000),
     admin: new RateLimiter(300, 60_000),
@@ -104,7 +102,7 @@ export function createApi(env = process.env) {
     timers.push(setInterval(() => db.ready && db.cleanup().catch((e) => console.warn('Aufräumen:', e.message)), DAY_MS).unref());
     timers.push(setInterval(() => Object.values(limits).forEach((l) => l.prune()), 10 * 60_000).unref());
   } else {
-    console.warn('Hinweis: DATABASE_URL fehlt – Statistik, Kontaktformular und Admin sind aus (API antwortet 503).');
+    console.warn('Hinweis: DATABASE_URL fehlt – Aufrufzähler, Kontaktformular und Admin sind aus (API antwortet 503).');
   }
 
   const needDb = () => {
@@ -121,15 +119,6 @@ export function createApi(env = process.env) {
     const method = req.method;
     const ip = clientIp(req.headers, req.socket.remoteAddress);
     if (method === 'POST' && !sameOrigin(req)) throw new HttpError(403, 'Fremde Herkunft');
-
-    if (path === '/api/event' && method === 'POST') {
-      if (!limits.event.hit(ip)) throw new HttpError(429, 'Zu viele Anfragen');
-      const d = needDb();
-      const v = validateEvent(await jsonBody(req, MAX_BODY));
-      if (!v.ok) throw new HttpError(400, v.error);
-      await d.addEvent(v.value);
-      return send(res, 204);
-    }
 
     if (path === '/api/contact' && method === 'POST') {
       if (!limits.contact.hit(ip)) throw new HttpError(429, 'Zu viele Nachrichten – bitte später noch einmal versuchen.');
@@ -179,6 +168,11 @@ export function createApi(env = process.env) {
   }
 
   return {
+    /** one page view today; without a database it is not counted, a failure only gets logged */
+    countVisit() {
+      if (!db?.ready) return;
+      db.addVisit().catch((e) => console.warn('Aufrufzähler:', e.message));
+    },
     /** answers a request below /api/ */
     async handle(req, res, url) {
       try {

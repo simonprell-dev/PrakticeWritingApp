@@ -43,7 +43,6 @@ import type { PlayerId, ScanResult, VisionOptions } from '../vision/types.ts';
 import { packTyped, unpackTyped } from './imageCodec.ts';
 import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSaves, loadSave, MODES, newSaveId, putSave, readSaveFile, type GameMode, type SaveGame } from './saves.ts';
 import { firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
-import { GameTally, track, useTelemetrySettings } from './telemetry.ts';
 import { t } from '../i18n/i18n.ts';
 
 const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna };
@@ -93,8 +92,8 @@ export class App {
   private cameraOff = 0;
   private saveEvery = 0;
   private saving: Promise<void> | null = null;
-  /** anonymous statistics of the game running now */
-  private tally = new GameTally();
+  /** the thank-you with the donate button was shown in this game */
+  private thanked = false;
 
   constructor(canvas: HTMLCanvasElement, ui: HTMLElement) {
     this.ui = ui;
@@ -145,8 +144,6 @@ export class App {
     });
     this.showStart();
     void this.boot();
-    useTelemetrySettings(() => this.settings);
-    track('visit');
   }
 
   private async boot(): Promise<void> {
@@ -212,7 +209,6 @@ export class App {
    */
   private toMenu(): void {
     if (this.thankFirst()) return;
-    this.tally.end();
     const scene = this.scene;
     if (this.settings.game.autosave !== null || !scene?.saveState || this.frozen) return this.showStart();
     void scene.saveState().then(
@@ -235,8 +231,8 @@ export class App {
    */
   private thankFirst(): boolean {
     const scene = this.scene;
-    if (!(scene instanceof HabitatScene || scene instanceof PaintScene) || this.frozen || this.tally.thanked || !scene.count()) return false;
-    this.tally.thanked = true;
+    if (!(scene instanceof HabitatScene || scene instanceof PaintScene) || this.frozen || this.thanked || !scene.count()) return false;
+    this.thanked = true;
     openDonateThanks(() => {
       if (this.scene === scene) this.toMenu();
     });
@@ -663,7 +659,7 @@ export class App {
   startHabitat(id: HabitatId, resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'habitat', id };
-    this.tally.start(this.gameMode()!);
+    this.thanked = false;
     this.settings.game.habitat = id;
     this.save();
     const def = HABITATS[id];
@@ -705,7 +701,7 @@ export class App {
   startPaint(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'paint' };
-    this.tally.start(this.gameMode()!);
+    this.thanked = false;
     const scene = new PaintScene(this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
@@ -733,7 +729,7 @@ export class App {
   startDuel(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'duel' };
-    this.tally.start(this.gameMode()!);
+    this.thanked = false;
     const scene = new DuelScene(this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
@@ -763,7 +759,7 @@ export class App {
   startSiege(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'siege' };
-    this.tally.start(this.gameMode()!);
+    this.thanked = false;
     this.scene = new SiegeScene(this.host(), this.stage.worldW);
     this.hud = new Hud(this.ui, {
       title: t('🏰 Riesenburg'),
@@ -789,7 +785,7 @@ export class App {
   startTowers(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'tower' };
-    this.tally.start(this.gameMode()!);
+    this.thanked = false;
     this.scene = new TowerScene(this.host(), this.stage.worldW);
     this.hud = new Hud(this.ui, {
       title: t('🏗️ Türme bauen'),
@@ -842,7 +838,6 @@ export class App {
       },
       finished: (r) => {
         this.forgetGame();
-        this.tally.end();
         if (this.mode.kind === 'siege') this.siegeFinished(r as SiegeResult);
         else if (this.mode.kind === 'tower') this.towerFinished(r as TowerResult);
         else this.duelFinished(r as DuelResult);
@@ -1053,7 +1048,6 @@ export class App {
       snap.detH = res.frameH / res.scale;
       if (opt.team) for (const g of res.glyphs) g.team = opt.team;
       this.scene.handleScan(res, snap);
-      this.tally.scan(res.glyphs.filter((g) => g.isNew && !g.score.rejected).length);
       const mirrored = res.glyphs.filter((g) => g.isNew && g.score.rejected).length;
       if (mirrored) {
         toast(
@@ -1087,7 +1081,6 @@ export class App {
       snap.detW = res.frameW;
       snap.detH = res.frameH;
       scene.handleCards(res, snap);
-      this.tally.scan(res.cards.length);
       this.auto.markScanned();
     } catch (e) {
       scene.cancelCapture();

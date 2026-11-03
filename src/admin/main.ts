@@ -1,26 +1,22 @@
-// Admin page (/admin): login, usage statistics and the contact inbox. Talks to /api/admin/* (server/api.js).
+// Admin page (/admin): login, page views per day and the contact inbox. Talks to /api/admin/* (server/api.js).
 import './admin.css';
-import { MODES, type GameMode } from '../app/saves.ts';
 import { clear, h } from '../ui/dom.ts';
 
 interface DayRow {
   day: string;
   visits: number;
-  starts: number;
-  ends: number;
-  scans: number;
-  chars: number;
 }
 interface Stats {
   days: number;
   from: string;
   to: string;
+  /** page views in the range */
+  visits: number;
+  allTime: number;
+  /** the first day with a page view, null before the first one */
+  firstDay: string | null;
   unread: number;
-  totals: Omit<DayRow, 'day'>;
   perDay: DayRow[];
-  perMode: { mode: string; starts: number; ends: number; chars: number; avg_duration_s: number }[];
-  perScript: { script: string; starts: number; chars: number }[];
-  perLang: { lang: string; visits: number; starts: number }[];
 }
 interface Message {
   id: string;
@@ -37,21 +33,6 @@ interface MessagePage {
   page: number;
   pageSize: number;
 }
-
-const SCRIPTS: Record<string, string> = {
-  druck: 'Druckschrift',
-  grund: 'Grundschrift',
-  schreib: 'Schreibschrift',
-  hiragana: 'Hiragana',
-  katakana: 'Katakana',
-  kyrillisch: 'Kyrillisch',
-  arabisch: 'Arabisch',
-  devanagari: 'Devanagari',
-  griechisch: 'Griechisch',
-  hebraeisch: 'Hebräisch',
-  hangul: 'Hangul',
-  thai: 'Thailändisch',
-};
 
 const root = document.getElementById('admin')!;
 const fmt = new Intl.NumberFormat('de-DE');
@@ -139,7 +120,7 @@ function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string,
   return el;
 }
 
-/** every day of the range, also the ones without events */
+/** every day of the range, also the ones without page views */
 function fillDays(s: Stats): DayRow[] {
   const by = new Map(s.perDay.map((d) => [d.day, d]));
   const out: DayRow[] = [];
@@ -147,7 +128,7 @@ function fillDays(s: Stats): DayRow[] {
   const end = new Date(s.to + 'T12:00:00Z');
   while (d <= end) {
     const key = d.toISOString().slice(0, 10);
-    out.push(by.get(key) ?? { day: key, visits: 0, starts: 0, ends: 0, scans: 0, chars: 0 });
+    out.push(by.get(key) ?? { day: key, visits: 0 });
     d.setUTCDate(d.getUTCDate() + 1);
   }
   return out;
@@ -156,11 +137,11 @@ function fillDays(s: Stats): DayRow[] {
 const dayLabel = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.`;
 
 /** one bar per day; hovering a day shows its number */
-function barChart(rows: DayRow[], key: 'visits' | 'starts' | 'chars', unit: string, cls: string): HTMLElement {
+function barChart(rows: DayRow[], unit: string): HTMLElement {
   const W = 720;
   const H = 180;
   const pad = { l: 36, r: 6, t: 8, b: 22 };
-  const max = Math.max(1, ...rows.map((r) => r[key]));
+  const max = Math.max(1, ...rows.map((r) => r.visits));
   // round the top of the scale to a friendly number
   const step = 10 ** Math.floor(Math.log10(max));
   const top = Math.ceil(max / step) * step;
@@ -174,77 +155,37 @@ function barChart(rows: DayRow[], key: 'visits' | 'starts' | 'chars', unit: stri
   const labelEvery = Math.ceil(rows.length / 10);
   rows.forEach((r, i) => {
     const x = pad.l + i * bw;
-    const v = r[key];
+    const v = r.visits;
     const bh = Math.max(v ? 1 : 0, y(0) - y(v));
     const tip = svg('title', {}, `${dayLabel(r.day)}: ${num(v)} ${unit}`);
     // the whole column is the hover target, wider than the bar
     g.append(svg('rect', { class: 'hit', x, y: pad.t, width: bw, height: H - pad.t - pad.b, fill: 'transparent' }, tip));
-    g.append(svg('rect', { class: `bar ${cls}`, x: x + bw * 0.15, y: y(0) - bh, width: Math.max(1, bw * 0.7), height: bh, rx: Math.min(3, bw * 0.2), 'pointer-events': 'none' }));
+    g.append(svg('rect', { class: 'bar visits', x: x + bw * 0.15, y: y(0) - bh, width: Math.max(1, bw * 0.7), height: bh, rx: Math.min(3, bw * 0.2), 'pointer-events': 'none' }));
     if (i % labelEvery === 0) g.append(svg('text', { x: x + bw / 2, y: H - 6, 'text-anchor': 'middle' }, dayLabel(r.day)));
   });
   return h('div', { class: 'chart' }, g);
 }
 
-const modeName = (m: string) => (m in MODES ? `${MODES[m as GameMode].icon} ${MODES[m as GameMode].title}` : m);
-const duration = (s: number) => (s >= 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s} s`);
-
 async function renderStats(box: HTMLElement): Promise<number> {
   const s = await api<Stats>(`/api/admin/stats?days=${days}`);
   clear(box);
-  const t = s.totals;
   const rows = fillDays(s);
+  const avg = Math.round(s.visits / rows.length);
   box.append(
     h(
       'div',
       { class: 'cards' },
-      card('Besuche', num(t.visits)),
-      card('Spiele gestartet', num(t.starts)),
-      card('Spiele beendet', num(t.ends), t.starts ? `${Math.round((t.ends / t.starts) * 100)} % der gestarteten` : undefined),
-      card('Fotos ausgewertet', num(t.scans)),
-      card('Zeichen erkannt', num(t.chars)),
+      card('Aufrufe heute', num(rows[rows.length - 1]?.visits ?? 0)),
+      card(`Aufrufe in ${s.days} Tagen`, num(s.visits), `Ø ${num(avg)} pro Tag`),
+      card('Aufrufe insgesamt', num(s.allTime), s.firstDay ? `seit ${dayLabel(s.firstDay)}${s.firstDay.slice(0, 4)}` : undefined),
       card('Neue Nachrichten', num(s.unread)),
     ),
-    h(
-      'div',
-      { class: 'grid2' },
-      h('div', { class: 'panel' }, h('h2', null, 'Besuche pro Tag'), barChart(rows, 'visits', 'Besuche', 'visits')),
-      h('div', { class: 'panel' }, h('h2', null, 'Spiele gestartet pro Tag'), barChart(rows, 'starts', 'Spiele', 'starts')),
-    ),
-    h(
-      'div',
-      { class: 'panel' },
-      h('h2', null, 'Spielarten'),
-      table(
-        ['Spielart', 'gestartet', 'beendet', 'Zeichen', 'Ø Dauer'],
-        s.perMode.map((m) => [modeName(m.mode), m.starts, m.ends, m.chars, m.avg_duration_s ? duration(m.avg_duration_s) : '–']),
-        [false, true, true, true, true],
-      ),
-    ),
-    h(
-      'div',
-      { class: 'grid2' },
-      h(
-        'div',
-        { class: 'panel' },
-        h('h2', null, 'Schriften'),
-        table(['Schrift', 'Spiele', 'Zeichen'], s.perScript.map((r) => [SCRIPTS[r.script] ?? r.script, r.starts, r.chars]), [false, true, true]),
-      ),
-      h(
-        'div',
-        { class: 'panel' },
-        h('h2', null, 'Sprachen'),
-        table(['Sprache', 'Besuche', 'Spiele'], s.perLang.map((r) => [r.lang, r.visits, r.starts]), [false, true, true]),
-      ),
-    ),
+    h('div', { class: 'panel' }, h('h2', null, 'Aufrufe pro Tag'), barChart(rows, 'Aufrufe')),
     h(
       'details',
       { class: 'panel' },
       h('summary', null, 'Alle Tage als Tabelle'),
-      table(
-        ['Tag', 'Besuche', 'gestartet', 'beendet', 'Fotos', 'Zeichen'],
-        [...rows].reverse().map((r) => [dayLabel(r.day) + r.day.slice(0, 4), r.visits, r.starts, r.ends, r.scans, r.chars]),
-        [false, true, true, true, true, true],
-      ),
+      table(['Tag', 'Aufrufe'], [...rows].reverse().map((r) => [dayLabel(r.day) + r.day.slice(0, 4), r.visits]), [false, true]),
     ),
   );
   return s.unread;

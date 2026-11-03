@@ -218,7 +218,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
         rich(t('Die Kamerabilder werden {only} im Browser ausgewertet. Sie werden weder an uns noch an Dritte übertragen und nicht gespeichert.'), { only: h('b', null, t('ausschließlich auf Ihrem Gerät')) }),
         [t('Spielstände (ausgeschnittene Buchstaben, ausgemalte Bilder) werden nur in Ihrem Browser gespeichert und lassen sich jederzeit löschen.')],
         [t('Es gibt keine Benutzerkonten, keine Cookies, keine Werbung und keine Analysedienste Dritter. Deshalb gibt es auch kein Cookie-Banner.')],
-        rich(t('Die App sendet eine {stats} (z. B. „Spiel gestartet“) ohne IP-Adresse, ohne Kennung und ohne Cookie. Sie lässt sich in den Einstellungen abschalten.'), { stats: h('b', null, t('anonyme Nutzungsstatistik')) }),
+        [t('Wir zählen nur, wie oft die Seite aufgerufen wird – eine Zahl pro Tag, ohne IP-Adresse, ohne Kennung und ohne Cookie.')],
         [t('Nachrichten über das Kontaktformular speichern wir nur, um sie zu beantworten, und löschen sie spätestens nach 12 Monaten.')],
         [t('Die Kamera startet erst, wenn Sie sie einrichten oder ein Spiel beginnen.')],
         [t('Es werden keine externen Dienste eingebunden – auch Schriftarten und Programmteile kommen ausschließlich von unserem eigenen Server.')],
@@ -273,16 +273,12 @@ function datenschutz(info: LegalInfo): HTMLElement {
       ),
     ),
     section(
-      t('{n}. Anonyme Nutzungsstatistik', { n: n() }),
+      t('{n}. Aufrufzähler', { n: n() }),
       p(
-        t('Damit wir sehen, welche Spiele genutzt werden, sendet die App kleine Meldungen an unseren Server: dass die App geöffnet wurde, dass eine Spielart gestartet oder beendet wurde, die Spieldauer, die Anzahl der erkannten Zeichen bzw. Karten pro Foto sowie die gewählte Schrift und Sprache. Gespeichert wird jede Meldung nur mit dem Kalendertag – ohne Uhrzeit, ohne IP-Adresse, ohne Geräte- oder Benutzerkennung und ohne Cookie. Einzelne Personen oder Geräte lassen sich daraus nicht erkennen; Bilder, Buchstaben und Spielstände werden nie übertragen.'),
+        t('Wenn Ihr Browser die App-Seite von unserem Server lädt, zählt der Server für diesen Tag einen Aufruf hoch. Gespeichert wird nur diese Zahl pro Kalendertag – keine IP-Adresse, keine Uhrzeit, keine Geräte- oder Benutzerkennung und kein Cookie; die App selbst sendet dafür nichts. Einzelne Personen oder Geräte lassen sich daraus nicht erkennen. Was in der App gespielt oder geschrieben wird, erfahren wir nicht.'),
       ),
       p(
-        t('Die IP-Adresse wird beim Empfang nur kurz im Arbeitsspeicher verwendet, um Missbrauch zu begrenzen, und nicht gespeichert. Rechtsgrundlage für diese kurze Verarbeitung: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren, bedarfsgerecht weiterentwickelten App), bei öffentlichen Schulen lit. e DSGVO. Die Meldungen werden nach 13 Monaten automatisch gelöscht.'),
-      ),
-      p(
-        h('b', null, t('Widerspruch:'), ' '),
-        t('In den Einstellungen („⚙️ Einstellungen → Über → Anonyme Nutzungsstatistik senden“) können Sie die Statistik jederzeit abschalten. Diese Wahl wird nur im Local Storage Ihres Browsers gespeichert.'),
+        t('Rechtsgrundlage für das Mitzählen des Aufrufs: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (berechtigtes Interesse zu wissen, ob und wie viel die App genutzt wird), bei öffentlichen Schulen lit. e DSGVO.'),
       ),
     ),
     section(
@@ -293,7 +289,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
         t('Standort des Servers: {location}.', { location: info.serverLocation }),
       ),
       p(
-        t('Beim Aufruf der Website werden technisch notwendige Daten verarbeitet: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Statuscode, übertragene Datenmenge sowie Angaben zum Browser (User-Agent). Die App selbst schreibt keine Zugriffsprotokolle; die Datenbank für Kontaktformular und Nutzungsstatistik liegt ebenfalls bei Railway.'),
+        t('Beim Aufruf der Website werden technisch notwendige Daten verarbeitet: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Statuscode, übertragene Datenmenge sowie Angaben zum Browser (User-Agent). Die App selbst schreibt keine Zugriffsprotokolle; die Datenbank für Kontaktformular und Aufrufzähler liegt ebenfalls bei Railway.'),
         ' ',
         t('Die Hosting-Plattform speichert Zugriffsprotokolle für höchstens {days} Tage und löscht sie danach automatisch.', { days: info.logDays }),
       ),
@@ -326,7 +322,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
     section(
       t('{n}. Kinder', { n: n() }),
       p(
-        t('Die App ist für den Einsatz im Unterricht unter Aufsicht einer Lehrkraft gedacht. Es werden keine Daten der Kinder an uns oder Dritte übermittelt (die anonyme Nutzungsstatistik enthält keine Angaben zu Personen); die Kinder benötigen kein Konto.'),
+        t('Die App ist für den Einsatz im Unterricht unter Aufsicht einer Lehrkraft gedacht. Es werden keine Daten der Kinder an uns oder Dritte übermittelt (der Aufrufzähler enthält keine Angaben zu Personen); die Kinder benötigen kein Konto.'),
       ),
     ),
   );
