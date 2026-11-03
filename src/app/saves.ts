@@ -1,17 +1,19 @@
 // Saved games. The last game of every mode is kept automatically (to continue it later), and games can be
 // saved under a name, deleted, downloaded as a file and loaded from a file. Everything stays in this
 // browser (IndexedDB) unless a file is downloaded.
+import { t, tk } from '../i18n/i18n.ts';
 
 export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'malen' | 'duell' | 'riesenburg' | 'tuerme';
 
+/** title: German, translated where it is shown (t(MODES[m].title)) */
 export const MODES: Record<GameMode, { icon: string; title: string }> = {
-  meer: { icon: '🐠', title: 'Meer' },
-  weltraum: { icon: '👽', title: 'Weltraum' },
-  savanne: { icon: '🦒', title: 'Savanne' },
-  malen: { icon: '🎨', title: 'Mal-Aquarium' },
-  duell: { icon: '⚔️', title: 'Team-Duell' },
-  riesenburg: { icon: '🏰', title: 'Riesenburg' },
-  tuerme: { icon: '🏗️', title: 'Türme bauen' },
+  meer: { icon: '🐠', title: tk('Meer') },
+  weltraum: { icon: '👽', title: tk('Weltraum') },
+  savanne: { icon: '🦒', title: tk('Savanne') },
+  malen: { icon: '🎨', title: tk('Mal-Aquarium') },
+  duell: { icon: '⚔️', title: tk('Team-Duell') },
+  riesenburg: { icon: '🏰', title: tk('Riesenburg') },
+  tuerme: { icon: '🏗️', title: tk('Türme bauen') },
 };
 
 export const FORMAT = 'krakel-und-krone-spielstand';
@@ -73,14 +75,14 @@ function db(): Promise<IDBDatabase | null> {
 function result<T>(r: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error ?? new Error('Speicherfehler'));
+    r.onerror = () => reject(r.error ?? new Error(t('Speicherfehler')));
   });
 }
 
-function finished(t: IDBTransaction): Promise<void> {
+function finished(tx: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
-    t.oncomplete = () => resolve();
-    t.onerror = t.onabort = () => reject(t.error ?? new Error('Speicherfehler'));
+    tx.oncomplete = () => resolve();
+    tx.onerror = tx.onabort = () => reject(tx.error ?? new Error(t('Speicherfehler')));
   });
 }
 
@@ -172,9 +174,9 @@ export async function readSaveFile(f: File): Promise<SaveGame> {
   } catch {
     g = {};
   }
-  if (g.format !== FORMAT || !g.mode || !(g.mode in MODES) || g.state === undefined) throw new Error('Das ist keine Spielstand-Datei von Krakel & Krone.');
-  if (g.version !== 1) throw new Error('Dieser Spielstand ist von einer neueren Version. Bitte die Seite neu laden.');
-  return { ...(g as SaveGame), id: newSaveId(), auto: false, name: String(g.name || MODES[g.mode].title).slice(0, 60) };
+  if (g.format !== FORMAT || !g.mode || !(g.mode in MODES) || g.state === undefined) throw new Error(t('Das ist keine Spielstand-Datei von Krakel & Krone.'));
+  if (g.version !== 1) throw new Error(t('Dieser Spielstand ist von einer neueren Version. Bitte die Seite neu laden.'));
+  return { ...(g as SaveGame), id: newSaveId(), auto: false, name: String(g.name || t(MODES[g.mode].title)).slice(0, 60) };
 }
 
 // ---------------------------------------------------------------- words
@@ -187,12 +189,12 @@ export function when(ts: number, now = Date.now()): string {
   const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diff = Math.round((day(new Date(now)) - day(d)) / 86400000);
   const time = `${d.getHours()}:${pad(d.getMinutes())}`;
-  if (diff === 0) return `heute, ${time}`;
-  if (diff === 1) return `gestern, ${time}`;
+  if (diff === 0) return t('heute, {time}', { time });
+  if (diff === 1) return t('gestern, {time}', { time });
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}, ${time}`;
 }
 
 /** default name of a game saved now, e.g. "Meer – 23.10., 10:42" */
 export function defaultName(mode: GameMode, now = new Date()): string {
-  return `${MODES[mode].title} – ${pad(now.getDate())}.${pad(now.getMonth() + 1)}., ${now.getHours()}:${pad(now.getMinutes())}`;
+  return `${t(MODES[mode].title)} – ${pad(now.getDate())}.${pad(now.getMonth() + 1)}., ${now.getHours()}:${pad(now.getMinutes())}`;
 }

@@ -11,6 +11,7 @@ import { tilePreview, type TileKind } from './previews.ts';
 import { openScriptPicker, scriptTile } from './scriptPicker.ts';
 import { languageButton } from './languagePicker.ts';
 import type { ScriptId } from '../recog/scripts.ts';
+import { t } from '../i18n/i18n.ts';
 
 export interface StartDeps {
   settings: Settings;
@@ -60,17 +61,17 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
     if (s.practice.mode !== 'ueben') return;
     targetChip.append(
       button(
-        [h('span', null, 'Üben:'), h('span', { class: 'glyph' }, s.practice.targets.join(' ')), h('span', null, `je ${s.practice.count}×`), h('span', null, '✎')],
+        [h('span', null, t('Üben:')), h('span', { class: 'glyph' }, s.practice.targets.join(' ')), h('span', null, t('je {n}×', { n: s.practice.count })), h('span', null, '✎')],
         () => d.openPicker(renderTarget),
         'btn target-chip',
-        'Buchstaben wählen',
+        t('Buchstaben wählen'),
       ),
     );
   };
   const mode = segmented(
     [
-      { value: 'frei', label: '✏️ Frei schreiben' },
-      { value: 'ueben', label: '🎯 Buchstaben üben' },
+      { value: 'frei', label: t('✏️ Frei schreiben') },
+      { value: 'ueben', label: t('🎯 Buchstaben üben') },
     ],
     s.practice.mode,
     (v) => {
@@ -84,17 +85,17 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
 
   const tile = (id: TileKind, label: string, hint: string, onClick: () => void) => {
     const cv = h('canvas', { width: 480, height: 360 });
-    const t = button([cv, h('div', { class: 'label' }, label), h('div', { class: 'hint' }, hint)], onClick, 'tile', label);
+    const b = button([cv, h('div', { class: 'label' }, label), h('div', { class: 'hint' }, hint)], onClick, 'tile', label);
     const draw = () => tilePreview(id, cv);
     if (document.fonts?.ready) void document.fonts.ready.then(draw);
     else draw();
-    return t;
+    return b;
   };
   const cam = d.camera();
   const short = cam.label.length > 32 ? cam.label.slice(0, 30) + '…' : cam.label;
   const camChip = cam.handheld
-    ? button('📱 Kamera: Handy/Tablet', d.openCamera, 'btn small cam-chip ok', 'Kamera einrichten')
-    : button(cam.ok ? `📷 ${short}` : '📷 Kamera einrichten', d.openCamera, `btn small cam-chip ${cam.ok ? 'ok' : cam.configured ? 'bad' : ''}`, cam.label);
+    ? button(t('📱 Kamera: Handy/Tablet'), d.openCamera, 'btn small cam-chip ok', t('Kamera einrichten'))
+    : button(cam.ok ? `📷 ${short}` : t('📷 Kamera einrichten'), d.openCamera, `btn small cam-chip ${cam.ok ? 'ok' : cam.configured ? 'bad' : ''}`, cam.label);
 
   // "Weiterspielen" appears as soon as the saved games are read
   const cont = h('div', { class: 'continue-row' });
@@ -107,20 +108,20 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
       'div',
       { class: 'start' },
       logo,
-      h('p', { class: 'subtitle' }, 'Schreib schön – und dein Krakel bekommt eine Krone!'),
+      h('p', { class: 'subtitle' }, t('Schreib schön – und dein Krakel bekommt eine Krone!')),
       cont,
       h('div', { class: 'mode-row' }, mode, targetChip),
       h(
         'div',
         { class: 'tiles' },
         scriptTile(s.script, () => openScriptPicker(s.script, d.setScript)),
-        tile('meer', '🐠 Meer', 'Fische im Ozean', () => d.startHabitat('meer')),
-        tile('weltraum', '👽 Weltraum', 'Aliens zwischen den Planeten', () => d.startHabitat('weltraum')),
-        tile('savanne', '🦒 Savanne', 'Tiere in der Steppe', () => d.startHabitat('savanne')),
-        tile('duell', '⚔️ Team-Duell', 'Zwei Teams, Zettel, Blasen-Burgen', d.openDuel),
-        tile('riesenburg', '🏰 Riesenburg', 'Die ganze Klasse gegen den Riesen', d.openSiege),
-        tile('tuerme', '🏗️ Türme bauen', 'Bis zu 8 Teams, Aliens helfen', d.openTowers),
-        tile('malen', '🎨 Mal-Aquarium', 'Meerestiere ausmalen – sie schwimmen los', d.openPaint),
+        tile('meer', t('🐠 Meer'), t('Fische im Ozean'), () => d.startHabitat('meer')),
+        tile('weltraum', t('👽 Weltraum'), t('Aliens zwischen den Planeten'), () => d.startHabitat('weltraum')),
+        tile('savanne', t('🦒 Savanne'), t('Tiere in der Steppe'), () => d.startHabitat('savanne')),
+        tile('duell', t('⚔️ Team-Duell'), t('Zwei Teams, Zettel, Blasen-Burgen'), d.openDuel),
+        tile('riesenburg', t('🏰 Riesenburg'), t('Die ganze Klasse gegen den Riesen'), d.openSiege),
+        tile('tuerme', t('🏗️ Türme bauen'), t('Bis zu 8 Teams, Aliens helfen'), d.openTowers),
+        tile('malen', t('🎨 Mal-Aquarium'), t('Meerestiere ausmalen – sie schwimmen los'), d.openPaint),
       ),
       howtoSection({ mode: s.camera.mode, choose: d.setCameraMode }),
       h(
@@ -128,10 +129,10 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         { class: 'footer' },
         camChip,
         languageButton(d.setLanguage),
-        button('📂 Spielstände', d.openSaves, 'btn small'),
-        button('⚙️ Einstellungen', d.openSettings, 'btn small'),
-        button('👩‍🏫 Für Lehrer und Eltern', openGuide, 'btn small'),
-        button('✉️ Kontakt & Feedback', () => openContact(), 'btn small'),
+        button(t('📂 Spielstände'), d.openSaves, 'btn small'),
+        button(t('⚙️ Einstellungen'), d.openSettings, 'btn small'),
+        button(t('👩‍🏫 Für Lehrer und Eltern'), openGuide, 'btn small'),
+        button(t('✉️ Kontakt & Feedback'), () => openContact(), 'btn small'),
         donateButton(),
       ),
       legalLinks(),

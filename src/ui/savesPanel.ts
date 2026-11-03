@@ -3,22 +3,23 @@
 import { MODES, when, type GameMode, type SaveMeta } from '../app/saves.ts';
 import { button, clear, h, modal } from './dom.ts';
 import { toast } from './toast.ts';
+import { t } from '../i18n/i18n.ts';
 
 function thumbImg(m: SaveMeta, cls = 'save-thumb'): HTMLElement {
   return m.thumb ? h('img', { src: m.thumb, class: cls, alt: '' }) : h('div', { class: `${cls} empty` }, MODES[m.mode].icon);
 }
 
 function title(m: SaveMeta): string {
-  return m.auto ? `${MODES[m.mode].icon} ${MODES[m.mode].title}` : `${MODES[m.mode].icon} ${m.name}`;
+  return m.auto ? `${MODES[m.mode].icon} ${t(MODES[m.mode].title)}` : `${MODES[m.mode].icon} ${m.name}`;
 }
 
 /** the button on the start screen that continues the last game */
 export function continueBanner(m: SaveMeta, onClick: () => void): HTMLElement {
   return button(
-    [h('span', { class: 'cont-play' }, '▶'), thumbImg(m, 'cont-thumb'), h('span', { class: 'cont-text' }, h('b', null, `Weiterspielen: ${title(m)}`), h('span', null, `${m.summary} · ${when(m.savedAt)}`))],
+    [h('span', { class: 'cont-play' }, '▶'), thumbImg(m, 'cont-thumb'), h('span', { class: 'cont-text' }, h('b', null, t('Weiterspielen: {game}', { game: title(m) })), h('span', null, `${m.summary} · ${when(m.savedAt)}`))],
     onClick,
     'btn continue-banner',
-    'Das letzte Spiel weiterspielen',
+    t('Das letzte Spiel weiterspielen'),
   );
 }
 
@@ -34,17 +35,17 @@ export function openContinue(m: SaveMeta, d: ContinueDeps): void {
   // after "aufheben" the game lives on under its new id
   let id = m.id;
   const keepBtn = button(
-    '📌 Altes Spiel unter einem Namen aufheben',
+    t('📌 Altes Spiel unter einem Namen aufheben'),
     () => {
       keepBtn.disabled = true;
       void d.keep().then(
         (kept) => {
           id = kept;
-          keepBtn.textContent = '✓ Aufgehoben (unter 📂 Spielstände)';
+          keepBtn.textContent = t('✓ Aufgehoben (unter 📂 Spielstände)');
         },
         () => {
           keepBtn.disabled = false;
-          toast('Das hat nicht geklappt.', 'warn');
+          toast(t('Das hat nicht geklappt.'), 'warn');
         },
       );
     },
@@ -53,14 +54,14 @@ export function openContinue(m: SaveMeta, d: ContinueDeps): void {
   const content = h(
     'div',
     { style: 'max-width:min(620px,92vw);text-align:center' },
-    h('h2', null, `${MODES[m.mode].icon} ${MODES[m.mode].title}`),
-    h('p', { style: 'font-size:1.2rem;margin:.2em 0 .8em' }, 'Möchtet ihr das letzte Spiel weiterspielen oder ein neues beginnen?'),
-    h('div', { class: 'save-card' }, thumbImg(m), h('div', null, h('b', null, m.summary), h('div', { class: 'help' }, `gemerkt ${when(m.savedAt)}`))),
+    h('h2', null, `${MODES[m.mode].icon} ${t(MODES[m.mode].title)}`),
+    h('p', { style: 'font-size:1.2rem;margin:.2em 0 .8em' }, t('Möchtet ihr das letzte Spiel weiterspielen oder ein neues beginnen?')),
+    h('div', { class: 'save-card' }, thumbImg(m), h('div', null, h('b', null, m.summary), h('div', { class: 'help' }, t('gemerkt {when}', { when: when(m.savedAt) })))),
     h(
       'div',
       { class: 'actions', style: 'justify-content:center' },
       button(
-        'Neues Spiel',
+        t('Neues Spiel'),
         () => {
           m2.close();
           d.fresh();
@@ -68,7 +69,7 @@ export function openContinue(m: SaveMeta, d: ContinueDeps): void {
         'btn',
       ),
       button(
-        '▶ Weiterspielen',
+        t('▶ Weiterspielen'),
         () => {
           m2.close();
           d.resume(id);
@@ -76,7 +77,7 @@ export function openContinue(m: SaveMeta, d: ContinueDeps): void {
         'btn primary',
       ),
     ),
-    h('p', { class: 'help', style: 'margin-bottom:.3em' }, 'Ein neues Spiel ersetzt das alte, sobald etwas Neues dazukommt.'),
+    h('p', { class: 'help', style: 'margin-bottom:.3em' }, t('Ein neues Spiel ersetzt das alte, sobald etwas Neues dazukommt.')),
     keepBtn,
   );
   const m2 = modal(content);
@@ -95,10 +96,10 @@ export function openKeepQuestion(answer: (keep: boolean) => void): void {
     'div',
     { style: 'max-width:min(560px,92vw);text-align:center' },
     h('div', { style: 'font-size:3rem', 'aria-hidden': 'true' }, '💾'),
-    h('h2', null, 'Spiel merken?'),
-    h('p', { style: 'font-size:1.2rem' }, 'Soll sich die App dieses Spiel merken? Dann könnt ihr später weiterspielen – auch morgen noch.'),
-    h('p', { class: 'help' }, 'Gespeichert werden nur die ausgeschnittenen Buchstaben und Bilder, keine Fotos, und nur in diesem Browser. Die Frage kommt nur einmal; umstellen geht in den Einstellungen.'),
-    h('div', { class: 'actions', style: 'justify-content:center' }, button('Nein, danke', () => pick(false), 'btn'), button('💾 Ja, merken', () => pick(true), 'btn primary')),
+    h('h2', null, t('Spiel merken?')),
+    h('p', { style: 'font-size:1.2rem' }, t('Soll sich die App dieses Spiel merken? Dann könnt ihr später weiterspielen – auch morgen noch.')),
+    h('p', { class: 'help' }, t('Gespeichert werden nur die ausgeschnittenen Buchstaben und Bilder, keine Fotos, und nur in diesem Browser. Die Frage kommt nur einmal; umstellen geht in den Einstellungen.')),
+    h('div', { class: 'actions', style: 'justify-content:center' }, button(t('Nein, danke'), () => pick(false), 'btn'), button(t('💾 Ja, merken'), () => pick(true), 'btn primary')),
   );
   const m = modal(content);
 }
@@ -126,23 +127,23 @@ export function openSaveDialog(d: SaveDialogDeps): void {
       },
       (e) => {
         busy(b, false);
-        toast('Speichern hat nicht geklappt: ' + (e as Error).message, 'warn', 6000);
+        toast(t('Speichern hat nicht geklappt: {error}', { error: (e as Error).message }), 'warn', 6000);
       },
     );
   };
-  const saveBtn: HTMLButtonElement = button('💾 Speichern', () => run(saveBtn, d.save, `Gespeichert: ${name.value.trim() || d.defaultName}`), 'btn primary');
-  const fileBtn: HTMLButtonElement = button('⬇️ Als Datei herunterladen', () => run(fileBtn, d.download, 'Die Datei ist im Download-Ordner.'), 'btn');
+  const saveBtn: HTMLButtonElement = button(t('💾 Speichern'), () => run(saveBtn, d.save, t('Gespeichert: {name}', { name: name.value.trim() || d.defaultName })), 'btn primary');
+  const fileBtn: HTMLButtonElement = button(t('⬇️ Als Datei herunterladen'), () => run(fileBtn, d.download, t('Die Datei ist im Download-Ordner.')), 'btn');
   const content = h(
     'div',
     { style: 'max-width:min(620px,92vw)' },
-    h('h2', null, '💾 Spiel speichern'),
-    h('div', { class: 'row' }, h('label', null, 'Name'), name),
+    h('h2', null, t('💾 Spiel speichern')),
+    h('div', { class: 'row' }, h('label', null, t('Name')), name),
     h(
       'p',
       { class: 'help' },
-      'Gespeichert wird nur in diesem Browser. Später unter „📂 Spielstände“ auf der Startseite wieder laden. Als Datei lässt sich das Spiel auch auf einen anderen Computer mitnehmen. Das letzte Spiel jeder Spielart merkt sich die App außerdem von selbst.',
+      t('Gespeichert wird nur in diesem Browser. Später unter „📂 Spielstände“ auf der Startseite wieder laden. Als Datei lässt sich das Spiel auch auf einen anderen Computer mitnehmen. Das letzte Spiel jeder Spielart merkt sich die App außerdem von selbst.'),
     ),
-    h('div', { class: 'actions' }, button('Abbrechen', () => m.close(), 'btn'), fileBtn, saveBtn),
+    h('div', { class: 'actions' }, button(t('Abbrechen'), () => m.close(), 'btn'), fileBtn, saveBtn),
   );
   const m = modal(content);
   setTimeout(() => name.select(), 50);
@@ -159,12 +160,12 @@ export interface SavesListDeps {
 
 /** All saved games: load, download, delete; or open a file. */
 export function openSavesList(d: SavesListDeps): void {
-  const box = h('div', { class: 'save-list' }, h('p', { class: 'help' }, 'Lade …'));
+  const box = h('div', { class: 'save-list' }, h('p', { class: 'help' }, t('Lade …')));
   const render = async () => {
     const all = await d.list().catch(() => [] as SaveMeta[]);
     clear(box);
     if (!all.length) {
-      box.append(h('p', { class: 'help' }, 'Noch keine Spielstände. Sobald ihr spielt, merkt sich die App das letzte Spiel jeder Spielart; im Spiel speichert „💾“ es unter einem Namen.'));
+      box.append(h('p', { class: 'help' }, t('Noch keine Spielstände. Sobald ihr spielt, merkt sich die App das letzte Spiel jeder Spielart; im Spiel speichert „💾“ es unter einem Namen.')));
       return;
     }
     for (const m of all) {
@@ -177,29 +178,29 @@ export function openSavesList(d: SavesListDeps): void {
             'div',
             { class: 'save-info' },
             h('b', null, title(m)),
-            h('span', null, m.auto ? `${m.summary} · zuletzt gespielt` : `${MODES[m.mode].title} · ${m.summary}`),
+            h('span', null, m.auto ? t('{summary} · zuletzt gespielt', { summary: m.summary }) : `${t(MODES[m.mode].title)} · ${m.summary}`),
             h('span', { class: 'help' }, when(m.savedAt)),
           ),
           h(
             'div',
             { class: 'save-btns' },
             button(
-              '▶ Laden',
+              t('▶ Laden'),
               () => {
                 list.close();
                 d.load(m.id);
               },
               'btn small primary',
             ),
-            button('⬇️', () => void d.download(m.id).catch((e) => toast((e as Error).message, 'warn')), 'btn small icon', 'Als Datei herunterladen'),
+            button('⬇️', () => void d.download(m.id).catch((e) => toast((e as Error).message, 'warn')), 'btn small icon', t('Als Datei herunterladen')),
             button(
               '🗑',
               () => {
-                if (!confirm(`„${m.auto ? MODES[m.mode].title + ' (zuletzt gespielt)' : m.name}“ löschen?`)) return;
+                if (!confirm(m.auto ? t('„{name} (zuletzt gespielt)“ löschen?', { name: t(MODES[m.mode].title) }) : t('„{name}“ löschen?', { name: m.name }))) return;
                 void d.remove(m.id).then(render);
               },
               'btn small icon',
-              'Löschen',
+              t('Löschen'),
             ),
           ),
         ),
@@ -219,11 +220,11 @@ export function openSavesList(d: SavesListDeps): void {
   const content = h(
     'div',
     { style: 'width:min(820px,92vw)' },
-    h('h2', null, '📂 Spielstände'),
+    h('h2', null, t('📂 Spielstände')),
     box,
     input,
-    h('p', { class: 'help' }, 'Die Spielstände liegen nur in diesem Browser. Sie enthalten die ausgeschnittenen Buchstaben und ausgemalten Fische, aber keine Kamerafotos.'),
-    h('div', { class: 'actions' }, button('📁 Datei öffnen …', () => input.click(), 'btn'), button('Schließen', () => list.close(), 'btn primary')),
+    h('p', { class: 'help' }, t('Die Spielstände liegen nur in diesem Browser. Sie enthalten die ausgeschnittenen Buchstaben und ausgemalten Fische, aber keine Kamerafotos.')),
+    h('div', { class: 'actions' }, button(t('📁 Datei öffnen …'), () => input.click(), 'btn'), button(t('Schließen'), () => list.close(), 'btn primary')),
   );
   const list = modal(content);
   void render();

@@ -2,6 +2,7 @@ import { clearSaves } from '../app/saves.ts';
 import { resetSettings, type Settings } from '../app/settings.ts';
 import { button, h, modal, segmented, toggle } from './dom.ts';
 import { toast } from './toast.ts';
+import { t } from '../i18n/i18n.ts';
 
 export interface SettingsDeps {
   settings: Settings;
@@ -34,62 +35,62 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
   const content = h(
     'div',
     { style: 'min-width:min(760px,90vw)' },
-    h('h2', null, '⚙️ Einstellungen'),
-    h('h3', null, 'Kamera'),
-    h('div', { class: 'row' }, button('📷 Kamera einrichten …', () => {
+    h('h2', null, t('⚙️ Einstellungen')),
+    h('h3', null, t('Kamera')),
+    h('div', { class: 'row' }, button(t('📷 Kamera einrichten …'), () => {
       m.close();
       d.openCamera();
-    }, 'btn small'), h('span', { class: 'help' }, s.camera.label ? `Aktuell: ${s.camera.label}` : 'Noch keine Kamera gewählt')),
-    h('h3', null, 'Erkennung'),
+    }, 'btn small'), h('span', { class: 'help' }, s.camera.label ? t('Aktuell: {camera}', { camera: s.camera.label }) : t('Noch keine Kamera gewählt'))),
+    h('h3', null, t('Erkennung')),
     row(
-      'Strenge',
+      t('Strenge'),
       segmented(
         [
-          { value: 'leicht', label: 'Leicht' },
-          { value: 'mittel', label: 'Mittel' },
-          { value: 'streng', label: 'Streng' },
+          { value: 'leicht', label: t('Leicht') },
+          { value: 'mittel', label: t('Mittel') },
+          { value: 'streng', label: t('Streng') },
         ],
         s.recog.strictness,
         set((v) => (s.recog.strictness = v)),
       ),
-      'Leicht: schon wackelige Buchstaben werden zu schönen Wesen. Streng: nur sehr saubere Schrift wird „Prachtstück“.',
+      t('Leicht: schon wackelige Buchstaben werden zu schönen Wesen. Streng: nur sehr saubere Schrift wird „Prachtstück“.'),
     ),
     // Druck- or Grundschrift templates: only the Druckschrift model knows both
     s.script !== 'druck' ? null : row(
-      'Vorlage',
+      t('Vorlage'),
       segmented(
         [
-          { value: 'beide', label: 'Beide' },
-          { value: 'grund', label: 'Grundschrift' },
-          { value: 'druck', label: 'Druckschrift' },
+          { value: 'beide', label: t('Beide') },
+          { value: 'grund', label: t('Grundschrift') },
+          { value: 'druck', label: t('Druckschrift') },
         ],
         s.recog.style,
         set((v) => (s.recog.style = v)),
       ),
-      'Womit die Buchstaben verglichen werden.',
+      t('Womit die Buchstaben verglichen werden.'),
     ),
     row(
-      'Stift',
+      t('Stift'),
       segmented(
         [
-          { value: 'auto', label: 'Automatisch' },
-          { value: 'felt', label: 'Filzstift' },
-          { value: 'pencil', label: 'Bleistift' },
+          { value: 'auto', label: t('Automatisch') },
+          { value: 'felt', label: t('Filzstift') },
+          { value: 'pencil', label: t('Bleistift') },
         ],
         s.recog.pen,
         set((v) => (s.recog.pen = v)),
       ),
     ),
     row(
-      'Lineatur',
+      t('Lineatur'),
       segmented(
         [
-          { value: 'auto', label: 'Automatisch' },
-          { value: 'L1', label: 'Lineatur 1' },
-          { value: 'L2', label: 'Lineatur 2' },
-          { value: 'L3', label: 'Lineatur 3' },
-          { value: 'liniert', label: 'Normal liniert' },
-          { value: 'blanko', label: 'Ohne Linien' },
+          { value: 'auto', label: t('Automatisch') },
+          { value: 'L1', label: t('Lineatur 1') },
+          { value: 'L2', label: t('Lineatur 2') },
+          { value: 'L3', label: t('Lineatur 3') },
+          { value: 'liniert', label: t('Normal liniert') },
+          { value: 'blanko', label: t('Ohne Linien') },
         ],
         s.recog.lineatur,
         set((v) => (s.recog.lineatur = v)),
@@ -101,7 +102,7 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       h(
         'div',
         { class: 'row' },
-        toggle('Spiegelschrift zählt nicht', s.recog.noMirror, (on) => {
+        toggle(t('Spiegelschrift zählt nicht'), s.recog.noMirror, (on) => {
           s.recog.noMirror = on;
           d.save();
         }),
@@ -109,75 +110,75 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       h(
         'div',
         { class: 'help', style: 'margin:-4px 0 8px' },
-        'An: Spiegelverkehrte Buchstaben (z. B. ein umgedrehtes S, Z oder N) werden nicht als Buchstabe gezählt – es schlüpft kein Wesen und es gibt keinen Baustein. Aus: Sie zählen, bekommen aber weniger Sterne und den Tipp „Dreh mich um“. b/d und p/q lassen sich dabei nicht unterscheiden.',
+        t('An: Spiegelverkehrte Buchstaben (z. B. ein umgedrehtes S, Z oder N) werden nicht als Buchstabe gezählt – es schlüpft kein Wesen und es gibt keinen Baustein. Aus: Sie zählen, bekommen aber weniger Sterne und den Tipp „Dreh mich um“. b/d und p/q lassen sich dabei nicht unterscheiden.'),
       ),
     ),
     row(
-      'Automatisch scannen',
+      t('Automatisch scannen'),
       segmented(
         [
-          { value: 'aus', label: 'Aus' },
-          { value: 'an', label: 'An' },
+          { value: 'aus', label: t('Aus') },
+          { value: 'an', label: t('An') },
         ],
         s.recog.autoScan ? 'an' : 'aus',
         set((v) => (s.recog.autoScan = v === 'an')),
       ),
-      'Scannt von selbst, wenn sich unter der Kamera etwas verändert hat und die Hände weg sind.',
+      t('Scannt von selbst, wenn sich unter der Kamera etwas verändert hat und die Hände weg sind.'),
     ),
-    row('Wartezeit', h('span', { class: 'row', style: 'margin:0' }, delay, delayLabel)),
-    h('h3', null, 'Spiel'),
+    row(t('Wartezeit'), h('span', { class: 'row', style: 'margin:0' }, delay, delayLabel)),
+    h('h3', null, t('Spiel')),
     row(
-      'Wesen gleichzeitig',
+      t('Wesen gleichzeitig'),
       segmented(
         ['20', '30', '50'].map((v) => ({ value: v, label: v })),
         String(s.game.maxCreatures),
         set((v) => (s.game.maxCreatures = Number(v))),
       ),
-      'Wenn es mehr werden, schwimmen die ältesten Wesen weg.',
+      t('Wenn es mehr werden, schwimmen die ältesten Wesen weg.'),
     ),
     row(
-      'Töne',
+      t('Töne'),
       segmented(
         [
-          { value: 'an', label: 'An' },
-          { value: 'aus', label: 'Aus' },
+          { value: 'an', label: t('An') },
+          { value: 'aus', label: t('Aus') },
         ],
         s.game.sound ? 'an' : 'aus',
         set((v) => (s.game.sound = v === 'an')),
       ),
     ),
-    row('Lautstärke', vol),
+    row(t('Lautstärke'), vol),
     h(
       'div',
       null,
       h(
         'div',
         { class: 'row' },
-        toggle('Messemodus', s.game.fair, (on) => {
+        toggle(t('Messemodus'), s.game.fair, (on) => {
           s.game.fair = on;
           d.save();
         }),
       ),
-      h('div', { class: 'help', style: 'margin:-4px 0 8px' }, 'Blendet im Mal-Aquarium einen QR-Code und die Webadresse ein, damit Besucher das Spiel zu Hause wiederfinden.'),
+      h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Blendet im Mal-Aquarium einen QR-Code und die Webadresse ein, damit Besucher das Spiel zu Hause wiederfinden.')),
     ),
-    h('h3', null, 'Spielstände'),
+    h('h3', null, t('Spielstände')),
     h(
       'div',
       null,
       h(
         'div',
         { class: 'row' },
-        toggle('Letztes Spiel merken', s.game.autosave === true, (on) => {
+        toggle(t('Letztes Spiel merken'), s.game.autosave === true, (on) => {
           s.game.autosave = on;
           d.save();
         }),
         button(
-          '🗑 Alle Spielstände löschen',
+          t('🗑 Alle Spielstände löschen'),
           () => {
-            if (!confirm('Alle gespeicherten Spiele löschen? Das lässt sich nicht rückgängig machen.')) return;
+            if (!confirm(t('Alle gespeicherten Spiele löschen? Das lässt sich nicht rückgängig machen.'))) return;
             void clearSaves().then(
-              () => toast('Alle Spielstände sind gelöscht.', 'good'),
-              () => toast('Löschen hat nicht geklappt.', 'warn'),
+              () => toast(t('Alle Spielstände sind gelöscht.'), 'good'),
+              () => toast(t('Löschen hat nicht geklappt.'), 'warn'),
             );
           },
           'btn small',
@@ -186,18 +187,18 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       h(
         'div',
         { class: 'help', style: 'margin:-4px 0 8px' },
-        'An: Die App merkt sich das letzte Spiel jeder Spielart und fragt beim nächsten Mal, ob ihr weiterspielen wollt. Gespeichert wird nur in diesem Browser – mit den ausgeschnittenen Buchstaben und ausgemalten Fischen, ohne Kamerafotos. Auf gemeinsam genutzten Geräten lieber ausschalten.',
+        t('An: Die App merkt sich das letzte Spiel jeder Spielart und fragt beim nächsten Mal, ob ihr weiterspielen wollt. Gespeichert wird nur in diesem Browser – mit den ausgeschnittenen Buchstaben und ausgemalten Fischen, ohne Kamerafotos. Auf gemeinsam genutzten Geräten lieber ausschalten.'),
       ),
     ),
-    h('h3', null, 'Über'),
-    h('p', { class: 'help' }, 'Alle Bilder werden nur auf diesem Gerät ausgewertet und nirgendwohin geschickt. Gespeichert werden nur diese Einstellungen und die Spielstände – beides nur in diesem Browser.'),
+    h('h3', null, t('Über')),
+    h('p', { class: 'help' }, t('Alle Bilder werden nur auf diesem Gerät ausgewertet und nirgendwohin geschickt. Gespeichert werden nur diese Einstellungen und die Spielstände – beides nur in diesem Browser.')),
     h(
       'div',
       null,
       h(
         'div',
         { class: 'row' },
-        toggle('Anonyme Nutzungsstatistik senden', s.game.telemetry, (on) => {
+        toggle(t('Anonyme Nutzungsstatistik senden'), s.game.telemetry, (on) => {
           s.game.telemetry = on;
           d.save();
         }),
@@ -205,22 +206,22 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       h(
         'div',
         { class: 'help', style: 'margin:-4px 0 8px' },
-        'An: Die App meldet uns ohne Namen, ohne Kennung und ohne Cookie, dass sie geöffnet wurde, welche Spielart gestartet und beendet wurde, wie lange gespielt wurde und wie viele Zeichen erkannt wurden (dazu Schrift und Sprache). Bilder, Buchstaben und Spielstände werden nie geschickt, die IP-Adresse wird nicht gespeichert. So sehen wir, was gespielt wird. Aus: Es wird nichts gesendet.',
+        t('An: Die App meldet uns ohne Namen, ohne Kennung und ohne Cookie, dass sie geöffnet wurde, welche Spielart gestartet und beendet wurde, wie lange gespielt wurde und wie viele Zeichen erkannt wurden (dazu Schrift und Sprache). Bilder, Buchstaben und Spielstände werden nie geschickt, die IP-Adresse wird nicht gespeichert. So sehen wir, was gespielt wird. Aus: Es wird nichts gesendet.'),
       ),
     ),
     h('p', { class: 'help' }, d.modelInfo),
     h(
       'div',
       { class: 'actions' },
-      button('Alles zurücksetzen', () => {
-        if (!confirm('Alle Einstellungen zurücksetzen und alle Spielstände löschen?')) return;
+      button(t('Alles zurücksetzen'), () => {
+        if (!confirm(t('Alle Einstellungen zurücksetzen und alle Spielstände löschen?'))) return;
         const fresh = resetSettings();
         fresh.firstRunDone = true;
         void clearSaves().catch(() => undefined);
         d.replace(fresh);
         m.close();
       }, 'btn small'),
-      button('Fertig', () => m.close(), 'btn primary'),
+      button(t('Fertig'), () => m.close(), 'btn primary'),
     ),
   );
   const m = modal(content, onClose);

@@ -44,6 +44,7 @@ import { packTyped, unpackTyped } from './imageCodec.ts';
 import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSaves, loadSave, MODES, newSaveId, putSave, readSaveFile, type GameMode, type SaveGame } from './saves.ts';
 import { firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
 import { GameTally, track, useTelemetrySettings } from './telemetry.ts';
+import { t } from '../i18n/i18n.ts';
 
 const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna };
 /** the paper setting as the recognition sees it: Lineatur 1 and 2 have the same four-line shape */
@@ -109,7 +110,7 @@ export class App {
     this.visionReady = this.vision.init().then(
       (info) => (this.engineInfo = info),
       (e) => {
-        toast('Die Erkennung konnte nicht geladen werden: ' + (e as Error).message, 'warn', 8000);
+        toast(t('Die Erkennung konnte nicht geladen werden: {error}', { error: (e as Error).message }), 'warn', 8000);
         throw e;
       },
     );
@@ -123,7 +124,7 @@ export class App {
       () => this.scan('auto'),
     );
     this.auto.onChange = () => this.hud?.setAuto(this.auto.enabled, this.auto.progress);
-    this.camera.onEnded = () => toast('Die Kamera wurde getrennt. Bitte wieder anschließen.', 'warn', 6000);
+    this.camera.onEnded = () => toast(t('Die Kamera wurde getrennt. Bitte wieder anschließen.'), 'warn', 6000);
     setSound(this.settings.game.sound, this.settings.game.volume);
 
     // touch: no long-press menu on the game
@@ -202,7 +203,7 @@ export class App {
   /** a fixed camera starts with the first game (the browser may ask for it then) */
   private ensureCamera(): void {
     if (this.handheld || this.camera.ready()) return;
-    this.openCamera(this.settings.camera.deviceId).catch(() => toast('Keine Kamera – bitte oben rechts einrichten.', 'warn', 5000));
+    this.openCamera(this.settings.camera.deviceId).catch(() => toast(t('Keine Kamera – bitte oben rechts einrichten.'), 'warn', 5000));
   }
 
   /**
@@ -283,11 +284,11 @@ export class App {
 
   /** what the viewfinder asks for */
   private photoText(team?: PlayerId): { title: string; hint: string; frame?: 'sheet' | 'card' } {
-    if (this.scene instanceof PaintScene) return { title: 'Karte fotografieren', hint: 'Die ganze Karte mit dem schwarzen Rahmen ins Bild, dann auf den runden Knopf.', frame: 'card' };
-    const name = team ? this.teamKeys().find((t) => t.id === team)?.name : undefined;
+    if (this.scene instanceof PaintScene) return { title: t('Karte fotografieren'), hint: t('Die ganze Karte mit dem schwarzen Rahmen ins Bild, dann auf den runden Knopf.'), frame: 'card' };
+    const name = team ? this.teamKeys().find((k) => k.id === team)?.name : undefined;
     return {
-      title: name ? `Foto für ${name}` : 'Foto machen',
-      hint: 'Alle Buchstaben in den Rahmen, dann auf den runden Knopf.',
+      title: name ? t('Foto für {name}', { name }) : t('Foto machen'),
+      hint: t('Alle Buchstaben in den Rahmen, dann auf den runden Knopf.'),
     };
   }
 
@@ -347,7 +348,7 @@ export class App {
       save: () => this.save(),
       camera: () => ({
         ok: this.handheld || this.camera.ready(),
-        label: this.camera.label || this.settings.camera.label || 'Kamera',
+        label: this.camera.label || this.settings.camera.label || t('Kamera'),
         handheld: this.handheld,
         configured: !!this.settings.camera.deviceId,
       }),
@@ -485,7 +486,7 @@ export class App {
     clearTimeout(this.saveSoon);
     const mode = this.gameMode();
     if (!mode || !this.settings.game.autosave) return Promise.resolve();
-    const snap = this.snapshot({ id: autoId(mode), name: MODES[mode].title, auto: true });
+    const snap = this.snapshot({ id: autoId(mode), name: t(MODES[mode].title), auto: true });
     // one write at a time, in order
     const run = (this.saving ?? Promise.resolve())
       .then(() => snap)
@@ -513,7 +514,7 @@ export class App {
     if (!mode) return;
     const take = async (name: string) => {
       const g = await this.snapshot({ id: newSaveId(), name, auto: false });
-      if (!g) throw new Error('Es gibt noch nichts zu speichern – erst etwas schreiben oder malen.');
+      if (!g) throw new Error(t('Es gibt noch nichts zu speichern – erst etwas schreiben oder malen.'));
       return g;
     };
     openSaveDialog({
@@ -530,7 +531,7 @@ export class App {
       load: (id) => void this.resume(id),
       download: async (id) => {
         const g = await loadSave(id);
-        if (!g) throw new Error('Diesen Spielstand gibt es nicht mehr.');
+        if (!g) throw new Error(t('Diesen Spielstand gibt es nicht mehr.'));
         downloadSave(g);
       },
       remove: deleteSave,
@@ -546,7 +547,7 @@ export class App {
   async resume(id: string): Promise<void> {
     const g = await loadSave(id).catch(() => null);
     if (!g) {
-      toast('Diesen Spielstand gibt es nicht mehr.', 'warn');
+      toast(t('Diesen Spielstand gibt es nicht mehr.'), 'warn');
       return;
     }
     const c = g.config as Partial<Settings>;
@@ -568,9 +569,9 @@ export class App {
       if (g.memory) await this.vision.setMemory(unpackTyped(g.memory) as SavedMemory);
       if (this.scene !== scene) return;
       this.updateProgress();
-      if (m !== 'tuerme' && m !== 'riesenburg') toast(`Weiter geht’s: ${g.auto ? MODES[m].title : g.name}`, 'good', 3500);
+      if (m !== 'tuerme' && m !== 'riesenburg') toast(t('Weiter geht’s: {name}', { name: g.auto ? t(MODES[m].title) : g.name }), 'good', 3500);
     } catch (e) {
-      toast('Der Spielstand ließ sich nicht ganz laden: ' + (e as Error).message, 'warn', 6000);
+      toast(t('Der Spielstand ließ sich nicht ganz laden: {error}', { error: (e as Error).message }), 'warn', 6000);
     } finally {
       if (this.scene === scene) this.frozen = false;
     }
@@ -586,11 +587,11 @@ export class App {
           try {
             await this.openCamera(this.settings.camera.deviceId);
           } catch {
-            toast('Zuerst die Kamera einrichten.', 'warn');
+            toast(t('Zuerst die Kamera einrichten.'), 'warn');
             return null;
           }
         }
-        const g = await this.photo(DETECT_SIZE, { title: 'Farbe zeigen', hint: 'Einen Zettel oder ein Wort in der Farbe des Teams ins Bild halten.' });
+        const g = await this.photo(DETECT_SIZE, { title: t('Farbe zeigen'), hint: t('Einen Zettel oder ein Wort in der Farbe des Teams ins Bild halten.') });
         return g?.snapshot ?? null;
       },
     };
@@ -610,8 +611,10 @@ export class App {
           this.showStart();
         },
         modelInfo: info?.hasModel
-          ? `Handschrift-Modell geladen${info.accuracy ? ` (erkennt ${Math.round(info.accuracy.group * 100)} % der Test-Zeichen)` : ''}.`
-          : 'Handschrift-Modell nicht gefunden – es wird nur mit Vorlagen verglichen.',
+          ? info.accuracy
+            ? t('Handschrift-Modell geladen (erkennt {p} % der Test-Zeichen).', { p: Math.round(info.accuracy.group * 100) })
+            : t('Handschrift-Modell geladen.')
+          : t('Handschrift-Modell nicht gefunden – es wird nur mit Vorlagen verglichen.'),
       },
       () => {
         if (this.mode.kind === 'start') this.showStart();
@@ -668,7 +671,7 @@ export class App {
     const scene = new HabitatScene(def, this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
-      title: { meer: '🐠 Meer', weltraum: '👽 Weltraum', savanne: '🦒 Savanne' }[id],
+      title: { meer: t('🐠 Meer'), weltraum: t('👽 Weltraum'), savanne: t('🦒 Savanne') }[id],
       settings: this.settings,
       camera: this.camera,
       handheld: this.handheld,
@@ -688,15 +691,15 @@ export class App {
     this.auto.setEnabled(this.autoAllowed());
     // first show how the practice letter is written
     if (practice) setTimeout(() => this.scene === scene && scene.practiceTarget && scene.showDemo(scene.practiceTarget), 900);
-    if (!resuming) toast(practice ? this.practiceIntro(scene) : 'Schreib Buchstaben oder Zahlen und drücke „Fertig!“', 'info', 5000);
+    if (!resuming) toast(practice ? this.practiceIntro(scene) : t('Schreib Buchstaben oder Zahlen und drücke „Fertig!“'), 'info', 5000);
   }
 
   private practiceIntro(scene: HabitatScene): string {
     const p = this.settings.practice;
-    const first = `${p.count}× ${withArticle(scene.practiceTarget!)}`;
-    if (p.targets.length === 1) return `Schreibe ${first} und drücke „Fertig!“`;
-    const list = p.targets.slice(0, -1).join(', ') + ' und ' + p.targets[p.targets.length - 1];
-    return `Heute üben wir ${list}. Zuerst ${first}!`;
+    const c = withArticle(scene.practiceTarget!);
+    if (p.targets.length === 1) return t('Schreibe {n}× {c} und drücke „Fertig!“', { n: p.count, c });
+    const list = t('{first} und {last}', { first: p.targets.slice(0, -1).join(', '), last: p.targets[p.targets.length - 1] });
+    return t('Heute üben wir {list}. Zuerst {n}× {c}!', { list, n: p.count, c });
   }
 
   startPaint(resuming = false): void {
@@ -706,12 +709,12 @@ export class App {
     const scene = new PaintScene(this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
-      title: '🎨 Mal-Aquarium',
+      title: t('🎨 Mal-Aquarium'),
       settings: this.settings,
       camera: this.camera,
       handheld: this.handheld,
       practice: false,
-      newSheetLabel: '🗒 Neue Karten',
+      newSheetLabel: t('🗒 Neue Karten'),
       onScan: () => void this.scan('manual', { now: true }),
       onMenu: () => this.toMenu(),
       onNewSheet: () => this.newSheet(),
@@ -724,7 +727,7 @@ export class App {
     this.hud.setFair(this.settings.game.fair);
     this.updateProgress();
     this.auto.setEnabled(this.autoAllowed());
-    if (!resuming) toast('Ausgemalte Karte unter die Kamera legen und „Fertig!“ drücken!', 'info', 5000);
+    if (!resuming) toast(t('Ausgemalte Karte unter die Kamera legen und „Fertig!“ drücken!'), 'info', 5000);
   }
 
   startDuel(resuming = false): void {
@@ -734,7 +737,7 @@ export class App {
     const scene = new DuelScene(this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
-      title: '⚔️ Team-Duell',
+      title: t('⚔️ Team-Duell'),
       settings: this.settings,
       camera: this.camera,
       handheld: this.handheld,
@@ -745,7 +748,7 @@ export class App {
       onMenu: () => this.toMenu(),
       onNewSheet: () => {
         void this.vision.reset();
-        toast('Alle Zettel gelten wieder als neu.', 'info');
+        toast(t('Alle Zettel gelten wieder als neu.'), 'info');
       },
       onToggleAuto: () => this.toggleAuto(),
       onFullscreen: () => this.toggleFullscreen(),
@@ -754,7 +757,7 @@ export class App {
     });
     this.hud.setCounter('');
     this.auto.setEnabled(this.autoAllowed());
-    if (!resuming) toast('Zettel unter die Kamera legen und „Fertig!“ drücken!', 'info', 4500);
+    if (!resuming) toast(t('Zettel unter die Kamera legen und „Fertig!“ drücken!'), 'info', 4500);
   }
 
   startSiege(resuming = false): void {
@@ -763,7 +766,7 @@ export class App {
     this.tally.start(this.gameMode()!);
     this.scene = new SiegeScene(this.host(), this.stage.worldW);
     this.hud = new Hud(this.ui, {
-      title: '🏰 Riesenburg',
+      title: t('🏰 Riesenburg'),
       settings: this.settings,
       camera: this.camera,
       handheld: this.handheld,
@@ -772,7 +775,7 @@ export class App {
       onMenu: () => this.toMenu(),
       onNewSheet: () => {
         void this.vision.reset();
-        toast('Alles gilt wieder als neu.', 'info');
+        toast(t('Alles gilt wieder als neu.'), 'info');
       },
       onToggleAuto: () => this.toggleAuto(),
       onFullscreen: () => this.toggleFullscreen(),
@@ -789,7 +792,7 @@ export class App {
     this.tally.start(this.gameMode()!);
     this.scene = new TowerScene(this.host(), this.stage.worldW);
     this.hud = new Hud(this.ui, {
-      title: '🏗️ Türme bauen',
+      title: t('🏗️ Türme bauen'),
       settings: this.settings,
       camera: this.camera,
       handheld: this.handheld,
@@ -800,7 +803,7 @@ export class App {
       onMenu: () => this.toMenu(),
       onNewSheet: () => {
         void this.vision.reset();
-        toast('Alle Zettel gelten wieder als neu.', 'info');
+        toast(t('Alle Zettel gelten wieder als neu.'), 'info');
       },
       onToggleAuto: () => this.toggleAuto(),
       onFullscreen: () => this.toggleFullscreen(),
@@ -830,7 +833,7 @@ export class App {
   private host(): SceneHost {
     return {
       settings: this.settings,
-      toast: (t, k) => toast(t, k),
+      toast: (text, k) => toast(text, k),
       showCard: (info) => openGlyphCard(info, DEBUG),
       showPainted: (info) => openPaintedCard(info),
       progress: () => {
@@ -869,7 +872,7 @@ export class App {
     sfx.fanfare();
     confetti(['#ffcf3d', '#ff6f91', '#4fb3ff', '#7ccf6b']);
     if (scene.nextTarget()) {
-      toast(`Super, ${p.count}× ${withArticle(done)} geschafft! Jetzt kommt ${withArticle(scene.practiceTarget!)}.`, 'good', 5000);
+      toast(t('Super, {n}× {c} geschafft! Jetzt kommt {next}.', { n: p.count, c: withArticle(done), next: withArticle(scene.practiceTarget!) }), 'good', 5000);
       this.updateProgress();
       setTimeout(() => this.scene === scene && scene.practiceTarget && scene.showDemo(scene.practiceTarget), 1200);
       return;
@@ -879,17 +882,17 @@ export class App {
       'div',
       { style: 'text-align:center;max-width:620px' },
       h('div', { style: 'font-size:4rem' }, '🎉'),
-      h('h2', null, all ? `Super! Alle ${p.targets.length} Buchstaben geschafft!` : `Super! ${p.count}× ${withArticle(done)} geschafft!`),
+      h('h2', null, all ? t('Super! Alle {n} Buchstaben geschafft!', { n: p.targets.length }) : t('Super! {n}× {c} geschafft!', { n: p.count, c: withArticle(done) })),
       all ? h('p', { class: 'practice-done' }, ...p.targets.map((c) => h('span', null, c))) : null,
-      h('p', { style: 'font-size:1.2rem' }, all ? 'Nochmal von vorn oder neue Buchstaben aussuchen?' : 'Willst du weiter üben oder einen neuen Buchstaben?'),
+      h('p', { style: 'font-size:1.2rem' }, all ? t('Nochmal von vorn oder neue Buchstaben aussuchen?') : t('Willst du weiter üben oder einen neuen Buchstaben?')),
       h(
         'div',
         { class: 'actions', style: 'justify-content:center' },
-        button(all ? 'Nochmal von vorn' : 'Weiter so', () => {
+        button(all ? t('Nochmal von vorn') : t('Weiter so'), () => {
           scene.restartPractice();
           m.close();
         }, 'btn'),
-        button(all ? 'Neue Buchstaben' : 'Neuer Buchstabe', () => {
+        button(all ? t('Neue Buchstaben') : t('Neuer Buchstabe'), () => {
           m.close();
           openTargetPicker(this.settings, () => {
             this.save();
@@ -954,7 +957,7 @@ export class App {
     }
     this.scriptReady = this.visionReady.then(() =>
       this.vision.useScript(def.id).catch((e) => {
-        toast(`Die Schrift „${def.name}“ konnte nicht geladen werden: ${(e as Error).message}`, 'warn', 8000);
+        toast(t('Die Schrift „{name}“ konnte nicht geladen werden: {error}', { name: t(def.name), error: (e as Error).message }), 'warn', 8000);
         throw e;
       }),
     );
@@ -1015,14 +1018,14 @@ export class App {
     if (this.busy || this.frozen || !this.scene || isModalOpen()) return;
     if (trigger === 'auto' && this.handheld) return;
     if (!this.handheld && !this.camera.ready()) {
-      toast('Keine Kamera verbunden.', 'warn');
+      toast(t('Keine Kamera verbunden.'), 'warn');
       this.cameraSetup();
       return;
     }
     this.busy = true;
     try {
       if (trigger === 'manual' && !opt.now && !this.handheld) {
-        await this.probe.waitStill(1500, () => toast('Hände weg – gleich mache ich ein Foto! 📸', 'info', 2000));
+        await this.probe.waitStill(1500, () => toast(t('Hände weg – gleich mache ich ein Foto! 📸'), 'info', 2000));
       }
       if (this.scene instanceof PaintScene) {
         await this.scanCards(this.scene);
@@ -1031,7 +1034,7 @@ export class App {
       const g = await this.photo(DETECT_SIZE, this.photoText(opt.team));
       if (!g || !this.scene) return;
       // right after the start the handwriting recognition may still be waking up
-      this.hud?.setBusy(true, this.engineInfo ? 'Schaue …' : 'Wache auf …');
+      this.hud?.setBusy(true, this.engineInfo ? t('Schaue …') : t('Wache auf …'));
       await this.scriptReady;
       // show the photo right away; the recognition runs meanwhile in the worker
       const s = Math.min(1, DETECT_SIZE / Math.max(g.frame.width, g.frame.height));
@@ -1055,8 +1058,8 @@ export class App {
       if (mirrored) {
         toast(
           mirrored === 1
-            ? '🪞 Ein Zeichen ist spiegelverkehrt – das zählt nicht. Andersherum schreiben!'
-            : `🪞 ${mirrored} Zeichen sind spiegelverkehrt – das zählt nicht. Andersherum schreiben!`,
+            ? t('🪞 Ein Zeichen ist spiegelverkehrt – das zählt nicht. Andersherum schreiben!')
+            : t('🪞 {n} Zeichen sind spiegelverkehrt – das zählt nicht. Andersherum schreiben!', { n: mirrored }),
           'info',
           4500,
         );
@@ -1064,7 +1067,7 @@ export class App {
       this.auto.markScanned();
     } catch (e) {
       if (e instanceof CameraError) toast(`${e.message} ${e.hint}`, 'warn', 7000);
-      else toast('Das hat nicht geklappt: ' + (e as Error).message, 'warn', 6000);
+      else toast(t('Das hat nicht geklappt: {error}', { error: (e as Error).message }), 'warn', 6000);
     } finally {
       this.busy = false;
       this.hud?.setBusy(false);
@@ -1075,7 +1078,7 @@ export class App {
   private async scanCards(scene: PaintScene): Promise<void> {
     const g = await this.photo(1920, this.photoText());
     if (!g || this.scene !== scene) return;
-    this.hud?.setBusy(true, 'Schaue …');
+    this.hud?.setBusy(true, t('Schaue …'));
     const snap: Snapshot = { canvas: g.snapshot, detW: g.frame.width, detH: g.frame.height };
     scene.beginCapture(snap);
     try {
@@ -1097,28 +1100,28 @@ export class App {
     const content = h(
       'div',
       { style: 'text-align:center;min-width:min(460px,90vw)' },
-      h('h2', null, '⏸ Pause'),
+      h('h2', null, t('⏸ Pause')),
       h(
         'p',
         { style: 'font-size:1.15rem' },
         this.settings.game.autosave === true
-          ? 'Zurück zum Menü? Das Spiel wird gemerkt – ihr könnt es später weiterspielen.'
+          ? t('Zurück zum Menü? Das Spiel wird gemerkt – ihr könnt es später weiterspielen.')
           : this.settings.game.autosave === false
-            ? 'Zurück zum Menü? Die Wesen in diesem Spiel verschwinden dann (außer ihr speichert es).'
-            : 'Zurück zum Menü?',
+            ? t('Zurück zum Menü? Die Wesen in diesem Spiel verschwinden dann (außer ihr speichert es).')
+            : t('Zurück zum Menü?'),
       ),
       h(
         'div',
         { class: 'actions', style: 'justify-content:center' },
-        button('Zum Menü', () => {
+        button(t('Zum Menü'), () => {
           m.close();
           this.toMenu();
         }, 'btn'),
-        button('💾 Speichern', () => {
+        button(t('💾 Speichern'), () => {
           m.close();
           this.openSaveGame();
         }, 'btn'),
-        button('Weiterspielen', () => m.close(), 'btn primary'),
+        button(t('Weiterspielen'), () => m.close(), 'btn primary'),
       ),
     );
     const m = modal(content);
@@ -1127,22 +1130,22 @@ export class App {
   private newSheet(): void {
     if (this.scene instanceof PaintScene) {
       this.scene.forgetCards();
-      toast('Alle Karten gelten wieder als neu.', 'info');
+      toast(t('Alle Karten gelten wieder als neu.'), 'info');
       return;
     }
     void this.vision.reset();
-    toast('Neues Blatt – alles gilt wieder als neu.', 'info');
+    toast(t('Neues Blatt – alles gilt wieder als neu.'), 'info');
   }
 
   private toggleAuto(): void {
     if (this.handheld) {
-      toast('Automatisch geht nur mit einer Kamera, die fest steht.', 'info', 3000);
+      toast(t('Automatisch geht nur mit einer Kamera, die fest steht.'), 'info', 3000);
       return;
     }
     this.settings.recog.autoScan = !this.auto.enabled;
     this.save();
     this.auto.setEnabled(this.autoAllowed());
-    toast(this.auto.enabled ? 'Automatisch scannen: an 👁' : 'Automatisch scannen: aus', 'info', 2000);
+    toast(this.auto.enabled ? t('Automatisch scannen: an 👁') : t('Automatisch scannen: aus'), 'info', 2000);
   }
 
   private toggleFullscreen(): void {
@@ -1168,8 +1171,8 @@ export class App {
 
   private onKey(e: KeyboardEvent): void {
     if (isModalOpen() || this.mode.kind === 'start') return;
-    const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+    const el = e.target as HTMLElement | null;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) return;
     const digit = /^[1-9]$/.test(e.key) ? Number(e.key) : 0;
     if (digit) {
       const team = this.teamKeys()[digit - 1];

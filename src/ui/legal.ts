@@ -1,6 +1,8 @@
 // Impressum, Datenschutzerklärung and licence notes. Operator details come from /legal.json
 // (on Railway generated from the LEGAL_* variables, see RECHTLICHES.md). No legal advice.
-import { button, h, modal } from './dom.ts';
+// The texts are translated; the German version is the binding one and can be shown on every page.
+import { language, t as translate } from '../i18n/i18n.ts';
+import { button, clear, h, modal } from './dom.ts';
 
 export interface LegalInfo {
   configured: boolean;
@@ -64,6 +66,35 @@ export const LEGAL_PATHS: Record<string, LegalPage> = {
   '/lizenzen': 'lizenzen',
 };
 
+// ------------------------------------------------------------------ translation
+
+/** while a page is built in its German original (the binding version), t() gives the German text */
+let original = false;
+
+function t(source: string, params?: Record<string, string | number>): string {
+  if (!original) return translate(source, params);
+  return params ? source.replace(/\{(\w+)\}/g, (m, k: string) => (k in params ? String(params[k]) : m)) : source;
+}
+
+/** builds a page in German (original) or in the page language */
+function inGerman<T>(on: boolean, build: () => T): T {
+  const was = original;
+  original = on;
+  try {
+    return build();
+  } finally {
+    original = was;
+  }
+}
+
+/** a translated text with links in it: "Mehr auf {link}." -> ["Mehr auf ", <a>, "."] */
+function rich(text: string, parts: Record<string, Node | string>): (Node | string)[] {
+  return text.split(/(\{\w+\})/).map((s) => {
+    const k = /^\{(\w+)\}$/.exec(s)?.[1];
+    return k && k in parts ? parts[k] : s;
+  });
+}
+
 // ------------------------------------------------------------------ helpers
 
 const lines = (text: string) => {
@@ -99,8 +130,8 @@ function placeholderNote(info: LegalInfo): HTMLElement | null {
   return h(
     'div',
     { class: 'err-box' },
-    h('b', null, 'Hinweis für den Betreiber: '),
-    'Die Angaben zum Verantwortlichen sind noch Platzhalter. Vor dem öffentlichen Betrieb bitte die LEGAL_*-Variablen setzen (siehe RECHTLICHES.md im Projekt).',
+    h('b', null, t('Hinweis für den Betreiber:'), ' '),
+    t('Die Angaben zum Verantwortlichen sind noch Platzhalter. Vor dem öffentlichen Betrieb bitte die LEGAL_*-Variablen setzen (siehe RECHTLICHES.md im Projekt).'),
   );
 }
 
@@ -108,24 +139,25 @@ function operatorBlock(info: LegalInfo): HTMLElement {
   return p(
     h('b', null, info.name),
     info.representative ? h('br') : null,
-    info.representative ? `vertreten durch ${info.representative}` : null,
+    info.representative ? t('vertreten durch {name}', { name: info.representative }) : null,
     h('br'),
     lines(info.address),
     h('br'),
-    'E-Mail: ',
+    t('E-Mail:'),
+    ' ',
     mail(info.email),
     info.phone ? h('br') : null,
-    info.phone ? `Telefon: ${info.phone}` : null,
+    info.phone ? t('Telefon: {phone}', { phone: info.phone }) : null,
     info.website ? h('br') : null,
-    info.website ? 'Website: ' : null,
+    info.website ? t('Website:') + ' ' : null,
     info.website ? ext(info.website, bareUrl(info.website)) : null,
   );
 }
 
 function legalBasisHosting(info: LegalInfo): string {
   return info.type === 'schule'
-    ? 'Art. 6 Abs. 1 UAbs. 1 lit. e DSGVO in Verbindung mit den Datenschutz- und Schulgesetzen des Landes (in Bayern z. B. Art. 4 Abs. 1 BayDSG): Die Bereitstellung des Lernangebots ist Teil der Aufgaben der Schule.'
-    : 'Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt darin, die Website sicher und funktionsfähig auszuliefern und Missbrauch abzuwehren.';
+    ? t('Art. 6 Abs. 1 UAbs. 1 lit. e DSGVO in Verbindung mit den Datenschutz- und Schulgesetzen des Landes (in Bayern z. B. Art. 4 Abs. 1 BayDSG): Die Bereitstellung des Lernangebots ist Teil der Aufgaben der Schule.')
+    : t('Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt darin, die Website sicher und funktionsfähig auszuliefern und Missbrauch abzuwehren.');
 }
 
 // ------------------------------------------------------------------ pages
@@ -134,39 +166,39 @@ function impressum(info: LegalInfo): HTMLElement {
   return h(
     'div',
     { class: 'legal' },
-    h('h2', null, 'Impressum'),
+    h('h2', null, t('Impressum')),
     placeholderNote(info),
-    p('Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)'),
+    p(t('Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)')),
     operatorBlock(info),
-    info.supervision ? section('Zuständige Aufsichtsbehörde', p(lines(info.supervision))) : null,
-    info.contentResponsible ? section('Inhaltlich verantwortlich', p(lines(info.contentResponsible))) : null,
+    info.supervision ? section(t('Zuständige Aufsichtsbehörde'), p(lines(info.supervision))) : null,
+    info.contentResponsible ? section(t('Inhaltlich verantwortlich'), p(lines(info.contentResponsible))) : null,
     section(
-      'Hinweis',
+      t('Hinweis'),
       p(
-        'Krakel & Krone ist ein Lern- und Motivationsspiel für das Schreibenlernen. Die vergebenen Sterne und Stufen sind ein Spiel und keine Leistungsbewertung.',
+        t('Krakel & Krone ist ein Lern- und Motivationsspiel für das Schreibenlernen. Die vergebenen Sterne und Stufen sind ein Spiel und keine Leistungsbewertung.'),
       ),
-      info.website ? p('Mehr Projekte gibt es auf ', ext(info.website, bareUrl(info.website)), '.') : null,
+      info.website ? p(...rich(t('Mehr Projekte gibt es auf {link}.'), { link: ext(info.website, bareUrl(info.website)) })) : null,
     ),
-    section('Verbraucherstreitbeilegung', p('Der Anbieter ist nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.')),
+    section(t('Verbraucherstreitbeilegung'), p(t('Der Anbieter ist nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.'))),
     section(
-      'Haftung für Inhalte',
+      t('Haftung für Inhalte'),
       p(
-        'Die Inhalte dieser Website wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte – auch für die Bewertung der Handschrift durch die automatische Erkennung – wird keine Gewähr übernommen. Als Diensteanbieter ist der Anbieter für eigene Inhalte nach den allgemeinen Gesetzen verantwortlich. Eine Verpflichtung, übermittelte oder gespeicherte fremde Informationen zu überwachen, besteht nicht. Sobald Rechtsverletzungen bekannt werden, werden die betreffenden Inhalte umgehend entfernt.',
-      ),
-    ),
-    section(
-      'Haftung für Links',
-      p(
-        'Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte der Anbieter keinen Einfluss hat. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft; rechtswidrige Inhalte waren nicht erkennbar. Werden Rechtsverletzungen bekannt, werden derartige Links umgehend entfernt.',
+        t('Die Inhalte dieser Website wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte – auch für die Bewertung der Handschrift durch die automatische Erkennung – wird keine Gewähr übernommen. Als Diensteanbieter ist der Anbieter für eigene Inhalte nach den allgemeinen Gesetzen verantwortlich. Eine Verpflichtung, übermittelte oder gespeicherte fremde Informationen zu überwachen, besteht nicht. Sobald Rechtsverletzungen bekannt werden, werden die betreffenden Inhalte umgehend entfernt.'),
       ),
     ),
     section(
-      'Urheberrecht',
+      t('Haftung für Links'),
       p(
-        'Das Spiel – insbesondere Programm, Grafiken, Figuren und Texte – unterliegt dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechts bedürfen der vorherigen schriftlichen Zustimmung des Anbieters. Die Kopiervorlage des Mal-Aquariums darf für den Unterricht und zu Hause ausgedruckt und kopiert werden. Inhalte Dritter (Schriftarten, Trainingsdaten der Handschrift-Erkennung) stehen unter ihren eigenen Lizenzen, siehe Lizenzhinweise.',
+        t('Diese Website enthält Links zu externen Websites Dritter, auf deren Inhalte der Anbieter keinen Einfluss hat. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft; rechtswidrige Inhalte waren nicht erkennbar. Werden Rechtsverletzungen bekannt, werden derartige Links umgehend entfernt.'),
       ),
     ),
-    section('Datenschutz und Lizenzen', p('Siehe Datenschutzerklärung und Lizenzhinweise (Links unten).')),
+    section(
+      t('Urheberrecht'),
+      p(
+        t('Das Spiel – insbesondere Programm, Grafiken, Figuren und Texte – unterliegt dem deutschen Urheberrecht. Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechts bedürfen der vorherigen schriftlichen Zustimmung des Anbieters. Die Kopiervorlage des Mal-Aquariums darf für den Unterricht und zu Hause ausgedruckt und kopiert werden. Inhalte Dritter (Schriftarten, Trainingsdaten der Handschrift-Erkennung) stehen unter ihren eigenen Lizenzen, siehe Lizenzhinweise.'),
+      ),
+    ),
+    section(t('Datenschutz und Lizenzen'), p(t('Siehe Datenschutzerklärung und Lizenzhinweise (Links unten).'))),
   );
 }
 
@@ -177,173 +209,220 @@ function datenschutz(info: LegalInfo): HTMLElement {
   return h(
     'div',
     { class: 'legal' },
-    h('h2', null, 'Datenschutzerklärung'),
-    p(h('span', { class: 'help' }, `Stand: ${info.date}`)),
+    h('h2', null, t('Datenschutzerklärung')),
+    p(h('span', { class: 'help' }, t('Stand: {date}', { date: info.date }))),
     placeholderNote(info),
     section(
-      'Das Wichtigste in Kürze',
+      t('Das Wichtigste in Kürze'),
       list([
-        ['Die Kamerabilder werden ', h('b', null, 'ausschließlich auf Ihrem Gerät'), ' im Browser ausgewertet. Sie werden weder an uns noch an Dritte übertragen und nicht gespeichert.'],
-        ['Spielstände (ausgeschnittene Buchstaben, ausgemalte Bilder) werden nur in Ihrem Browser gespeichert und lassen sich jederzeit löschen.'],
-        ['Es gibt keine Benutzerkonten, keine Cookies, keine Werbung und keine Analysedienste Dritter. Deshalb gibt es auch kein Cookie-Banner.'],
-        ['Die App sendet eine ', h('b', null, 'anonyme Nutzungsstatistik'), ' (z. B. „Spiel gestartet“) ohne IP-Adresse, ohne Kennung und ohne Cookie. Sie lässt sich in den Einstellungen abschalten.'],
-        ['Nachrichten über das Kontaktformular speichern wir nur, um sie zu beantworten, und löschen sie spätestens nach 12 Monaten.'],
-        ['Die Kamera startet erst, wenn Sie sie einrichten oder ein Spiel beginnen.'],
-        ['Es werden keine externen Dienste eingebunden – auch Schriftarten und Programmteile kommen ausschließlich von unserem eigenen Server.'],
-        ['Beim Aufruf der Website verarbeitet unser Hosting-Anbieter technisch notwendige Verbindungsdaten (z. B. Ihre IP-Adresse).'],
+        rich(t('Die Kamerabilder werden {only} im Browser ausgewertet. Sie werden weder an uns noch an Dritte übertragen und nicht gespeichert.'), { only: h('b', null, t('ausschließlich auf Ihrem Gerät')) }),
+        [t('Spielstände (ausgeschnittene Buchstaben, ausgemalte Bilder) werden nur in Ihrem Browser gespeichert und lassen sich jederzeit löschen.')],
+        [t('Es gibt keine Benutzerkonten, keine Cookies, keine Werbung und keine Analysedienste Dritter. Deshalb gibt es auch kein Cookie-Banner.')],
+        rich(t('Die App sendet eine {stats} (z. B. „Spiel gestartet“) ohne IP-Adresse, ohne Kennung und ohne Cookie. Sie lässt sich in den Einstellungen abschalten.'), { stats: h('b', null, t('anonyme Nutzungsstatistik')) }),
+        [t('Nachrichten über das Kontaktformular speichern wir nur, um sie zu beantworten, und löschen sie spätestens nach 12 Monaten.')],
+        [t('Die Kamera startet erst, wenn Sie sie einrichten oder ein Spiel beginnen.')],
+        [t('Es werden keine externen Dienste eingebunden – auch Schriftarten und Programmteile kommen ausschließlich von unserem eigenen Server.')],
+        [t('Beim Aufruf der Website verarbeitet unser Hosting-Anbieter technisch notwendige Verbindungsdaten (z. B. Ihre IP-Adresse).')],
       ]),
     ),
-    section(`${n()}. Verantwortlicher`, operatorBlock(info)),
-    info.dpo ? section(`${n()}. Datenschutzbeauftragte/r`, p(lines(info.dpo))) : null,
+    section(t('{n}. Verantwortlicher', { n: n() }), operatorBlock(info)),
+    info.dpo ? section(t('{n}. Datenschutzbeauftragte/r', { n: n() }), p(lines(info.dpo))) : null,
     section(
-      `${n()}. Kamera und Handschrift`,
+      t('{n}. Kamera und Handschrift', { n: n() }),
       p(
-        'Damit aus geschriebenen Buchstaben und Zahlen Spielfiguren werden, nimmt die App nach Ihrer Freigabe Bilder der Kamera (z. B. einer Dokumentenkamera) auf und wertet sie direkt im Browser aus (Erkennen der Zeichen, spielerische Bewertung, Ausschneiden der Zeichen für die Spielfiguren). Im „Mal-Aquarium“ erkennt die App ausgemalte Fisch-Karten und schneidet den Fisch (mit dem darauf geschriebenen Fischnamen) als Spielfigur aus.',
+        t('Damit aus geschriebenen Buchstaben und Zahlen Spielfiguren werden, nimmt die App nach Ihrer Freigabe Bilder der Kamera (z. B. einer Dokumentenkamera) auf und wertet sie direkt im Browser aus (Erkennen der Zeichen, spielerische Bewertung, Ausschneiden der Zeichen für die Spielfiguren). Im „Mal-Aquarium“ erkennt die App ausgemalte Fisch-Karten und schneidet den Fisch (mit dem darauf geschriebenen Fischnamen) als Spielfigur aus.'),
       ),
       list([
-        ['Die Verarbeitung findet vollständig auf dem verwendeten Gerät statt. Wir als Anbieter erhalten keinen Zugriff auf Bilder oder Ergebnisse.'],
-        ['Die Kamerafotos liegen nur im Arbeitsspeicher und werden nach der Auswertung verworfen.'],
-        ['Ausgeschnittene Zeichen und ausgemalte Fisch-Karten gehören zum Spielstand: Sie werden in Ihrem Browser gespeichert, damit ein Spiel später weitergehen kann (siehe „Speicherung auf Ihrem Gerät“).'],
-        ['Es findet keine Gesichtserkennung und keine Identifizierung von Personen statt. Bitte richten Sie die Kamera so aus, dass nur das Papier zu sehen ist.'],
-        ['Die Bewertung ist ein Spiel zur Motivation. Es findet keine automatisierte Entscheidung im Sinne von Art. 22 DSGVO statt.'],
-        ['Auf Handy und Tablet startet die Kamera erst, wenn ein Foto gemacht wird (Sucher), und geht kurz danach wieder aus.'],
-        ['Den Kamerazugriff können Sie jederzeit in den Einstellungen Ihres Browsers widerrufen.'],
-        ['Auf der Labor-Seite geladene Fotos werden ebenfalls nur lokal verarbeitet; „Aufnahme speichern“ legt eine Datei nur auf Ihrem Gerät ab.'],
+        [t('Die Verarbeitung findet vollständig auf dem verwendeten Gerät statt. Wir als Anbieter erhalten keinen Zugriff auf Bilder oder Ergebnisse.')],
+        [t('Die Kamerafotos liegen nur im Arbeitsspeicher und werden nach der Auswertung verworfen.')],
+        [t('Ausgeschnittene Zeichen und ausgemalte Fisch-Karten gehören zum Spielstand: Sie werden in Ihrem Browser gespeichert, damit ein Spiel später weitergehen kann (siehe „Speicherung auf Ihrem Gerät“).')],
+        [t('Es findet keine Gesichtserkennung und keine Identifizierung von Personen statt. Bitte richten Sie die Kamera so aus, dass nur das Papier zu sehen ist.')],
+        [t('Die Bewertung ist ein Spiel zur Motivation. Es findet keine automatisierte Entscheidung im Sinne von Art. 22 DSGVO statt.')],
+        [t('Auf Handy und Tablet startet die Kamera erst, wenn ein Foto gemacht wird (Sucher), und geht kurz danach wieder aus.')],
+        [t('Den Kamerazugriff können Sie jederzeit in den Einstellungen Ihres Browsers widerrufen.')],
+        [t('Auf der Labor-Seite geladene Fotos werden ebenfalls nur lokal verarbeitet; „Aufnahme speichern“ legt eine Datei nur auf Ihrem Gerät ab.')],
       ]),
     ),
     section(
-      `${n()}. Speicherung auf Ihrem Gerät`,
+      t('{n}. Speicherung auf Ihrem Gerät', { n: n() }),
       list([
         [
-          h('b', null, 'Local Storage: '),
-          'Ihre Einstellungen (z. B. gewählte Kamera, Bildausschnitt, Strenge, Teamnamen und -farben, Übungsbuchstabe). Diese Daten verlassen Ihr Gerät nicht. Bitte tragen Sie als Teamnamen keine Namen von Kindern ein.',
+          h('b', null, t('Local Storage:'), ' '),
+          t('Ihre Einstellungen (z. B. gewählte Kamera, Bildausschnitt, Strenge, Teamnamen und -farben, Übungsbuchstabe). Diese Daten verlassen Ihr Gerät nicht. Bitte tragen Sie als Teamnamen keine Namen von Kindern ein.'),
         ],
         [
-          h('b', null, 'IndexedDB (Spielstände): '),
-          'das letzte Spiel jeder Spielart – nur wenn Sie das ausdrücklich wählen (die App fragt beim ersten Besuch bzw. beim ersten Verlassen eines Spiels, ob sie Spiele auf diesem Gerät merken soll) – und die Spiele, die Sie selbst unter einem Namen speichern. Ein Spielstand enthält die ausgeschnittenen Buchstaben bzw. ausgemalten Fische, ihre Bewertung, ein kleines Vorschaubild des Spiels und die Spieleinstellungen – keine Kamerafotos. Spielstände verlassen Ihr Gerät nicht. Laden Sie einen Spielstand als Datei herunter, liegt diese Datei nur bei Ihnen.',
+          h('b', null, t('IndexedDB (Spielstände):'), ' '),
+          t('das letzte Spiel jeder Spielart – nur wenn Sie das ausdrücklich wählen (die App fragt beim ersten Besuch bzw. beim ersten Verlassen eines Spiels, ob sie Spiele auf diesem Gerät merken soll) – und die Spiele, die Sie selbst unter einem Namen speichern. Ein Spielstand enthält die ausgeschnittenen Buchstaben bzw. ausgemalten Fische, ihre Bewertung, ein kleines Vorschaubild des Spiels und die Spieleinstellungen – keine Kamerafotos. Spielstände verlassen Ihr Gerät nicht. Laden Sie einen Spielstand als Datei herunter, liegt diese Datei nur bei Ihnen.'),
         ],
-        [h('b', null, 'Service Worker / Cache: '), 'Programmdateien der App, damit sie auch ohne Internetverbindung funktioniert.'],
+        [h('b', null, t('Service Worker / Cache:'), ' '), t('Programmdateien der App, damit sie auch ohne Internetverbindung funktioniert.')],
       ]),
       p(
-        'Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG: Die Speicherung ist unbedingt erforderlich, um die von Ihnen ausdrücklich gewünschten Funktionen bereitzustellen (Einstellungen behalten, ein Spiel fortsetzen). Sie können die Daten jederzeit löschen – einzelne Spielstände unter „📂 Spielstände“, alle über „Einstellungen → Alle Spielstände löschen“ bzw. „Alles zurücksetzen“, oder indem Sie die Websitedaten in Ihrem Browser löschen. Das automatische Merken lässt sich in den Einstellungen ausschalten.',
+        t('Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG: Die Speicherung ist unbedingt erforderlich, um die von Ihnen ausdrücklich gewünschten Funktionen bereitzustellen (Einstellungen behalten, ein Spiel fortsetzen). Sie können die Daten jederzeit löschen – einzelne Spielstände unter „📂 Spielstände“, alle über „Einstellungen → Alle Spielstände löschen“ bzw. „Alles zurücksetzen“, oder indem Sie die Websitedaten in Ihrem Browser löschen. Das automatische Merken lässt sich in den Einstellungen ausschalten.'),
       ),
     ),
     section(
-      `${n()}. Kontaktformular`,
+      t('{n}. Kontaktformular', { n: n() }),
       p(
-        'Über „✉️ Kontakt & Feedback“ auf der Startseite können Sie uns eine Nachricht schicken. Gespeichert werden Ihre Nachricht, Datum und Uhrzeit, die Sprache der App sowie – nur wenn Sie sie angeben – Ihr Name und Ihre E-Mail-Adresse. Die IP-Adresse wird nicht gespeichert; sie wird nur kurz im Arbeitsspeicher genutzt, um massenhaftes Absenden (Spam) zu begrenzen.',
+        t('Über „✉️ Kontakt & Feedback“ auf der Startseite können Sie uns eine Nachricht schicken. Gespeichert werden Ihre Nachricht, Datum und Uhrzeit, die Sprache der App sowie – nur wenn Sie sie angeben – Ihr Name und Ihre E-Mail-Adresse. Die IP-Adresse wird nicht gespeichert; sie wird nur kurz im Arbeitsspeicher genutzt, um massenhaftes Absenden (Spam) zu begrenzen.'),
       ),
       p(
-        'Zweck ist die Bearbeitung und Beantwortung Ihrer Anfrage. Rechtsgrundlage: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (unser berechtigtes Interesse, Anfragen und Hinweise zur App zu beantworten) bzw. lit. b DSGVO, wenn Ihre Anfrage auf einen Vertrag zielt; bei öffentlichen Schulen lit. e DSGVO. Die Angaben sind freiwillig.',
+        t('Zweck ist die Bearbeitung und Beantwortung Ihrer Anfrage. Rechtsgrundlage: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (unser berechtigtes Interesse, Anfragen und Hinweise zur App zu beantworten) bzw. lit. b DSGVO, wenn Ihre Anfrage auf einen Vertrag zielt; bei öffentlichen Schulen lit. e DSGVO. Die Angaben sind freiwillig.'),
       ),
       p(
-        'Wir löschen die Nachricht, sobald sie erledigt ist, spätestens jedoch automatisch 12 Monate nach dem Eingang. Die Daten liegen in einer Datenbank beim Hosting-Anbieter (siehe „Hosting“) und werden nicht an Dritte weitergegeben. Bitte schreiben Sie keine Namen oder anderen Daten von Kindern in die Nachricht.',
-      ),
-    ),
-    section(
-      `${n()}. Anonyme Nutzungsstatistik`,
-      p(
-        'Damit wir sehen, welche Spiele genutzt werden, sendet die App kleine Meldungen an unseren Server: dass die App geöffnet wurde, dass eine Spielart gestartet oder beendet wurde, die Spieldauer, die Anzahl der erkannten Zeichen bzw. Karten pro Foto sowie die gewählte Schrift und Sprache. Gespeichert wird jede Meldung nur mit dem Kalendertag – ohne Uhrzeit, ohne IP-Adresse, ohne Geräte- oder Benutzerkennung und ohne Cookie. Einzelne Personen oder Geräte lassen sich daraus nicht erkennen; Bilder, Buchstaben und Spielstände werden nie übertragen.',
-      ),
-      p(
-        'Die IP-Adresse wird beim Empfang nur kurz im Arbeitsspeicher verwendet, um Missbrauch zu begrenzen, und nicht gespeichert. Rechtsgrundlage für diese kurze Verarbeitung: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren, bedarfsgerecht weiterentwickelten App), bei öffentlichen Schulen lit. e DSGVO. Die Meldungen werden nach 13 Monaten automatisch gelöscht.',
-      ),
-      p(
-        h('b', null, 'Widerspruch: '),
-        'In den Einstellungen („⚙️ Einstellungen → Über → Anonyme Nutzungsstatistik senden“) können Sie die Statistik jederzeit abschalten. Diese Wahl wird nur im Local Storage Ihres Browsers gespeichert.',
+        t('Wir löschen die Nachricht, sobald sie erledigt ist, spätestens jedoch automatisch 12 Monate nach dem Eingang. Die Daten liegen in einer Datenbank beim Hosting-Anbieter (siehe „Hosting“) und werden nicht an Dritte weitergegeben. Bitte schreiben Sie keine Namen oder anderen Daten von Kindern in die Nachricht.'),
       ),
     ),
     section(
-      `${n()}. Hosting und Server-Protokolle`,
+      t('{n}. Anonyme Nutzungsstatistik', { n: n() }),
       p(
-        'Die Website wird bei der Railway Corporation, 548 Market St PMB 68956, San Francisco, CA 94104, USA, betrieben. Railway verarbeitet die Daten als Auftragsverarbeiter auf Grundlage eines Vertrags zur Auftragsverarbeitung nach Art. 28 DSGVO. ',
-        `Standort des Servers: ${info.serverLocation}.`,
+        t('Damit wir sehen, welche Spiele genutzt werden, sendet die App kleine Meldungen an unseren Server: dass die App geöffnet wurde, dass eine Spielart gestartet oder beendet wurde, die Spieldauer, die Anzahl der erkannten Zeichen bzw. Karten pro Foto sowie die gewählte Schrift und Sprache. Gespeichert wird jede Meldung nur mit dem Kalendertag – ohne Uhrzeit, ohne IP-Adresse, ohne Geräte- oder Benutzerkennung und ohne Cookie. Einzelne Personen oder Geräte lassen sich daraus nicht erkennen; Bilder, Buchstaben und Spielstände werden nie übertragen.'),
       ),
       p(
-        'Beim Aufruf der Website werden technisch notwendige Daten verarbeitet: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Statuscode, übertragene Datenmenge sowie Angaben zum Browser (User-Agent). Die App selbst schreibt keine Zugriffsprotokolle; die Datenbank für Kontaktformular und Nutzungsstatistik liegt ebenfalls bei Railway. Die Hosting-Plattform speichert Zugriffsprotokolle ',
-        `für höchstens ${info.logDays} Tage und löscht sie danach automatisch.`,
+        t('Die IP-Adresse wird beim Empfang nur kurz im Arbeitsspeicher verwendet, um Missbrauch zu begrenzen, und nicht gespeichert. Rechtsgrundlage für diese kurze Verarbeitung: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren, bedarfsgerecht weiterentwickelten App), bei öffentlichen Schulen lit. e DSGVO. Die Meldungen werden nach 13 Monaten automatisch gelöscht.'),
       ),
-      p(`Rechtsgrundlage: ${legalBasisHosting(info)}`),
       p(
-        'Railway ist ein Unternehmen mit Sitz in den USA; ein Zugriff aus den USA kann nicht ausgeschlossen werden. Die Übermittlung ist durch die EU-Standardvertragsklauseln (Durchführungsbeschluss (EU) 2021/914) im Auftragsverarbeitungsvertrag von Railway abgesichert bzw. – soweit Railway nach dem EU-U.S. Data Privacy Framework zertifiziert ist – durch den Angemessenheitsbeschluss der EU-Kommission vom 10. Juli 2023. Weitere Informationen: ',
-        ext('https://railway.com/legal/dpa', 'Auftragsverarbeitungsvertrag von Railway'),
-        ', ',
-        ext('https://trust.railway.com/item/subprocessors', 'Unterauftragsverarbeiter'),
-        '.',
+        h('b', null, t('Widerspruch:'), ' '),
+        t('In den Einstellungen („⚙️ Einstellungen → Über → Anonyme Nutzungsstatistik senden“) können Sie die Statistik jederzeit abschalten. Diese Wahl wird nur im Local Storage Ihres Browsers gespeichert.'),
       ),
     ),
     section(
-      `${n()}. Keine weiteren Empfänger`,
-      p('Es werden keine Daten an weitere Empfänger übermittelt. Es gibt keine Einbindung von Social-Media-Diensten, Videoplattformen, Karten, Schriftarten- oder Skript-Servern Dritter.'),
-    ),
-    section(
-      `${n()}. Ihre Rechte`,
+      t('{n}. Hosting und Server-Protokolle', { n: n() }),
       p(
-        'Sie haben das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18) und Widerspruch gegen die Verarbeitung (Art. 21 DSGVO). Wenden Sie sich dazu an den oben genannten Verantwortlichen.',
+        t('Die Website wird bei der Railway Corporation, 548 Market St PMB 68956, San Francisco, CA 94104, USA, betrieben. Railway verarbeitet die Daten als Auftragsverarbeiter auf Grundlage eines Vertrags zur Auftragsverarbeitung nach Art. 28 DSGVO.'),
+        ' ',
+        t('Standort des Servers: {location}.', { location: info.serverLocation }),
       ),
       p(
-        'Sie haben außerdem das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO)',
-        info.authority ? ', insbesondere bei der für uns zuständigen Behörde:' : '.',
+        t('Beim Aufruf der Website werden technisch notwendige Daten verarbeitet: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Statuscode, übertragene Datenmenge sowie Angaben zum Browser (User-Agent). Die App selbst schreibt keine Zugriffsprotokolle; die Datenbank für Kontaktformular und Nutzungsstatistik liegt ebenfalls bei Railway.'),
+        ' ',
+        t('Die Hosting-Plattform speichert Zugriffsprotokolle für höchstens {days} Tage und löscht sie danach automatisch.', { days: info.logDays }),
+      ),
+      p(t('Rechtsgrundlage: {basis}', { basis: legalBasisHosting(info) })),
+      p(
+        t('Railway ist ein Unternehmen mit Sitz in den USA; ein Zugriff aus den USA kann nicht ausgeschlossen werden. Die Übermittlung ist durch die EU-Standardvertragsklauseln (Durchführungsbeschluss (EU) 2021/914) im Auftragsverarbeitungsvertrag von Railway abgesichert bzw. – soweit Railway nach dem EU-U.S. Data Privacy Framework zertifiziert ist – durch den Angemessenheitsbeschluss der EU-Kommission vom 10. Juli 2023.'),
+        ' ',
+        ...rich(t('Weitere Informationen: {dpa}, {subprocessors}.'), {
+          dpa: ext('https://railway.com/legal/dpa', t('Auftragsverarbeitungsvertrag von Railway')),
+          subprocessors: ext('https://trust.railway.com/item/subprocessors', t('Unterauftragsverarbeiter')),
+        }),
+      ),
+    ),
+    section(
+      t('{n}. Keine weiteren Empfänger', { n: n() }),
+      p(t('Es werden keine Daten an weitere Empfänger übermittelt. Es gibt keine Einbindung von Social-Media-Diensten, Videoplattformen, Karten, Schriftarten- oder Skript-Servern Dritter.')),
+    ),
+    section(
+      t('{n}. Ihre Rechte', { n: n() }),
+      p(
+        t('Sie haben das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18) und Widerspruch gegen die Verarbeitung (Art. 21 DSGVO). Wenden Sie sich dazu an den oben genannten Verantwortlichen.'),
+      ),
+      p(
+        info.authority
+          ? t('Sie haben außerdem das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO), insbesondere bei der für uns zuständigen Behörde:')
+          : t('Sie haben außerdem das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO).'),
       ),
       info.authority ? p(lines(info.authority)) : null,
     ),
     section(
-      `${n()}. Kinder`,
+      t('{n}. Kinder', { n: n() }),
       p(
-        'Die App ist für den Einsatz im Unterricht unter Aufsicht einer Lehrkraft gedacht. Es werden keine Daten der Kinder an uns oder Dritte übermittelt (die anonyme Nutzungsstatistik enthält keine Angaben zu Personen); die Kinder benötigen kein Konto.',
+        t('Die App ist für den Einsatz im Unterricht unter Aufsicht einer Lehrkraft gedacht. Es werden keine Daten der Kinder an uns oder Dritte übermittelt (die anonyme Nutzungsstatistik enthält keine Angaben zu Personen); die Kinder benötigen kein Konto.'),
       ),
     ),
   );
 }
 
 function lizenzen(): HTMLElement {
+  const licenceText = (href: string) => ext(href, t('Lizenztext'));
   return h(
     'div',
     { class: 'legal' },
-    h('h2', null, 'Lizenzen & Danksagung'),
+    h('h2', null, t('Lizenzen & Danksagung')),
     section(
-      'Schriftarten (SIL Open Font License 1.1)',
+      t('Schriftarten (SIL Open Font License 1.1)'),
       list([
-        ['Fredoka – Copyright 2016 The Fredoka Project Authors. ', ext('/fonts/OFL-Fredoka.txt', 'Lizenztext')],
-        ['Playwrite DE Grund – Copyright 2023 The Playwrite Project Authors (TypeTogether). ', ext('/fonts/OFL-PlaywriteDEGrund.txt', 'Lizenztext')],
+        ['Fredoka – Copyright 2016 The Fredoka Project Authors. ', licenceText('/fonts/OFL-Fredoka.txt')],
+        ['Playwrite DE Grund – Copyright 2023 The Playwrite Project Authors (TypeTogether). ', licenceText('/fonts/OFL-PlaywriteDEGrund.txt')],
         [
-          '„Druckvorlage“ – eine verkleinerte, umbenannte Fassung (Modified Version) der Schrift Andika, Copyright (c) 2004–2022 SIL International. Die reservierten Schriftnamen „Andika“ und „SIL“ werden für diese Fassung nicht verwendet. ',
-          ext('/fonts/OFL-Druckvorlage-Andika.txt', 'Lizenztext'),
+          t('„Druckvorlage“ – eine verkleinerte, umbenannte Fassung (Modified Version) der Schrift Andika, Copyright (c) 2004–2022 SIL International. Die reservierten Schriftnamen „Andika“ und „SIL“ werden für diese Fassung nicht verwendet.'),
+          ' ',
+          licenceText('/fonts/OFL-Druckvorlage-Andika.txt'),
         ],
       ]),
     ),
     section(
-      'Schreibreihenfolge der Hiragana und Katakana',
+      t('Schreibreihenfolge der Hiragana und Katakana'),
       list([
-        [
-          'KanjiVG – Copyright (C) Ulrich Apel und Mitwirkende, ',
-          ext('https://kanjivg.tagaini.net', 'kanjivg.tagaini.net'),
-          '. Lizenz: ',
-          ext('https://creativecommons.org/licenses/by-sa/3.0/deed.de', 'CC BY-SA 3.0'),
-          '. Änderungen: Die Strichpfade wurden umgerechnet und für die Schreib-Animationen skaliert; diese Daten stehen unter derselben Lizenz.',
-        ],
+        rich(
+          t('KanjiVG – Copyright (C) Ulrich Apel und Mitwirkende, {site}. Lizenz: {licence}. Änderungen: Die Strichpfade wurden umgerechnet und für die Schreib-Animationen skaliert; diese Daten stehen unter derselben Lizenz.'),
+          {
+            site: ext('https://kanjivg.tagaini.net', 'kanjivg.tagaini.net'),
+            licence: ext('https://creativecommons.org/licenses/by-sa/3.0/deed.de', 'CC BY-SA 3.0'),
+          },
+        ),
       ]),
     ),
     section(
-      'Handschrift-Erkennung',
+      t('Handschrift-Erkennung'),
       p(
-        'Das Erkennungsmodell wurde mit dem EMNIST-Datensatz trainiert: G. Cohen, S. Afshar, J. Tapson, A. van Schaik (2017): „EMNIST: an extension of MNIST to handwritten letters“, ',
-        ext('https://arxiv.org/abs/1702.05373', 'arXiv:1702.05373'),
-        ', Ursprungsdaten: NIST Special Database 19. Lizenz: ',
-        ext('https://creativecommons.org/licenses/by/4.0/deed.de', 'CC BY 4.0'),
-        '. Änderungen: Aus den Daten wurde ein eigenes Erkennungsmodell trainiert (abgeleitetes Werk).',
+        ...rich(
+          t('Das Erkennungsmodell wurde mit dem EMNIST-Datensatz trainiert: G. Cohen, S. Afshar, J. Tapson, A. van Schaik (2017): „EMNIST: an extension of MNIST to handwritten letters“, {paper}, Ursprungsdaten: NIST Special Database 19. Lizenz: {licence}. Änderungen: Aus den Daten wurde ein eigenes Erkennungsmodell trainiert (abgeleitetes Werk).'),
+          {
+            paper: ext('https://arxiv.org/abs/1702.05373', 'arXiv:1702.05373'),
+            licence: ext('https://creativecommons.org/licenses/by/4.0/deed.de', 'CC BY 4.0'),
+          },
+        ),
       ),
       p(
-        'Zusätzliche Übungsbeispiele und die Vergleichsvorlagen wurden aus frei lizenzierten Schriften (SIL Open Font License bzw. Apache License 2.0) erzeugt, u. a. Andika, Playwrite DE Grund, Patrick Hand, Schoolbell, Comic Neue, Playpen Sans, Delius, Short Stack, Indie Flower, Gochi Hand, Kalam, Just Another Hand, Architects Daughter, Coming Soon, Sue Ellen Francisco, Handlee, Neucha, Mali, Itim und Sniglet.',
+        t('Zusätzliche Übungsbeispiele und die Vergleichsvorlagen wurden aus frei lizenzierten Schriften (SIL Open Font License bzw. Apache License 2.0) erzeugt, u. a. Andika, Playwrite DE Grund, Patrick Hand, Schoolbell, Comic Neue, Playpen Sans, Delius, Short Stack, Indie Flower, Gochi Hand, Kalam, Just Another Hand, Architects Daughter, Coming Soon, Sue Ellen Francisco, Handlee, Neucha, Mali, Itim und Sniglet.'),
       ),
     ),
-    section('Programm', p('Die App verwendet im Browser keine Bibliotheken von Drittanbietern. Alle Grafiken und Töne werden im Browser erzeugt. Der Server nutzt für die Datenbank node-postgres (MIT-Lizenz).')),
+    section(
+      t('Programm'),
+      p(t('Im Browser verwendet die App eine einzige Bibliothek von Drittanbietern:')),
+      list([
+        [
+          ext('https://github.com/kazuhikoarase/qrcode-generator', 'qrcode-generator'),
+          ' – Copyright (c) 2009 Kazuhiko Arase. ',
+          ...rich(t('Lizenz: {licence}. Sie erzeugt im Messemodus den QR-Code.'), { licence: ext('https://opensource.org/licenses/MIT', 'MIT') }),
+          ' ',
+          t('„QR Code“ ist eine eingetragene Marke der DENSO WAVE INCORPORATED.'),
+        ],
+      ]),
+      p(t('Alle Grafiken und Töne werden im Browser erzeugt. Der Server nutzt für die Datenbank node-postgres (MIT-Lizenz).')),
+    ),
+  );
+}
+
+/** "Rechtlich verbindlich ist die deutsche Fassung." with a button to switch between the original and the translation */
+function originalNote(german: boolean, toggle: () => void): HTMLElement {
+  return h(
+    'div',
+    { class: 'help', style: 'border:2px solid currentColor;border-radius:12px;padding:6px 12px;margin-bottom:.6em;display:flex;gap:12px;align-items:center;flex-wrap:wrap' },
+    h('span', null, t('Rechtlich verbindlich ist die deutsche Fassung.')),
+    button(german ? t('Übersetzung anzeigen') : t('Deutsch anzeigen'), toggle, 'btn small'),
   );
 }
 
 export async function openLegal(page: LegalPage, onClose?: () => void): Promise<void> {
   const info = await loadLegal();
-  const body = page === 'impressum' ? impressum(info) : page === 'datenschutz' ? datenschutz(info) : lizenzen();
+  // imprint and privacy policy are binding in German: a translated page can show the German original
+  const binding = page !== 'lizenzen' && language() !== 'de';
+  let german = false;
+  const box = h('div');
+  const render = () => {
+    clear(box);
+    const body = inGerman(german, () => (page === 'impressum' ? impressum(info) : page === 'datenschutz' ? datenschutz(info) : lizenzen()));
+    if (german) {
+      body.lang = 'de';
+      body.dir = 'ltr';
+    }
+    box.append(...(binding ? [originalNote(german, () => {
+      german = !german;
+      render();
+    })] : []), body);
+  };
+  render();
   const nav = h(
     'div',
     { class: 'actions', style: 'justify-content:space-between' },
@@ -354,7 +433,7 @@ export async function openLegal(page: LegalPage, onClose?: () => void): Promise<
         .filter((x) => x !== page)
         .map((x) =>
           button(
-            x === 'impressum' ? 'Impressum' : x === 'datenschutz' ? 'Datenschutz' : 'Lizenzen',
+            x === 'impressum' ? t('Impressum') : x === 'datenschutz' ? t('Datenschutz') : t('Lizenzen'),
             () => {
               m.close();
               void openLegal(x, onClose);
@@ -363,9 +442,9 @@ export async function openLegal(page: LegalPage, onClose?: () => void): Promise<
           ),
         ),
     ),
-    button('Schließen', () => m.close(), 'btn primary'),
+    button(t('Schließen'), () => m.close(), 'btn primary'),
   );
-  const m = modal(h('div', { style: 'max-width:820px' }, body, nav), onClose);
+  const m = modal(h('div', { style: 'max-width:820px' }, box, nav), onClose);
 }
 
 /** Small row of links (start screen, lab). */
@@ -382,7 +461,7 @@ export function legalLinks(): HTMLElement {
       },
       label,
     );
-  return h('nav', { class: 'legal-links', 'aria-label': 'Rechtliches' }, link('Impressum', 'impressum'), ' · ', link('Datenschutz', 'datenschutz'), ' · ', link('Lizenzen', 'lizenzen'));
+  return h('nav', { class: 'legal-links', 'aria-label': t('Rechtliches') }, link(t('Impressum'), 'impressum'), ' · ', link(t('Datenschutz'), 'datenschutz'), ' · ', link(t('Lizenzen'), 'lizenzen'));
 }
 
 /** Warning for the operator when the app runs publicly without imprint/privacy details. */
@@ -393,6 +472,6 @@ export async function legalWarning(): Promise<HTMLElement | null> {
   return h(
     'div',
     { class: 'legal-warning', role: 'status' },
-    '⚠️ Für den öffentlichen Betrieb fehlen noch Impressum und Datenschutz-Angaben des Betreibers (siehe RECHTLICHES.md).',
+    t('⚠️ Für den öffentlichen Betrieb fehlen noch Impressum und Datenschutz-Angaben des Betreibers (siehe RECHTLICHES.md).'),
   );
 }

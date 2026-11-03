@@ -7,6 +7,7 @@ import type { RGBAImage, ScanResult, VisionOptions } from '../vision/types.ts';
 import type { EngineInfo, SavedMemory } from './engine.ts';
 import type { Analysis } from './recognizer.ts';
 import type { ScriptId } from './scripts.ts';
+import { t } from '../i18n/i18n.ts';
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: number };
 
@@ -54,7 +55,7 @@ class WorkerHandle {
     return new Promise<T>((resolve, reject) => {
       const timer = window.setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error('Zeitüberschreitung bei der Auswertung'));
+        reject(new Error(t('Zeitüberschreitung bei der Auswertung')));
       }, timeout);
       this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject, timer });
       this.w.postMessage({ ...msg, id }, transfer);

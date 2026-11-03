@@ -1,6 +1,7 @@
 // App settings, persisted in localStorage (only on this device, nothing personal).
 import type { Quad } from '../camera/perspective.ts';
 import { detectLocale } from '../i18n/detect.ts';
+import { t, tk } from '../i18n/i18n.ts';
 import { isScriptId, scriptOf, type ScriptId } from '../recog/scripts.ts';
 import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
 
@@ -123,25 +124,25 @@ export const DEFAULTS: Settings = {
   duel: {
     by: 'pen',
     teams: [
-      { id: 'A', name: 'Rote Raketen', pen: 'rot', slip: 'rosa' },
-      { id: 'B', name: 'Blaue Blitze', pen: 'blau', slip: 'hellblau' },
+      { id: 'A', name: tk('Rote Raketen'), pen: 'rot', slip: 'rosa' },
+      { id: 'B', name: tk('Blaue Blitze'), pen: 'blau', slip: 'hellblau' },
     ],
     castle: 'mittel',
     timeLimit: 0,
   },
-  siege: { className: 'Unsere Klasse', size: 'mittel', timeLimit: 0 },
+  siege: { className: tk('Unsere Klasse'), size: 'mittel', timeLimit: 0 },
   tower: {
     by: 'pen',
     count: 2,
     players: [
-      { id: 'A', name: 'Rote Raketen', pen: 'rot', slip: 'rosa' },
-      { id: 'B', name: 'Blaue Blitze', pen: 'blau', slip: 'hellblau' },
-      { id: 'C', name: 'Grüne Geckos', pen: 'gruen', slip: 'gruen' },
-      { id: 'D', name: 'Lila Lamas', pen: 'lila', slip: 'gelb' },
-      { id: 'E', name: 'Orange Otter', pen: 'orange', slip: 'orange' },
-      { id: 'F', name: 'Pinke Pinguine', pen: 'pink', slip: 'lila' },
-      { id: 'G', name: 'Türkise Tiger', pen: 'tuerkis', slip: 'blau' },
-      { id: 'H', name: 'Braune Bären', pen: 'braun', slip: 'rot' },
+      { id: 'A', name: tk('Rote Raketen'), pen: 'rot', slip: 'rosa' },
+      { id: 'B', name: tk('Blaue Blitze'), pen: 'blau', slip: 'hellblau' },
+      { id: 'C', name: tk('Grüne Geckos'), pen: 'gruen', slip: 'gruen' },
+      { id: 'D', name: tk('Lila Lamas'), pen: 'lila', slip: 'gelb' },
+      { id: 'E', name: tk('Orange Otter'), pen: 'orange', slip: 'orange' },
+      { id: 'F', name: tk('Pinke Pinguine'), pen: 'pink', slip: 'lila' },
+      { id: 'G', name: tk('Türkise Tiger'), pen: 'tuerkis', slip: 'blau' },
+      { id: 'H', name: tk('Braune Bären'), pen: 'braun', slip: 'rot' },
     ],
     goal: 'mittel',
     timeLimit: 0,
@@ -167,9 +168,17 @@ export function firstChar(script: ScriptId): string {
   return scriptOf(script).practice[0].chars[0];
 }
 
+/** the defaults with the team and class names in the page language (they can be renamed) */
+function localDefaults(): Settings {
+  const s = structuredClone(DEFAULTS);
+  for (const team of [...s.duel.teams, ...s.tower.players]) team.name = t(team.name);
+  s.siege.className = t(s.siege.className);
+  return s;
+}
+
 /** the defaults for this device (phones and tablets hold the camera in the hand) */
 function freshSettings(): Settings {
-  const s = structuredClone(DEFAULTS);
+  const s = localDefaults();
   s.camera.mode = isHandheld() ? 'hand' : 'fest';
   // first visit: language and script from the browser (language list and time zone; no location query)
   const loc = detectLocale();
@@ -184,13 +193,13 @@ export function loadSettings(): Settings {
     const raw = localStorage.getItem(KEY);
     if (!raw) return freshSettings();
     const parsed = JSON.parse(raw);
-    const s = merge(structuredClone(DEFAULTS), parsed);
+    const s = merge(localDefaults(), parsed);
     // older versions only knew fixed cameras; on a phone or tablet the camera is held in the hand
     if (!parsed.camera?.mode) s.camera.mode = isHandheld() ? 'hand' : 'fest';
-    if (!Array.isArray(s.duel.teams) || s.duel.teams.length !== 2) s.duel.teams = structuredClone(DEFAULTS.duel.teams);
-    if (!Array.isArray(s.tower.players) || !s.tower.players.length) s.tower.players = structuredClone(DEFAULTS.tower.players);
+    if (!Array.isArray(s.duel.teams) || s.duel.teams.length !== 2) s.duel.teams = localDefaults().duel.teams;
+    if (!Array.isArray(s.tower.players) || !s.tower.players.length) s.tower.players = localDefaults().tower.players;
     // older versions had four towers: keep those teams, add the new ones
-    s.tower.players = DEFAULTS.tower.players.map((d, i) => ({ ...structuredClone(d), ...s.tower.players[i], id: d.id }));
+    s.tower.players = localDefaults().tower.players.map((d, i) => ({ ...d, ...s.tower.players[i], id: d.id }));
     s.tower.count = Math.min(8, Math.max(2, Math.round(Number(s.tower.count)) || 2));
     // older versions only knew "ruled: on/off"
     const oldRuled = (parsed.recog as { ruled?: unknown } | undefined)?.ruled;

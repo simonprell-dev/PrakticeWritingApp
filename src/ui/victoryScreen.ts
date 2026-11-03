@@ -4,6 +4,15 @@ import type { SiegeResult } from '../scenes/siegeScene.ts';
 import type { TowerResult } from '../scenes/towerScene.ts';
 import { donateBlock } from './donate.ts';
 import { button, h, modal } from './dom.ts';
+import { t } from '../i18n/i18n.ts';
+
+/** "Spielzeit: 3 Min 12 s" (with a full stop when it ends a sentence) */
+function playTime(seconds: number, dot = false): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  if (dot) return m ? t('Spielzeit: {m} Min {s} s.', { m, s }) : t('Spielzeit: {s} s.', { s });
+  return m ? t('Spielzeit: {m} Min {s} s', { m, s }) : t('Spielzeit: {s} s', { s });
+}
 
 function stickerCanvas(st: AnyCanvas): HTMLCanvasElement {
   const c = h('canvas', { width: 120, height: 120 });
@@ -24,18 +33,26 @@ export function confetti(colors: string[], n = 90): void {
   }
 }
 
-function teamCol(t: DuelTeamResult, winner: boolean): HTMLElement {
+function teamCol(tm: DuelTeamResult, winner: boolean): HTMLElement {
+  const written = tm.stats.written;
+  const popped = tm.stats.castleDamage;
   return h(
     'div',
-    { class: 'team-col', style: `border-color:${t.color};${winner ? 'background:#fffbe6' : ''}` },
-    h('h3', { style: `color:${t.color}` }, (winner ? '🏆 ' : '') + t.name),
-    h('div', { style: 'font-size:1.2rem' }, `✎ ${t.stats.written} Zeichen geschrieben · ${t.stats.castleDamage} ${t.stats.castleDamage === 1 ? 'Blase' : 'Blasen'} zerplatzt`),
-    h('div', { class: 'stars', style: 'font-size:1.8rem' }, '★'.repeat(t.avgStars), h('span', { class: 'off' }, '★'.repeat(5 - t.avgStars))),
-    t.best
-      ? h('div', { class: 'trophy' }, h('b', null, '👑 Schönstes Zeichen'), stickerCanvas(t.best.sticker), h('span', { class: 'help' }, `${t.best.score} Punkte`))
+    { class: 'team-col', style: `border-color:${tm.color};${winner ? 'background:#fffbe6' : ''}` },
+    h('h3', { style: `color:${tm.color}` }, (winner ? '🏆 ' : '') + tm.name),
+    h(
+      'div',
+      { style: 'font-size:1.2rem' },
+      popped === 1
+        ? t('✎ {written} Zeichen geschrieben · {popped} Blase zerplatzt', { written, popped })
+        : t('✎ {written} Zeichen geschrieben · {popped} Blasen zerplatzt', { written, popped }),
+    ),
+    h('div', { class: 'stars', style: 'font-size:1.8rem' }, '★'.repeat(tm.avgStars), h('span', { class: 'off' }, '★'.repeat(5 - tm.avgStars))),
+    tm.best
+      ? h('div', { class: 'trophy' }, h('b', null, t('👑 Schönstes Zeichen')), stickerCanvas(tm.best.sticker), h('span', { class: 'help' }, t('{n} Punkte', { n: tm.best.score })))
       : null,
-    t.bravest && t.bravest.hits > 0
-      ? h('div', { class: 'trophy' }, h('b', null, '💪 Tapferste Figur'), stickerCanvas(t.bravest.sticker), h('span', { class: 'help' }, `${t.bravest.hits} Treffer`))
+    tm.bravest && tm.bravest.hits > 0
+      ? h('div', { class: 'trophy' }, h('b', null, t('💪 Tapferste Figur')), stickerCanvas(tm.bravest.sticker), h('span', { class: 'help' }, t('{n} Treffer', { n: tm.bravest.hits })))
       : null,
   );
 }
@@ -50,19 +67,19 @@ export function openVictory(r: DuelResult, again: () => void, menu: () => void):
     h(
       'div',
       { class: 'banner', style: winnerTeam ? `color:${winnerTeam.color}` : '' },
-      winnerTeam ? `${winnerTeam.name} gewinnt!` : 'Unentschieden – alle haben gewonnen!',
+      winnerTeam ? t('{team} gewinnt!', { team: winnerTeam.name }) : t('Unentschieden – alle haben gewonnen!'),
     ),
-    h('p', { class: 'help', style: 'font-size:1.1rem;margin-top:-.4em' }, 'Ihr habt toll geschrieben! Hier sind eure schönsten Zeichen:'),
+    h('p', { class: 'help', style: 'font-size:1.1rem;margin-top:-.4em' }, t('Ihr habt toll geschrieben! Hier sind eure schönsten Zeichen:')),
     h('div', { class: 'teams' }, teamCol(a, r.winner === 'A'), teamCol(b, r.winner === 'B')),
     donateBlock(),
     h(
       'div',
       { class: 'actions', style: 'justify-content:center' },
-      button('Menü', () => {
+      button(t('Menü'), () => {
         m.close();
         menu();
       }, 'btn'),
-      button('Nochmal!', () => {
+      button(t('Nochmal!'), () => {
         m.close();
         again();
       }, 'btn primary'),
@@ -76,7 +93,6 @@ export function openTowerResult(r: TowerResult, again: () => void, menu: () => v
   confetti(winner ? [winner.color, '#ffcf3d', '#ffffff'] : [...r.players.map((p) => p.color), '#ffcf3d']);
   const ranking = r.players.map((p, i) => ({ p, i })).sort((a, b) => b.p.metres - a.p.metres);
   const medals = ['🥇', '🥈', '🥉', '🏅'];
-  const minutes = Math.floor(r.seconds / 60);
   const rows = h('div', { class: 'tower-ranking' });
   ranking.forEach(({ p, i }) => {
     // equal heights share the medal of the better place
@@ -91,33 +107,35 @@ export function openTowerResult(r: TowerResult, again: () => void, menu: () => v
           { class: 'tower-info' },
           h('h3', { style: `color:${p.color}` }, (i === r.winner ? '🏆 ' : '') + p.name),
           h('div', { class: 'tower-bar' }, h('span', { style: `width:${Math.min(100, (p.metres / r.goal) * 100)}%;background:${p.color}` })),
-          h('div', { class: 'help' }, `${p.metres} m von ${r.goal} m · ✎ ${p.written} Zeichen · ${p.blocks} Bausteine`),
+          h('div', { class: 'help' }, t('{metres} m von {goal} m · ✎ {written} Zeichen · {blocks} Bausteine', { metres: p.metres, goal: r.goal, written: p.written, blocks: p.blocks })),
           p.blocks ? h('div', { class: 'stars' }, '★'.repeat(p.avgStars), h('span', { class: 'off' }, '★'.repeat(5 - p.avgStars))) : null,
         ),
-        p.best ? h('div', { class: 'trophy' }, h('b', null, '👑 Schönstes'), stickerCanvas(p.best.sticker), h('span', { class: 'help' }, `${p.best.score} Punkte`)) : null,
+        p.best ? h('div', { class: 'trophy' }, h('b', null, t('👑 Schönstes')), stickerCanvas(p.best.sticker), h('span', { class: 'help' }, t('{n} Punkte', { n: p.best.score }))) : null,
       ),
     );
   });
   const content = h(
     'div',
     { class: 'victory', style: 'min-width:min(860px,92vw)' },
-    h('div', { class: 'banner', style: winner ? `color:${winner.color}` : '' }, winner ? `Sieg für ${winner.name}!` : 'Unentschieden!'),
+    h('div', { class: 'banner', style: winner ? `color:${winner.color}` : '' }, winner ? t('Sieg für {team}!', { team: winner.name }) : t('Unentschieden!')),
     h(
       'p',
       { style: 'font-size:1.2rem;margin:.1em 0 .6em' },
-      r.clones ? `Die Aliens haben sich ${r.clones}× geklont und ${r.gags} lustige Pannen erlebt.` : `Zork hat alles allein geschafft – mit ${r.gags} lustigen Pannen.`,
-      ` Spielzeit: ${minutes ? minutes + ' Min ' : ''}${Math.floor(r.seconds % 60)} s.`,
+      r.clones
+        ? t('Die Aliens haben sich {clones}× geklont und {gags} lustige Pannen erlebt.', { clones: r.clones, gags: r.gags })
+        : t('Zork hat alles allein geschafft – mit {gags} lustigen Pannen.', { gags: r.gags }),
+      ` ${playTime(r.seconds, true)}`,
     ),
     rows,
     donateBlock(),
     h(
       'div',
       { class: 'actions', style: 'justify-content:center' },
-      button('Menü', () => {
+      button(t('Menü'), () => {
         m.close();
         menu();
       }, 'btn'),
-      button('Nochmal!', () => {
+      button(t('Nochmal!'), () => {
         m.close();
         again();
       }, 'btn primary'),
@@ -130,24 +148,25 @@ export function openSiegeResult(r: SiegeResult, again: () => void, menu: () => v
   confetti(r.won ? [r.color, '#ffcf3d', '#ffffff', '#8f6ee0'] : [r.color, '#ffcf3d']);
   const castles = h('div', { style: 'font-size:2.6rem;letter-spacing:.15em;margin:.2em 0' });
   for (let i = 0; i < r.wallsTotal; i++) castles.append(h('span', { style: i < r.walls ? '' : 'filter:grayscale(1);opacity:.35' }, '🏰'));
-  const minutes = Math.floor(r.seconds / 60);
   const content = h(
     'div',
     { class: 'victory', style: 'min-width:min(760px,92vw)' },
-    h('div', { class: 'banner', style: `color:${r.color}` }, r.won ? 'Die Riesenburg ist erobert!' : 'Gut gekämpft!'),
-    h('p', { style: 'font-size:1.3rem;margin:.2em 0' }, r.won ? `${r.className} hat Riese Rumpel besiegt!` : `${r.className} hat ${r.walls} von ${r.wallsTotal} Mauern geschafft.`),
+    h('div', { class: 'banner', style: `color:${r.color}` }, r.won ? t('Die Riesenburg ist erobert!') : t('Gut gekämpft!')),
+    h('p', { style: 'font-size:1.3rem;margin:.2em 0' }, r.won
+        ? t('{name} hat Riese Rumpel besiegt!', { name: r.className })
+        : t('{name} hat {walls} von {total} Mauern geschafft.', { name: r.className, walls: r.walls, total: r.wallsTotal })),
     castles,
     h(
       'div',
       { class: 'team-col', style: `border-color:${r.color};max-width:620px;margin:0 auto` },
-      h('div', { style: 'font-size:1.25rem' }, `✎ ${r.stats.written} Zeichen geschrieben · ⭐ ${r.stars} Sterne · ${r.stats.castleDamage} Blasen zerplatzt`),
-      h('div', { class: 'help' }, `Spielzeit: ${minutes ? minutes + ' Min ' : ''}${Math.floor(r.seconds % 60)} s`),
+      h('div', { style: 'font-size:1.25rem' }, t('✎ {written} Zeichen geschrieben · ⭐ {stars} Sterne · {popped} Blasen zerplatzt', { written: r.stats.written, stars: r.stars, popped: r.stats.castleDamage })),
+      h('div', { class: 'help' }, playTime(r.seconds)),
       h(
         'div',
         { style: 'display:flex;gap:30px;justify-content:center;flex-wrap:wrap' },
-        r.best ? h('div', { class: 'trophy' }, h('b', null, '👑 Schönstes Zeichen'), stickerCanvas(r.best.sticker), h('span', { class: 'help' }, `${r.best.score} Punkte`)) : null,
+        r.best ? h('div', { class: 'trophy' }, h('b', null, t('👑 Schönstes Zeichen')), stickerCanvas(r.best.sticker), h('span', { class: 'help' }, t('{n} Punkte', { n: r.best.score }))) : null,
         r.bravest && r.bravest.hits > 0
-          ? h('div', { class: 'trophy' }, h('b', null, '💪 Tapferste Figur'), stickerCanvas(r.bravest.sticker), h('span', { class: 'help' }, `${r.bravest.hits} Treffer`))
+          ? h('div', { class: 'trophy' }, h('b', null, t('💪 Tapferste Figur')), stickerCanvas(r.bravest.sticker), h('span', { class: 'help' }, t('{n} Treffer', { n: r.bravest.hits })))
           : null,
       ),
     ),
@@ -155,11 +174,11 @@ export function openSiegeResult(r: SiegeResult, again: () => void, menu: () => v
     h(
       'div',
       { class: 'actions', style: 'justify-content:center' },
-      button('Menü', () => {
+      button(t('Menü'), () => {
         m.close();
         menu();
       }, 'btn'),
-      button('Nochmal!', () => {
+      button(t('Nochmal!'), () => {
         m.close();
         again();
       }, 'btn primary'),
