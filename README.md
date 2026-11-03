@@ -148,6 +148,27 @@ npm install
 npm run dev          # http://localhost:5173  (Kamera funktioniert auf localhost)
 ```
 
+### Mit Datenbank: Statistik, Kontaktformular, Admin (lokal testen)
+Ohne `DATABASE_URL` läuft alles wie bisher; `/api/*` antwortet dann mit 503. Zum Ausprobieren mit Postgres (Docker):
+```bash
+docker compose up -d db          # Postgres 17 auf localhost:5432 (Benutzer/Passwort/DB: krakel)
+cp .env.example .env             # DATABASE_URL und ADMIN_PASSWORD (bitte ändern)
+npm run build
+npm start                        # http://localhost:3000 – Tabellen werden beim Start angelegt
+# Admin: http://localhost:3000/admin
+```
+Zum Entwickeln mit Hot Reload: `npm run dev:api` startet `server.js` (API auf Port 3000, liest `.env`, startet bei Änderungen in `server/` neu) und Vite, das `/api` dorthin weiterleitet. Admin-Seite dann unter http://localhost:5173/admin.
+
+| Route | Zweck |
+|---|---|
+| `POST /api/event` | anonyme Nutzungsstatistik `{type: visit\|game_start\|game_end\|scan, mode, script, lang, chars?, durationS?}` – keine IP, kein Cookie, nur der Kalendertag wird gespeichert |
+| `POST /api/contact` | Kontaktformular `{message, name?, email?}` (Honeypot `website`, Mindest-Ausfüllzeit) |
+| `POST /api/admin/login` | `{password}` gegen `ADMIN_PASSWORD` → Sitzungs-Cookie (HttpOnly, SameSite=Strict, 12 h) |
+| `GET /api/admin/stats?days=30` | Besuche, Spiele, Zeichen pro Tag, Spielart, Schrift, Sprache |
+| `GET /api/admin/messages?page=1&status=new` · `POST /api/admin/messages/:id` | Posteingang; `{status: new\|read\|done}` oder `{delete: true}` |
+
+Schutz: 2 KB Größenlimit (Kontakt 24 KB), Rate-Limits pro IP nur im Arbeitsspeicher, strenge Whitelists. Der Server löscht Nachrichten nach 12 und Statistik nach 13 Monaten (beim Start und täglich). Code: `server/` (`api.js`, `db.js` mit versionierten Migrationen, `validate.js`, `session.js`).
+
 ### Auf Railway
 Railway erkennt das Projekt über `railway.json`:
 - Build: `npm run build`
@@ -159,11 +180,12 @@ Railway erkennt das Projekt über `railway.json`:
 3. Im Service: **Settings → Region → EU West (Amsterdam)** wählen (Datenschutz).
 4. Im Service: **Variables** mit den Angaben für Impressum und Datenschutz anlegen (`LEGAL_NAME`, `LEGAL_ADDRESS`, `LEGAL_EMAIL`, …), siehe **[RECHTLICHES.md](RECHTLICHES.md)**.
 5. Im Service: **Settings → Networking → Generate Domain**. Railway liefert HTTPS; das ist für den Kamerazugriff nötig.
-6. Den Auftragsverarbeitungsvertrag (DPA) mit Railway abschließen und die Checkliste in **[RECHTLICHES.md](RECHTLICHES.md)** durchgehen.
+6. Optional für Statistik, Kontaktformular und `/admin`: im Projekt **+ New → Database → PostgreSQL** (gleiche Region), im App-Service `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` und ein langes `ADMIN_PASSWORD` setzen (optional `ADMIN_SECRET`).
+7. Den Auftragsverarbeitungsvertrag (DPA) mit Railway abschließen und die Checkliste in **[RECHTLICHES.md](RECHTLICHES.md)** durchgehen.
 
 Alternativ mit der CLI: `npm i -g @railway/cli`, dann `railway login` und `railway up`.
 
-`server.js` hat keine Abhängigkeiten. Es liefert `dist/` mit gzip, Caching-Headern und einer strengen CSP aus.
+`server.js` liefert `dist/` mit gzip, Caching-Headern und einer strengen CSP aus. Einzige Abhängigkeit ist `pg` für die optionale Datenbank (`server/`).
 
 ---
 
@@ -203,6 +225,7 @@ Alternativ mit der CLI: `npm i -g @railway/cli`, dann `railway login` und `railw
 
 ### Tests & Werkzeuge
 ```bash
+npx vitest run --no-file-parallelism   # alle Tests nacheinander (parallel braucht viel Speicher)
 npm test                         # Vision-Pipeline (synthetische Seiten), CNN-Parität, Duell-Balance, Türme (alle 40 Pannen), Malkarten, Spielstände
 npm run lab                      # Labor: Fotos laden, alle Zwischenschritte und Teilscores ansehen
 node tools/calibrate.ts          # Score-Verteilung je Qualitätsstufe (zum Einstellen der Strenge)

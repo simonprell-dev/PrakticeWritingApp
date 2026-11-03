@@ -1,10 +1,11 @@
-// Dependency-free static server for Railway: serves dist/ on $PORT.
+// Static server for Railway: serves dist/ on $PORT, plus the small JSON API in server/ (Postgres, optional).
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createApi } from './server/api.js';
 
 const ROOT = fileURLToPath(new URL('./dist/', import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
@@ -99,12 +100,19 @@ function cacheControl(urlPath) {
   return 'no-cache';
 }
 
+const api = createApi(process.env);
+
 const server = createServer(async (req, res) => {
+  const url = new URL(req.url || '/', 'http://localhost');
+  if (url.pathname.startsWith('/api/')) {
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
+    await api.handle(req, res, url);
+    return;
+  }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405, { Allow: 'GET, HEAD' }).end();
     return;
   }
-  const url = new URL(req.url || '/', 'http://localhost');
   if (url.pathname === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'text/plain' }).end('ok');
     return;
@@ -121,6 +129,9 @@ const server = createServer(async (req, res) => {
     res.writeHead(400).end();
     return;
   }
+  // the admin page is its own small page (admin.html), never cached, never indexed
+  const admin = urlPath === '/admin' || urlPath === '/admin/';
+  if (admin) urlPath = '/admin.html';
   if (urlPath.endsWith('/')) urlPath += 'index.html';
   const file = normalize(join(ROOT, urlPath));
   if (!file.startsWith(ROOT.endsWith(sep) ? ROOT : ROOT + sep)) {
@@ -147,11 +158,12 @@ const server = createServer(async (req, res) => {
 
   const headers = {
     'Content-Type': MIME[extname(servedPath)] || 'application/octet-stream',
-    'Cache-Control': cacheControl(servedPath),
+    'Cache-Control': admin ? 'no-store' : cacheControl(servedPath),
     ETag: entry.etag,
     Vary: 'Accept-Encoding',
     ...SECURITY_HEADERS,
   };
+  if (admin) headers['X-Robots-Tag'] = 'noindex, nofollow';
   // behind Railway's HTTPS proxy: tell browsers to always use HTTPS
   if (req.headers['x-forwarded-proto'] === 'https') headers['Strict-Transport-Security'] = 'max-age=31536000';
   if (req.headers['if-none-match'] === entry.etag) {
@@ -172,7 +184,7 @@ server.listen(PORT, '0.0.0.0', () => {
 
 for (const sig of ['SIGTERM', 'SIGINT']) {
   process.on(sig, () => {
-    server.close(() => process.exit(0));
+    server.close(() => void api.close().finally(() => process.exit(0)));
     setTimeout(() => process.exit(0), 3000).unref();
   });
 }

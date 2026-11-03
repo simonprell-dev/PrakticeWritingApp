@@ -190,6 +190,23 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
     ),
     h('h3', null, 'Über'),
     h('p', { class: 'help' }, 'Alle Bilder werden nur auf diesem Gerät ausgewertet und nirgendwohin geschickt. Gespeichert werden nur diese Einstellungen und die Spielstände – beides nur in diesem Browser.'),
+    h(
+      'div',
+      null,
+      h(
+        'div',
+        { class: 'row' },
+        toggle('Anonyme Nutzungsstatistik senden', s.game.telemetry, (on) => {
+          s.game.telemetry = on;
+          d.save();
+        }),
+      ),
+      h(
+        'div',
+        { class: 'help', style: 'margin:-4px 0 8px' },
+        'An: Die App meldet uns ohne Namen, ohne Kennung und ohne Cookie, dass sie geöffnet wurde, welche Spielart gestartet und beendet wurde, wie lange gespielt wurde und wie viele Zeichen erkannt wurden (dazu Schrift und Sprache). Bilder, Buchstaben und Spielstände werden nie geschickt, die IP-Adresse wird nicht gespeichert. So sehen wir, was gespielt wird. Aus: Es wird nichts gesendet.',
+      ),
+    ),
     h('p', { class: 'help' }, d.modelInfo),
     h(
       'div',

@@ -171,6 +171,9 @@ function impressum(info: LegalInfo): HTMLElement {
 }
 
 function datenschutz(info: LegalInfo): HTMLElement {
+  // sections are numbered in order (the one about the data protection officer only exists when set)
+  let num = 0;
+  const n = () => ++num;
   return h(
     'div',
     { class: 'legal' },
@@ -182,16 +185,18 @@ function datenschutz(info: LegalInfo): HTMLElement {
       list([
         ['Die Kamerabilder werden ', h('b', null, 'ausschließlich auf Ihrem Gerät'), ' im Browser ausgewertet. Sie werden weder an uns noch an Dritte übertragen und nicht gespeichert.'],
         ['Spielstände (ausgeschnittene Buchstaben, ausgemalte Bilder) werden nur in Ihrem Browser gespeichert und lassen sich jederzeit löschen.'],
-        ['Es gibt keine Benutzerkonten, keine Cookies, kein Tracking, keine Werbung und keine Analysedienste. Deshalb gibt es auch kein Cookie-Banner.'],
+        ['Es gibt keine Benutzerkonten, keine Cookies, keine Werbung und keine Analysedienste Dritter. Deshalb gibt es auch kein Cookie-Banner.'],
+        ['Die App sendet eine ', h('b', null, 'anonyme Nutzungsstatistik'), ' (z. B. „Spiel gestartet“) ohne IP-Adresse, ohne Kennung und ohne Cookie. Sie lässt sich in den Einstellungen abschalten.'],
+        ['Nachrichten über das Kontaktformular speichern wir nur, um sie zu beantworten, und löschen sie spätestens nach 12 Monaten.'],
         ['Die Kamera startet erst, wenn Sie sie einrichten oder ein Spiel beginnen.'],
         ['Es werden keine externen Dienste eingebunden – auch Schriftarten und Programmteile kommen ausschließlich von unserem eigenen Server.'],
         ['Beim Aufruf der Website verarbeitet unser Hosting-Anbieter technisch notwendige Verbindungsdaten (z. B. Ihre IP-Adresse).'],
       ]),
     ),
-    section('1. Verantwortlicher', operatorBlock(info)),
-    info.dpo ? section('2. Datenschutzbeauftragte/r', p(lines(info.dpo))) : null,
+    section(`${n()}. Verantwortlicher`, operatorBlock(info)),
+    info.dpo ? section(`${n()}. Datenschutzbeauftragte/r`, p(lines(info.dpo))) : null,
     section(
-      `${info.dpo ? '3' : '2'}. Kamera und Handschrift`,
+      `${n()}. Kamera und Handschrift`,
       p(
         'Damit aus geschriebenen Buchstaben und Zahlen Spielfiguren werden, nimmt die App nach Ihrer Freigabe Bilder der Kamera (z. B. einer Dokumentenkamera) auf und wertet sie direkt im Browser aus (Erkennen der Zeichen, spielerische Bewertung, Ausschneiden der Zeichen für die Spielfiguren). Im „Mal-Aquarium“ erkennt die App ausgemalte Fisch-Karten und schneidet den Fisch (mit dem darauf geschriebenen Fischnamen) als Spielfigur aus.',
       ),
@@ -207,7 +212,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
       ]),
     ),
     section(
-      `${info.dpo ? '4' : '3'}. Speicherung auf Ihrem Gerät`,
+      `${n()}. Speicherung auf Ihrem Gerät`,
       list([
         [
           h('b', null, 'Local Storage: '),
@@ -224,13 +229,38 @@ function datenschutz(info: LegalInfo): HTMLElement {
       ),
     ),
     section(
-      `${info.dpo ? '5' : '4'}. Hosting und Server-Protokolle`,
+      `${n()}. Kontaktformular`,
+      p(
+        'Über „✉️ Kontakt & Feedback“ auf der Startseite können Sie uns eine Nachricht schicken. Gespeichert werden Ihre Nachricht, Datum und Uhrzeit, die Sprache der App sowie – nur wenn Sie sie angeben – Ihr Name und Ihre E-Mail-Adresse. Die IP-Adresse wird nicht gespeichert; sie wird nur kurz im Arbeitsspeicher genutzt, um massenhaftes Absenden (Spam) zu begrenzen.',
+      ),
+      p(
+        'Zweck ist die Bearbeitung und Beantwortung Ihrer Anfrage. Rechtsgrundlage: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (unser berechtigtes Interesse, Anfragen und Hinweise zur App zu beantworten) bzw. lit. b DSGVO, wenn Ihre Anfrage auf einen Vertrag zielt; bei öffentlichen Schulen lit. e DSGVO. Die Angaben sind freiwillig.',
+      ),
+      p(
+        'Wir löschen die Nachricht, sobald sie erledigt ist, spätestens jedoch automatisch 12 Monate nach dem Eingang. Die Daten liegen in einer Datenbank beim Hosting-Anbieter (siehe „Hosting“) und werden nicht an Dritte weitergegeben. Bitte schreiben Sie keine Namen oder anderen Daten von Kindern in die Nachricht.',
+      ),
+    ),
+    section(
+      `${n()}. Anonyme Nutzungsstatistik`,
+      p(
+        'Damit wir sehen, welche Spiele genutzt werden, sendet die App kleine Meldungen an unseren Server: dass die App geöffnet wurde, dass eine Spielart gestartet oder beendet wurde, die Spieldauer, die Anzahl der erkannten Zeichen bzw. Karten pro Foto sowie die gewählte Schrift und Sprache. Gespeichert wird jede Meldung nur mit dem Kalendertag – ohne Uhrzeit, ohne IP-Adresse, ohne Geräte- oder Benutzerkennung und ohne Cookie. Einzelne Personen oder Geräte lassen sich daraus nicht erkennen; Bilder, Buchstaben und Spielstände werden nie übertragen.',
+      ),
+      p(
+        'Die IP-Adresse wird beim Empfang nur kurz im Arbeitsspeicher verwendet, um Missbrauch zu begrenzen, und nicht gespeichert. Rechtsgrundlage für diese kurze Verarbeitung: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (berechtigtes Interesse an einer sicheren, bedarfsgerecht weiterentwickelten App), bei öffentlichen Schulen lit. e DSGVO. Die Meldungen werden nach 13 Monaten automatisch gelöscht.',
+      ),
+      p(
+        h('b', null, 'Widerspruch: '),
+        'In den Einstellungen („⚙️ Einstellungen → Über → Anonyme Nutzungsstatistik senden“) können Sie die Statistik jederzeit abschalten. Diese Wahl wird nur im Local Storage Ihres Browsers gespeichert.',
+      ),
+    ),
+    section(
+      `${n()}. Hosting und Server-Protokolle`,
       p(
         'Die Website wird bei der Railway Corporation, 548 Market St PMB 68956, San Francisco, CA 94104, USA, betrieben. Railway verarbeitet die Daten als Auftragsverarbeiter auf Grundlage eines Vertrags zur Auftragsverarbeitung nach Art. 28 DSGVO. ',
         `Standort des Servers: ${info.serverLocation}.`,
       ),
       p(
-        'Beim Aufruf der Website werden technisch notwendige Daten verarbeitet: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Statuscode, übertragene Datenmenge sowie Angaben zum Browser (User-Agent). Die App selbst schreibt keine Zugriffsprotokolle; die Hosting-Plattform speichert Zugriffsprotokolle ',
+        'Beim Aufruf der Website werden technisch notwendige Daten verarbeitet: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Statuscode, übertragene Datenmenge sowie Angaben zum Browser (User-Agent). Die App selbst schreibt keine Zugriffsprotokolle; die Datenbank für Kontaktformular und Nutzungsstatistik liegt ebenfalls bei Railway. Die Hosting-Plattform speichert Zugriffsprotokolle ',
         `für höchstens ${info.logDays} Tage und löscht sie danach automatisch.`,
       ),
       p(`Rechtsgrundlage: ${legalBasisHosting(info)}`),
@@ -243,11 +273,11 @@ function datenschutz(info: LegalInfo): HTMLElement {
       ),
     ),
     section(
-      `${info.dpo ? '6' : '5'}. Keine weiteren Empfänger`,
+      `${n()}. Keine weiteren Empfänger`,
       p('Es werden keine Daten an weitere Empfänger übermittelt. Es gibt keine Einbindung von Social-Media-Diensten, Videoplattformen, Karten, Schriftarten- oder Skript-Servern Dritter.'),
     ),
     section(
-      `${info.dpo ? '7' : '6'}. Ihre Rechte`,
+      `${n()}. Ihre Rechte`,
       p(
         'Sie haben das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18) und Widerspruch gegen die Verarbeitung (Art. 21 DSGVO). Wenden Sie sich dazu an den oben genannten Verantwortlichen.',
       ),
@@ -258,9 +288,9 @@ function datenschutz(info: LegalInfo): HTMLElement {
       info.authority ? p(lines(info.authority)) : null,
     ),
     section(
-      `${info.dpo ? '8' : '7'}. Kinder`,
+      `${n()}. Kinder`,
       p(
-        'Die App ist für den Einsatz im Unterricht unter Aufsicht einer Lehrkraft gedacht. Es werden keine Daten der Kinder an uns oder Dritte übermittelt; die Kinder benötigen kein Konto.',
+        'Die App ist für den Einsatz im Unterricht unter Aufsicht einer Lehrkraft gedacht. Es werden keine Daten der Kinder an uns oder Dritte übermittelt (die anonyme Nutzungsstatistik enthält keine Angaben zu Personen); die Kinder benötigen kein Konto.',
       ),
     ),
   );
@@ -295,7 +325,7 @@ function lizenzen(): HTMLElement {
         'Zusätzliche Übungsbeispiele und die Vergleichsvorlagen wurden aus frei lizenzierten Schriften (SIL Open Font License bzw. Apache License 2.0) erzeugt, u. a. Andika, Playwrite DE Grund, Patrick Hand, Schoolbell, Comic Neue, Playpen Sans, Delius, Short Stack, Indie Flower, Gochi Hand, Kalam, Just Another Hand, Architects Daughter, Coming Soon, Sue Ellen Francisco, Handlee, Neucha, Mali, Itim und Sniglet.',
       ),
     ),
-    section('Programm', p('Die App verwendet zur Laufzeit keine Bibliotheken von Drittanbietern. Alle Grafiken und Töne werden im Browser erzeugt.')),
+    section('Programm', p('Die App verwendet im Browser keine Bibliotheken von Drittanbietern. Alle Grafiken und Töne werden im Browser erzeugt. Der Server nutzt für die Datenbank node-postgres (MIT-Lizenz).')),
   );
 }
 

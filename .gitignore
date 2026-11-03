@@ -15,3 +15,6 @@ __pycache__/
 # local snapshots from the lab page
 test/fixtures/photos/private/
 tools/.browsers/
+
+# local database settings (see .env.example)
+.env
