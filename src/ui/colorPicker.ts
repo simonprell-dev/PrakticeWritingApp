@@ -3,6 +3,7 @@
 // team's colour is reported, so the teams can be told apart reliably.
 import { angleDeg, chroma, normalize3, PEN_PRESETS, SLIP_PRESETS, type Vec3 } from '../vision/color.ts';
 import { button, h, modal } from './dom.ts';
+import { t } from '../i18n/i18n.ts';
 
 export interface ColorPickerOpts {
   kind: 'pen' | 'slip';
@@ -87,10 +88,10 @@ export function openColorPicker(o: ColorPickerOpts): void {
   const photoCv = h('canvas');
   const marks = h('canvas', { class: 'marks' });
   const stage = h('div', { class: 'picker-photo' }, photoCv, marks);
-  const info = h('div', { class: 'picker-info' }, 'Foto wird gemacht …');
+  const info = h('div', { class: 'picker-info' }, t('Foto wird gemacht …'));
   let img: ImageData | null = null;
   let picked: Sample | null = null;
-  const take = button('Übernehmen', () => {
+  const take = button(t('Übernehmen'), () => {
     if (!picked) return;
     o.onPick(picked.value);
     m.close();
@@ -98,12 +99,12 @@ export function openColorPicker(o: ColorPickerOpts): void {
   take.disabled = true;
 
   const shoot = async () => {
-    info.textContent = 'Foto wird gemacht …';
+    info.textContent = t('Foto wird gemacht …');
     picked = null;
     take.disabled = true;
     const shot = await o.photo();
     if (!shot) {
-      info.textContent = 'Keine Kamera – bitte zuerst die Kamera einrichten.';
+      info.textContent = t('Keine Kamera – bitte zuerst die Kamera einrichten.');
       return;
     }
     photoCv.width = marks.width = shot.width;
@@ -112,7 +113,7 @@ export function openColorPicker(o: ColorPickerOpts): void {
     ctx.drawImage(shot, 0, 0);
     img = ctx.getImageData(0, 0, shot.width, shot.height);
     marks.getContext('2d')!.clearRect(0, 0, marks.width, marks.height);
-    info.textContent = o.kind === 'pen' ? `Tippe im Foto genau auf einen Strich von „${o.name}“.` : `Tippe im Foto auf eine freie Stelle eines Zettels von „${o.name}“.`;
+    info.textContent = o.kind === 'pen' ? t('Tippe im Foto genau auf einen Strich von „{name}“.', { name: o.name }) : t('Tippe im Foto auf eine freie Stelle eines Zettels von „{name}“.', { name: o.name });
   };
 
   marks.addEventListener('pointerdown', (e) => {
@@ -142,21 +143,21 @@ export function openColorPicker(o: ColorPickerOpts): void {
     picked = s;
     take.disabled = !s;
     if (!s) {
-      info.append(o.kind === 'pen' ? 'Hier sehe ich keine Tinte. Tippe direkt auf einen dicken Strich.' : 'Hier ist kein Zettel. Tippe auf eine freie Stelle des Zettels.');
+      info.append(o.kind === 'pen' ? t('Hier sehe ich keine Tinte. Tippe direkt auf einen dicken Strich.') : t('Hier ist kein Zettel. Tippe auf eine freie Stelle des Zettels.'));
       return;
     }
-    const clash = o.others.find((t) => tooClose(o.kind, s.value, t.value));
-    info.append(h('span', { class: 'swatch', style: `background:${s.css}` }), h('span', null, `Gemessen: ähnlich wie ${nearestName(o.kind, s.value)} (${s.used.length} Bildpunkte).`));
-    if (clash) info.append(h('div', { class: 'warn-line' }, `⚠️ Sehr ähnlich wie die Farbe von „${clash.name}“ – die Teams könnten verwechselt werden. Besser eine andere Farbe nehmen.`));
+    const clash = o.others.find((other) => tooClose(o.kind, s.value, other.value));
+    info.append(h('span', { class: 'swatch', style: `background:${s.css}` }), h('span', null, t('Gemessen: ähnlich wie {color} ({n} Bildpunkte).', { color: t(nearestName(o.kind, s.value)), n: s.used.length })));
+    if (clash) info.append(h('div', { class: 'warn-line' }, t('⚠️ Sehr ähnlich wie die Farbe von „{name}“ – die Teams könnten verwechselt werden. Besser eine andere Farbe nehmen.', { name: clash.name })));
   });
 
   const content = h(
     'div',
     { style: 'min-width:min(820px,94vw)' },
-    h('h2', null, `🎨 Farbe für „${o.name}“ anlernen`),
+    h('h2', null, t('🎨 Farbe für „{name}“ anlernen', { name: o.name })),
     stage,
     info,
-    h('div', { class: 'actions' }, button('📷 Neues Foto', () => void shoot(), 'btn small'), button('Abbrechen', () => m.close(), 'btn'), take),
+    h('div', { class: 'actions' }, button(t('📷 Neues Foto'), () => void shoot(), 'btn small'), button(t('Abbrechen'), () => m.close(), 'btn'), take),
   );
   const m = modal(content);
   void shoot();

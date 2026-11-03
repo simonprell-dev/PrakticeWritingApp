@@ -246,3 +246,4 @@ cd tools/train
   - Playwrite DE Grund
   - „Druckvorlage“: verkleinerte, nach OFL umbenannte Fassung von Andika (SIL International)
 - Trainingsdaten: EMNIST (Cohen et al. 2017, NIST), CC BY 4.0. Die Quellenangabe steht im Dialog „Lizenzen“.
+- Schreibreihenfolge der Hiragana und Katakana (`src/game/kanaStrokes.ts`, erzeugt mit `tools/make-kana-strokes.ts`): [KanjiVG](https://kanjivg.tagaini.net), Copyright (C) Ulrich Apel, CC BY-SA 3.0.

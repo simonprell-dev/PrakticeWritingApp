@@ -54,7 +54,8 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       ),
       'Leicht: schon wackelige Buchstaben werden zu schönen Wesen. Streng: nur sehr saubere Schrift wird „Prachtstück“.',
     ),
-    row(
+    // Druck- or Grundschrift templates: only the Druckschrift model knows both
+    s.script !== 'druck' ? null : row(
       'Vorlage',
       segmented(
         [

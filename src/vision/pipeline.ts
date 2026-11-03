@@ -29,6 +29,7 @@ import type {
 } from './types.ts';
 
 import { DETECT_SIZE } from './constants.ts';
+import { scriptOf } from '../recog/scripts.ts';
 
 export { DETECT_SIZE };
 
@@ -268,7 +269,8 @@ function processPatch(
     spacing = diffs[diffs.length >> 1];
   }
   lineSink.push(...lr.lines);
-  const seg = findGlyphs(lr.mask, p.valid);
+  const def = scriptOf(opts.script);
+  const seg = findGlyphs(lr.mask, p.valid, 60, { mode: def.seg, dir: def.dir });
   const tanSkew = Math.tan(lr.skew);
   const out: PatchGlyph[] = [];
   for (const g of seg.glyphs) {
@@ -283,7 +285,7 @@ function processPatch(
       for (const ly of hLines) best = Math.min(best, Math.abs(bottom - (ly + cx * tanSkew)));
       baselineDev = best / spacing;
     }
-    const job: GlyphJob = { crop, dots: g.dots, bodyH: g.baseBox.h, baselineDev, mirror: true };
+    const job: GlyphJob = { crop, dots: g.dots, bodyH: g.baseBox.h, baselineDev, mirror: def.seg === 'latin' };
 
     // all pixels of the glyph (body + dots) for team colour, sticker and thumbnail
     const all = new Set([...g.baseLabels, ...g.dotLabels]);
@@ -334,7 +336,7 @@ function processPatch(
  * Where every letter sits in the line system (school lines: bands; plain ruled paper: base line).
  * Returns the glyphs in reading order along the writing rows (a g or p belongs to its row, too).
  */
-function applyLines(glyphs: PatchGlyph[], m: LineModel, w: number): PatchGlyph[] {
+function applyLines(glyphs: PatchGlyph[], m: LineModel, w: number, dir: 'ltr' | 'rtl' = 'ltr'): PatchGlyph[] {
   const t = Math.tan(m.skew);
   const row = new Map<PatchGlyph, number>();
   for (const g of glyphs) {
@@ -354,7 +356,8 @@ function applyLines(glyphs: PatchGlyph[], m: LineModel, w: number): PatchGlyph[]
     if (known.length) row.set(g, base);
   }
   if (row.size !== glyphs.length) return glyphs;
-  return [...glyphs].sort((a, b) => row.get(a)! - row.get(b)! || a.body.x - b.body.x);
+  const sign = dir === 'rtl' ? -1 : 1;
+  return [...glyphs].sort((a, b) => row.get(a)! - row.get(b)! || sign * (a.body.x - b.body.x));
 }
 
 export interface ScanDeps {
@@ -437,7 +440,7 @@ export function segmentFrame(frame: RGBAImage, opts: VisionOptions): FrameSegmen
   tm.lap('segment');
   if (np.rows) {
     const model = lineModel(np.rows.profile, np.rows.pad, np.rows.skew, opts.lineatur ?? 'auto', glyphs.map((g) => g.body.h));
-    if (model.kind !== 'none') glyphs = applyLines(glyphs, model, dw);
+    if (model.kind !== 'none') glyphs = applyLines(glyphs, model, dw, scriptOf(opts.script).dir);
     tm.lap('lines');
   }
   return { frame: { width: frame.width, height: frame.height }, scale, dw, dh, regions, glyphs, lines, masks, ink: np.ink, timings: tm.timings };

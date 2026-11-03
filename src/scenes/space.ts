@@ -4,6 +4,7 @@ import { clamp, hsl, lerp, TAU } from '../game/math.ts';
 import { mulberry32 } from '../game/rng.ts';
 import { separate } from './aquarium.ts';
 import type { HabitatDef } from './habitat.ts';
+import { tk } from '../i18n/i18n.ts';
 
 interface Twinkle {
   x: number;
@@ -63,7 +64,8 @@ function planet(ctx: Ctx2, x: number, y: number, r: number, hue: number, ring: b
 export const space: HabitatDef = {
   id: 'weltraum',
   archetype: 'alien',
-  word: ['Alien', 'Aliens'],
+  word: [tk('Alien'), tk('Aliens')],
+  count: [tk('{n} Alien'), tk('{n} Aliens')],
   makeSprite: alienSprite,
   bounds: (W) => ({ x0: 120, x1: W - 120, y0: 170, y1: 930 }),
 

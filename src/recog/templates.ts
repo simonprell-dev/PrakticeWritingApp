@@ -7,7 +7,8 @@ import type { Mask, TemplateStyle } from '../vision/types.ts';
 
 export interface TemplateMetaEntry {
   char: string;
-  style: TemplateStyle;
+  /** druck, grund, or the script id (other scripts) */
+  style: TemplateStyle | string;
   /** height above baseline in x-heights */
   top: number;
   /** depth below baseline in x-heights */
@@ -21,7 +22,8 @@ export interface TemplateMeta {
   size: number;
   fit: number;
   bytesPerTemplate: number;
-  templates: TemplateMetaEntry[];
+  /** the school line metrics (top, bottom, aspect) are missing for the non-Latin scripts */
+  templates: (Omit<TemplateMetaEntry, 'top' | 'bottom' | 'aspect'> & Partial<TemplateMetaEntry>)[];
 }
 
 /** Skeleton representation shared by templates and glyphs. */
@@ -89,7 +91,10 @@ export class TemplateBank {
       const m: Mask = { width: meta.size, height: meta.size, data: new Uint8Array(n) };
       const off = k * meta.bytesPerTemplate;
       for (let i = 0; i < n; i++) m.data[i] = (bytes[off + (i >> 3)] >> (7 - (i & 7))) & 1;
-      const t: Template = { ...e, skel: buildSkel(m) };
+      // only the Latin templates have school line metrics: the others count as one band high
+      const skel = buildSkel(m);
+      const aspect = e.aspect ?? (skel.box.x1 - skel.box.x0 + 1) / (skel.box.y1 - skel.box.y0 + 1);
+      const t: Template = { ...e, top: e.top ?? 1, bottom: e.bottom ?? 0, aspect, skel };
       this.templates.push(t);
       const list = this.byChar.get(e.char) ?? [];
       list.push(t);

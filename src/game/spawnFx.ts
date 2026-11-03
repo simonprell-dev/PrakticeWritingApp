@@ -2,6 +2,7 @@
 //  1. capture(): flash + shutter right when the photo is taken, the photo appears as a polaroid with a
 //     moving scan light while the recognition runs in the worker,
 //  2. start(): the results arrive in the same polaroid, glyph boxes pop up, stickers fly into the scene.
+import { t } from '../i18n/i18n.ts';
 import type { Snapshot } from '../scenes/scene.ts';
 import type { ScannedGlyph } from '../vision/types.ts';
 import { sfx } from './audio.ts';
@@ -74,7 +75,7 @@ export class SpawnFx {
     sfx.shutter();
     this.worldW = worldW;
     this.flashT = 0;
-    this.polaroid = { snap, ...this.layout(snap, worldW), t: 0, resultAt: -1, closing: -1, label: 'Ich schaue', boxes: [] };
+    this.polaroid = { snap, ...this.layout(snap, worldW), t: 0, resultAt: -1, closing: -1, label: t('Ich schaue'), boxes: [] };
   }
 
   /** The recognition failed: let the polaroid go away. */
@@ -100,12 +101,20 @@ export class SpawnFx {
     const valid = newOnes.filter((g) => !g.score.rejected).length;
     const mirrored = newOnes.length - valid;
     const known = glyphs.length - newOnes.length;
-    const fresh = valid === 1 ? '1 neues Zeichen!' : `${valid} neue Zeichen!`;
-    const extra = [mirrored ? `${mirrored} spiegelverkehrt` : '', known ? `${known} kenne ich schon` : ''].filter(Boolean).join(', ');
+    const cnt = { n: valid, m: mirrored, k: known };
     let label: string;
-    if (valid) label = extra ? `${fresh} (${extra})` : fresh;
-    else if (mirrored) label = 'Spiegelschrift zählt nicht!';
-    else label = known ? 'Nichts Neues – alles schon bekannt' : 'Nichts gefunden';
+    if (valid === 1) {
+      if (mirrored && known) label = t('1 neues Zeichen! ({m} spiegelverkehrt, {k} kenne ich schon)', cnt);
+      else if (mirrored) label = t('1 neues Zeichen! ({m} spiegelverkehrt)', cnt);
+      else if (known) label = t('1 neues Zeichen! ({k} kenne ich schon)', cnt);
+      else label = t('1 neues Zeichen!');
+    } else if (valid) {
+      if (mirrored && known) label = t('{n} neue Zeichen! ({m} spiegelverkehrt, {k} kenne ich schon)', cnt);
+      else if (mirrored) label = t('{n} neue Zeichen! ({m} spiegelverkehrt)', cnt);
+      else if (known) label = t('{n} neue Zeichen! ({k} kenne ich schon)', cnt);
+      else label = t('{n} neue Zeichen!', cnt);
+    } else if (mirrored) label = t('Spiegelschrift zählt nicht!');
+    else label = known ? t('Nichts Neues – alles schon bekannt') : t('Nichts gefunden');
     let k = 0;
     const items = glyphs.map((g): FxItem => {
       const item: FxItem = { box: g.box, isNew: g.isNew, rejected: g.score.rejected, team: teamColor?.(g) };
@@ -267,7 +276,7 @@ export class SpawnFx {
       ctx.font = '600 26px Fredoka, system-ui, sans-serif';
       ctx.textAlign = 'center';
       const dots = p.resultAt < 0 ? '.'.repeat(1 + (Math.floor(p.t * 3) % 3)) : '';
-      ctx.fillText(p.label + dots, p.x + p.w / 2, p.y + p.h + 40);
+      ctx.fillText(p.label + dots, p.x + p.w / 2, p.y + p.h + 40, Math.min(this.worldW - 40, p.w + 200));
       ctx.restore();
     }
     for (const f of this.flights) {

@@ -1,5 +1,6 @@
 // Shared cutscene overlays: the big banner and the "3, 2, 1, Los!" countdown.
 import { clamp, ease } from '../game/math.ts';
+import { t } from '../i18n/i18n.ts';
 
 export interface Banner {
   title: string;
@@ -59,7 +60,7 @@ export function drawCountdown(ctx: CanvasRenderingContext2D, worldW: number, cou
   if (countdown < 0) return;
   const step = Math.min(3, Math.floor(countdown / 0.55));
   const local = countdown - step * 0.55;
-  const text = ['3', '2', '1', 'Los!'][step];
+  const text = ['3', '2', '1', t('Los!')][step];
   const s = ease.outBack(clamp(local / 0.25)) * (step === 3 ? 1.1 : 1);
   ctx.save();
   ctx.globalAlpha = step === 3 ? clamp((COUNTDOWN_SECONDS - countdown) / 0.5) : 1;
@@ -71,8 +72,8 @@ export function drawCountdown(ctx: CanvasRenderingContext2D, worldW: number, cou
   ctx.lineWidth = 18;
   ctx.strokeStyle = '#3b2a5c';
   ctx.lineJoin = 'round';
-  ctx.strokeText(text, 0, 0);
+  ctx.strokeText(text, 0, 0, worldW - 120);
   ctx.fillStyle = step === 3 ? '#ffd84a' : '#ffffff';
-  ctx.fillText(text, 0, 0);
+  ctx.fillText(text, 0, 0, worldW - 120);
   ctx.restore();
 }

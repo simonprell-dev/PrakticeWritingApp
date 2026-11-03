@@ -1,0 +1,98 @@
+/* "Schriften der Welt" world map (src/ui/worldMap.ts) */
+.world-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.world-map .wm-ocean {
+  fill: #d8efff;
+}
+.world-map .wm-land {
+  fill: #f3ead8;
+  stroke: #e2d4b8;
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+}
+.world-map .wm-region {
+  stroke: #ffffff;
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+  opacity: 0.85;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.world-map .wm-region:hover {
+  opacity: 1;
+}
+.world-map .wm-region.is-selected {
+  opacity: 1;
+  stroke: var(--ink, #3b2a5c);
+  stroke-width: 2.4;
+  animation: wm-pulse 1.8s ease-in-out infinite;
+}
+@keyframes wm-pulse {
+  0%, 100% { stroke-width: 2.4; stroke-opacity: 1; }
+  50% { stroke-width: 4.5; stroke-opacity: 0.55; }
+}
+
+.world-map .wm-leader {
+  stroke: var(--ink-soft, #6c5a8f);
+  stroke-width: 1.4;
+  stroke-dasharray: 3 3;
+  opacity: 0.7;
+}
+.world-map .wm-leader-dot {
+  fill: var(--ink-soft, #6c5a8f);
+  opacity: 0.8;
+}
+
+.world-map .wm-pin {
+  cursor: pointer;
+  outline: none;
+}
+.world-map .wm-pin-bg {
+  fill: #ffffff;
+  stroke-width: 3.5;
+  filter: drop-shadow(0 2px 1.5px rgba(59, 42, 92, 0.3));
+  transition: transform 0.15s;
+}
+.world-map .wm-glyph {
+  fill: var(--ink, #3b2a5c);
+  font-size: 19px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.world-map .wm-pin:hover .wm-pin-bg,
+.world-map .wm-pin:focus-visible .wm-pin-bg {
+  transform: scale(1.15);
+}
+.world-map .wm-pin:focus-visible .wm-pin-bg {
+  stroke: var(--accent, #7c5cff);
+  stroke-width: 5;
+}
+.world-map .wm-pin.is-selected .wm-pin-bg {
+  fill: var(--primary, #ffcf3d);
+  stroke: var(--ink, #3b2a5c);
+  transform: scale(1.2);
+}
+
+/* glyph fonts: the page may override these once the script fonts are loaded */
+.world-map .pin-druck .wm-glyph { font-family: 'Druckvorlage', 'Fredoka', sans-serif; }
+.world-map .pin-grund .wm-glyph { font-family: 'Grundschrift', 'Druckvorlage', cursive; font-weight: 400; }
+.world-map .pin-schreib .wm-glyph { font-family: 'Schreibschrift', 'Segoe Script', 'Brush Script MT', cursive; font-weight: 400; font-style: italic; }
+.world-map .pin-hiragana .wm-glyph,
+.world-map .pin-katakana .wm-glyph { font-family: 'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif; }
+.world-map .pin-kyrillisch .wm-glyph,
+.world-map .pin-griechisch .wm-glyph { font-family: 'Fredoka', 'Segoe UI', sans-serif; }
+.world-map .pin-arabisch .wm-glyph { font-family: 'Noto Sans Arabic', 'Segoe UI', sans-serif; font-size: 22px; }
+.world-map .pin-devanagari .wm-glyph { font-family: 'Noto Sans Devanagari', 'Nirmala UI', sans-serif; }
+.world-map .pin-hebraeisch .wm-glyph { font-family: 'Noto Sans Hebrew', 'Segoe UI', sans-serif; }
+.world-map .pin-hangul .wm-glyph { font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; }
+.world-map .pin-thai .wm-glyph { font-family: 'Noto Sans Thai', 'Leelawadee UI', sans-serif; }
+
+@media (prefers-reduced-motion: reduce) {
+  .world-map .wm-region.is-selected { animation: none; }
+  .world-map .wm-pin-bg { transition: none; }
+}

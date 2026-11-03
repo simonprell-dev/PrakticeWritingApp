@@ -1,6 +1,7 @@
 // Team-Duell setup: names, colours (pen or slip), optional colour calibration, castle strength, time limit.
 import type { Settings, TeamSettings } from '../app/settings.ts';
 import { PEN_PRESETS, SLIP_PRESETS, type Vec3 } from '../vision/color.ts';
+import { t } from '../i18n/i18n.ts';
 import { openColorPicker } from './colorPicker.ts';
 import { button, clear, h, modal, segmented } from './dom.ts';
 
@@ -27,7 +28,7 @@ export interface LobbyDeps extends ColorDeps {
  * the number key that takes the photo for this team.
  */
 export function colorCard(
-  t: TeamSettings,
+  team: TeamSettings,
   by: 'pen' | 'slip',
   title: string,
   fallbackName: string,
@@ -36,47 +37,47 @@ export function colorCard(
   others: TeamSettings[] = [],
   photoKey?: number,
 ): HTMLElement {
-  const name = h('input', { type: 'text', value: t.name, maxlength: '24' }) as HTMLInputElement;
+  const name = h('input', { type: 'text', value: team.name, maxlength: '24' }) as HTMLInputElement;
   name.addEventListener('input', () => {
-    t.name = name.value || fallbackName;
+    team.name = name.value || fallbackName;
     d.save();
   });
   const presets = by === 'pen' ? PEN_PRESETS : SLIP_PRESETS;
-  const current = by === 'pen' ? t.pen : t.slip;
+  const current = by === 'pen' ? team.pen : team.slip;
   const swatches = h('div', { class: 'row' });
   for (const [key, p] of Object.entries(presets)) {
     const b = button(
       h('span', { style: `display:inline-block;width:1.3em;height:1.3em;border-radius:50%;background:${p.css};border:2px solid #3b2a5c` }),
       () => {
         if (by === 'pen') {
-          t.pen = key;
-          t.penCalib = undefined;
+          team.pen = key;
+          team.penCalib = undefined;
         } else {
-          t.slip = key;
-          t.slipCalib = undefined;
+          team.slip = key;
+          team.slipCalib = undefined;
         }
         d.save();
         rerender();
       },
       `btn icon${key === current ? ' on' : ''}`,
-      p.label,
+      t(p.label),
     );
     swatches.append(b);
   }
   const calibInfo = h('div', { class: 'help' });
-  const calibrated = by === 'pen' ? !!t.penCalib : !!t.slipCalib;
-  calibInfo.textContent = calibrated ? '✓ Farbe im Foto angelernt' : 'Noch nicht angelernt (Voreinstellung).';
+  const calibrated = by === 'pen' ? !!team.penCalib : !!team.slipCalib;
+  calibInfo.textContent = calibrated ? `✓ ${t('Farbe im Foto angelernt')}` : t('Noch nicht angelernt (Voreinstellung).');
   const calBtn = button(
-    by === 'pen' ? '🎨 Stiftfarbe im Foto zeigen' : '🎨 Zettelfarbe im Foto zeigen',
+    by === 'pen' ? `🎨 ${t('Stiftfarbe im Foto zeigen')}` : `🎨 ${t('Zettelfarbe im Foto zeigen')}`,
     () =>
       openColorPicker({
         kind: by,
-        name: t.name,
-        others: others.filter((o) => o !== t).map((o) => ({ name: o.name, value: teamValue(o, by) })),
+        name: team.name,
+        others: others.filter((o) => o !== team).map((o) => ({ name: o.name, value: teamValue(o, by) })),
         photo: d.photo,
         onPick: (v) => {
-          if (by === 'pen') t.penCalib = v;
-          else t.slipCalib = v;
+          if (by === 'pen') team.penCalib = v;
+          else team.slipCalib = v;
           d.save();
           rerender();
         },
@@ -94,14 +95,14 @@ export function colorCard(
       photoKey
         ? h(
             'span',
-            { class: 'photo-key', title: `Taste ${photoKey} (oder Team-Knopf ${photoKey}) macht sofort ein Foto – alle Zeichen darauf gehören zu diesem Team` },
-            '📷 Taste',
+            { class: 'photo-key', title: t('Taste {n} (oder Team-Knopf {n}) macht sofort ein Foto – alle Zeichen darauf gehören zu diesem Team', { n: photoKey }) },
+            `📷 ${t('Taste')}`,
             h('kbd', { style: `background:${pc?.css ?? '#3b2a5c'}` }, String(photoKey)),
           )
         : null,
     ),
     h('div', { class: 'row' }, name),
-    h('div', { class: 'help' }, by === 'pen' ? 'Stiftfarbe:' : 'Zettelfarbe:'),
+    h('div', { class: 'help' }, by === 'pen' ? t('Stiftfarbe:') : t('Zettelfarbe:')),
     swatches,
     h('div', { class: 'row' }, calBtn),
     calibInfo,
@@ -111,7 +112,8 @@ export function colorCard(
 export function openDuelLobby(d: LobbyDeps): void {
   const s = d.settings.duel;
   const teamsBox = h('div', { class: 'teams' });
-  const card = (t: TeamSettings) => colorCard(t, s.by, t.id === 'A' ? 'Team links' : 'Team rechts', t.id === 'A' ? 'Team A' : 'Team B', d, render, s.teams, t.id === 'A' ? 1 : 2);
+  const card = (team: TeamSettings) =>
+    colorCard(team, s.by, team.id === 'A' ? t('Team links') : t('Team rechts'), team.id === 'A' ? t('Team A') : t('Team B'), d, render, s.teams, team.id === 'A' ? 1 : 2);
   const render = () => {
     clear(teamsBox);
     teamsBox.append(card(s.teams[0]), card(s.teams[1]));
@@ -121,20 +123,20 @@ export function openDuelLobby(d: LobbyDeps): void {
   const content = h(
     'div',
     { style: 'min-width:min(820px,92vw)' },
-    h('h2', null, '⚔️ Team-Duell'),
+    h('h2', null, `⚔️ ${t('Team-Duell')}`),
     h(
       'p',
       { class: 'help', style: 'font-size:1.05rem' },
-      'Jedes Team schreibt Buchstaben und Zahlen auf kleine Zettel. Unter der Kamera wird jedes Zeichen zu einer Figur mit 1 bis 5 Sternen – je schöner geschrieben, desto mehr. Jeder Stern ist ein Schlag: Treffen sich zwei Figuren, ziehen sie sich gegenseitig Sterne ab. An der gegnerischen Burg lässt jeder Schlag eine Seifenblase platzen. Die Seifenblasen-Maschine bläst neue nach, bis ihr Tank leer ist. Wer zuerst alle Blasen des Gegners zum Platzen bringt, gewinnt!',
+      t('Jedes Team schreibt Buchstaben und Zahlen auf kleine Zettel. Unter der Kamera wird jedes Zeichen zu einer Figur mit 1 bis 5 Sternen – je schöner geschrieben, desto mehr. Jeder Stern ist ein Schlag: Treffen sich zwei Figuren, ziehen sie sich gegenseitig Sterne ab. An der gegnerischen Burg lässt jeder Schlag eine Seifenblase platzen. Die Seifenblasen-Maschine bläst neue nach, bis ihr Tank leer ist. Wer zuerst alle Blasen des Gegners zum Platzen bringt, gewinnt!'),
     ),
     h(
       'div',
       { class: 'row' },
-      h('label', null, 'Teams erkennen an'),
+      h('label', null, t('Teams erkennen an')),
       segmented(
         [
-          { value: 'pen', label: 'Stiftfarbe' },
-          { value: 'slip', label: 'Zettelfarbe' },
+          { value: 'pen', label: t('Stiftfarbe') },
+          { value: 'slip', label: t('Zettelfarbe') },
         ],
         s.by,
         (v) => {
@@ -148,12 +150,12 @@ export function openDuelLobby(d: LobbyDeps): void {
     h(
       'div',
       { class: 'row' },
-      h('label', null, 'Seifenblasen'),
+      h('label', null, t('Seifenblasen')),
       segmented(
         [
-          { value: 'klein', label: 'Wenige (kurzes Spiel)' },
-          { value: 'mittel', label: 'Mittel' },
-          { value: 'gross', label: 'Viele (langes Spiel)' },
+          { value: 'klein', label: t('Wenige (kurzes Spiel)') },
+          { value: 'mittel', label: t('Mittel') },
+          { value: 'gross', label: t('Viele (langes Spiel)') },
         ],
         s.castle,
         (v) => {
@@ -165,9 +167,9 @@ export function openDuelLobby(d: LobbyDeps): void {
     h(
       'div',
       { class: 'row' },
-      h('label', null, 'Zeitlimit'),
+      h('label', null, t('Zeitlimit')),
       segmented(
-        ['0', '3', '5', '10'].map((v) => ({ value: v, label: v === '0' ? 'Keins' : `${v} Min` })),
+        ['0', '3', '5', '10'].map((v) => ({ value: v, label: v === '0' ? t('Keins') : t('{n} Min', { n: v }) })),
         String(s.timeLimit),
         (v) => {
           s.timeLimit = Number(v);
@@ -178,10 +180,10 @@ export function openDuelLobby(d: LobbyDeps): void {
     h(
       'div',
       { class: 'actions' },
-      button('📷 Kamera', () => d.openCamera(), 'btn small'),
-      button('Abbrechen', () => m.close(), 'btn'),
+      button(`📷 ${t('Kamera')}`, () => d.openCamera(), 'btn small'),
+      button(t('Abbrechen'), () => m.close(), 'btn'),
       button(
-        "Los geht's!",
+        t("Los geht's!"),
         () => {
           m.close();
           d.start();

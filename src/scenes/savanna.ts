@@ -4,6 +4,7 @@ import { sfx } from '../game/audio.ts';
 import { clamp, hsl, lerp, TAU } from '../game/math.ts';
 import { mulberry32 } from '../game/rng.ts';
 import type { HabitatDef } from './habitat.ts';
+import { tk } from '../i18n/i18n.ts';
 
 type Ctx2 = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -48,7 +49,8 @@ interface Fly {
 export const savanna: HabitatDef = {
   id: 'savanne',
   archetype: 'animal',
-  word: ['Tier', 'Tiere'],
+  word: [tk('Tier'), tk('Tiere')],
+  count: [tk('{n} Tier'), tk('{n} Tiere')],
   makeSprite: animalSprite,
   sortY: true,
   bounds: (W) => ({ x0: 140, x1: W - 140, y0: GROUND0, y1: GROUND1 }),

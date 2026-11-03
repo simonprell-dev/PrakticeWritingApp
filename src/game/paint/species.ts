@@ -1,5 +1,6 @@
 // The register of the "Mal-Aquarium" animals: outlines, colouring lines, eye and placement on the card of each
 // species, in the animal's own units. Pure data, shared by the print sheet, the card detection and the sprites.
+import { tk } from '../../i18n/i18n.ts';
 
 export type SpeciesId = 'fisch' | 'clownfisch' | 'doktorfisch' | 'kugelfisch' | 'karpfen' | 'hecht' | 'hai'
   | 'seepferdchen' | 'qualle' | 'krake' | 'schildkroete' | 'krebs' | 'freiform';
@@ -9,8 +10,13 @@ export interface Eye { x: number; y: number; r: number; pupil: { x: number; y: n
 
 export interface SpeciesDef {
   id: SpeciesId;
+  /** German name (translated where it is shown) */
   name: string;
   article: 'der' | 'die' | 'das';
+  /** the text before the name line on the card, a whole sentence per animal (German grammar): „Meine Qualle heißt:“ */
+  myName: string;
+  /** the greeting when one new animal arrives, a whole sentence per animal: „Eine neue Qualle!“ */
+  newOne: string;
   /** closed outline parts, back to front, in the animal's own units */
   parts: { id: string; d: string }[];
   /** ids of the parts drawn as the separately animated limb (tail, fins, claws, arms); may be empty */
@@ -33,8 +39,10 @@ export interface SpeciesDef {
 /** The fish (100 × 76 units, facing right). The tail and the fins tuck under the body. */
 const FISCH: SpeciesDef = {
   id: 'fisch',
-  name: 'Fisch',
+  name: tk('Fisch'),
   article: 'der',
+  myName: tk('Mein Fisch heißt:'),
+  newOne: tk('Ein neuer Fisch!'),
   parts: [
     { id: 'tail', d: 'M 34 33 C 26 27 16 17 4 11 C 8 23 12 31 13 38 C 12 45 8 53 4 65 C 16 59 26 49 34 43 Z' },
     { id: 'dorsal', d: 'M 72 18 C 66 7 54 1 41 3 C 46 9 47 15 46 23 Z' },
@@ -142,8 +150,10 @@ const mirror = (d: string, ax: number) => {
 /** the clownfish: chubby, round tail, two-lobed dorsal fin and three bands */
 const CLOWNFISCH: SpeciesDef = {
   id: 'clownfisch',
-  name: 'Clownfisch',
+  name: tk('Clownfisch'),
   article: 'der',
+  myName: tk('Mein Clownfisch heißt:'),
+  newOne: tk('Ein neuer Clownfisch!'),
   parts: [
     { id: 'tail', d: 'M 26 34 C 20 28 13 21 7 19 C 0 28 0 52 7 61 C 13 59 20 52 26 46 Z' },
     { id: 'dorsal', d: 'M 36 24 C 35 14 43 7 52 9 C 56 10 58 13 60 14 C 64 7 75 7 79 15 C 80 18 80 20 79 23 Z' },
@@ -176,8 +186,10 @@ const CLOWNFISCH: SpeciesDef = {
 /** the palette surgeonfish: deep oval body, long fins along the back and the belly, the dark palette marking */
 const DOKTORFISCH: SpeciesDef = {
   id: 'doktorfisch',
-  name: 'Doktorfisch',
+  name: tk('Doktorfisch'),
   article: 'der',
+  myName: tk('Mein Doktorfisch heißt:'),
+  newOne: tk('Ein neuer Doktorfisch!'),
   parts: [
     { id: 'tail', d: 'M 26 35 C 20 30 13 22 5 15 C 11 30 11 50 5 65 C 13 58 20 50 26 45 Z' },
     { id: 'dorsal', d: 'M 27 34 C 31 18 46 6 62 6 C 70 6 76 9 80 16 L 76 24 L 40 30 Z' },
@@ -204,8 +216,10 @@ const DOKTORFISCH: SpeciesDef = {
 /** the pufferfish: a spiky ball with small fins */
 const KUGELFISCH: SpeciesDef = {
   id: 'kugelfisch',
-  name: 'Kugelfisch',
+  name: tk('Kugelfisch'),
   article: 'der',
+  myName: tk('Mein Kugelfisch heißt:'),
+  newOne: tk('Ein neuer Kugelfisch!'),
   parts: [
     { id: 'tail', d: 'M 26 34 C 20 30 14 26 8 26 C 5 34 5 46 8 54 C 14 54 20 50 26 46 Z' },
     { id: 'dorsal', d: 'M 40 16 C 34 9 27 7 20 9 C 22 16 27 22 33 25 Z' },
@@ -233,8 +247,10 @@ const KUGELFISCH: SpeciesDef = {
 /** the carp: high back, long dorsal fin, big scales and whiskers */
 const KARPFEN: SpeciesDef = {
   id: 'karpfen',
-  name: 'Karpfen',
+  name: tk('Karpfen'),
   article: 'der',
+  myName: tk('Mein Karpfen heißt:'),
+  newOne: tk('Ein neuer Karpfen!'),
   parts: [
     { id: 'tail', d: 'M 26 36 C 18 28 10 18 2 12 C 7 24 10 33 14 42 C 10 51 7 60 2 72 C 10 66 18 56 26 48 Z' },
     { id: 'dorsal', d: 'M 38 28 C 42 14 50 6 58 6 C 64 8 70 14 74 22 L 64 24 Z' },
@@ -268,8 +284,10 @@ const KARPFEN: SpeciesDef = {
 /** the pike: long and slim, flat duck-bill snout, the fins far back near the tail */
 const HECHT: SpeciesDef = {
   id: 'hecht',
-  name: 'Hecht',
+  name: tk('Hecht'),
   article: 'der',
+  myName: tk('Mein Hecht heißt:'),
+  newOne: tk('Ein neuer Hecht!'),
   parts: [
     { id: 'tail', d: 'M 24 36 C 18 30 10 24 2 20 C 5 28 8 34 10 40 C 8 46 5 52 2 60 C 10 56 18 50 24 44 Z' },
     { id: 'dorsal', d: 'M 27 35 C 29 28 33 23 40 21 C 42 25 43 29 44 33 Z' },
@@ -305,8 +323,10 @@ const HECHT: SpeciesDef = {
 /** the shark: tall dorsal fin, long upper tail lobe, big pectoral fin, light belly and gills */
 const HAI: SpeciesDef = {
   id: 'hai',
-  name: 'Hai',
+  name: tk('Hai'),
   article: 'der',
+  myName: tk('Mein Hai heißt:'),
+  newOne: tk('Ein neuer Hai!'),
   parts: [
     { id: 'tail', d: 'M 24 39 C 18 29 10 17 2 6 C 7 22 10 34 12 43 C 10 49 8 55 6 61 C 12 57 18 51 24 46 Z' },
     { id: 'dorsal', d: 'M 47 31 C 50 21 54 11 60 4 C 62 14 66 23 72 29 Z' },
@@ -335,8 +355,10 @@ const HAI: SpeciesDef = {
 /** the seahorse: upright, snout to the right, curled tail, little fin on the back */
 const SEEPFERDCHEN: SpeciesDef = {
   id: 'seepferdchen',
-  name: 'Seepferdchen',
+  name: tk('Seepferdchen'),
   article: 'das',
+  myName: tk('Mein Seepferdchen heißt:'),
+  newOne: tk('Ein neues Seepferdchen!'),
   parts: [
     { id: 'tail', d: bands({ at: [[47, 54], [41, 62], [40, 70], [45, 75.5], [53, 75.5], [57, 70], [54, 65]], w0: 11, w1: 3 }) },
     { id: 'fin', d: 'M 39 34 C 31 31 25 37 27 46 C 30 49 35 48 39 45 Z' },
@@ -363,8 +385,10 @@ const SEEPFERDCHEN: SpeciesDef = {
 /** the jellyfish: a round bell with a wavy rim, four thin tentacles and frilly mouth arms */
 const QUALLE: SpeciesDef = {
   id: 'qualle',
-  name: 'Qualle',
+  name: tk('Qualle'),
   article: 'die',
+  myName: tk('Meine Qualle heißt:'),
+  newOne: tk('Eine neue Qualle!'),
   parts: [
     {
       id: 'tentacles',
@@ -398,8 +422,10 @@ const QUALLE: SpeciesDef = {
 /** the octopus: a round head and eight curly arms, four of them in front */
 const KRAKE: SpeciesDef = {
   id: 'krake',
-  name: 'Krake',
+  name: tk('Krake'),
   article: 'der',
+  myName: tk('Mein Krake heißt:'),
+  newOne: tk('Ein neuer Krake!'),
   parts: [
     {
       id: 'back',
@@ -442,8 +468,10 @@ const KRAKE: SpeciesDef = {
 /** the sea turtle: domed shell with plates, head to the right, big front flipper */
 const SCHILDKROETE: SpeciesDef = {
   id: 'schildkroete',
-  name: 'Schildkröte',
+  name: tk('Schildkröte'),
   article: 'die',
+  myName: tk('Meine Schildkröte heißt:'),
+  newOne: tk('Eine neue Schildkröte!'),
   parts: [
     { id: 'rear', d: 'M 30 48 C 24 54 15 59 5 59 C 9 52 16 47 24 44 Z' },
     { id: 'front', d: 'M 72 46 C 68 57 58 67 42 72 C 46 64 54 55 60 47 Z' },
@@ -481,8 +509,10 @@ const LEGS: P[][] = [
 /** the crab: wide shell, eyes on stalks, two big claws and three legs on each side */
 const KREBS: SpeciesDef = {
   id: 'krebs',
-  name: 'Krebs',
+  name: tk('Krebs'),
   article: 'der',
+  myName: tk('Mein Krebs heißt:'),
+  newOne: tk('Ein neuer Krebs!'),
   parts: [
     {
       id: 'legs',
@@ -525,7 +555,7 @@ export const SPECIES: Record<SpeciesId, SpeciesDef> = {
   krake: KRAKE,
   schildkroete: SCHILDKROETE,
   krebs: KREBS,
-  freiform: { ...FISCH, id: 'freiform', name: 'Freiform', parts: [], moving: [], lines: [], strokes: [], eyes: [], motion: 'sway' },
+  freiform: { ...FISCH, id: 'freiform', name: 'Freiform', myName: tk('Mein Tier heißt:'), newOne: tk('Ein neues Tier!'), parts: [], moving: [], lines: [], strokes: [], eyes: [], motion: 'sway' },
 };
 
 export const ANIMALS: SpeciesId[] = (Object.keys(SPECIES) as SpeciesId[]).filter((id) => id !== 'freiform');

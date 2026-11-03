@@ -283,6 +283,18 @@ function lizenzen(): HTMLElement {
       ]),
     ),
     section(
+      'Schreibreihenfolge der Hiragana und Katakana',
+      list([
+        [
+          'KanjiVG – Copyright (C) Ulrich Apel und Mitwirkende, ',
+          ext('https://kanjivg.tagaini.net', 'kanjivg.tagaini.net'),
+          '. Lizenz: ',
+          ext('https://creativecommons.org/licenses/by-sa/3.0/deed.de', 'CC BY-SA 3.0'),
+          '. Änderungen: Die Strichpfade wurden umgerechnet und für die Schreib-Animationen skaliert; diese Daten stehen unter derselben Lizenz.',
+        ],
+      ]),
+    ),
+    section(
       'Handschrift-Erkennung',
       p(
         'Das Erkennungsmodell wurde mit dem EMNIST-Datensatz trainiert: G. Cohen, S. Afshar, J. Tapson, A. van Schaik (2017): „EMNIST: an extension of MNIST to handwritten letters“, ',

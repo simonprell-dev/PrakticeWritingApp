@@ -28,6 +28,7 @@ import { TOWER, towerSpacing } from '../game/tower/rules.ts';
 import { blockWidth, drawBlock, drawGoalLine, drawPlinth } from '../game/tower/towerArt.ts';
 import { drawSkyThings, paintSky } from '../game/tower/towerSky.ts';
 import { TowerSim, type Alien, type TowerBlock, type TowerEvent, type TowerSave } from '../game/tower/towerSim.ts';
+import { t, tk } from '../i18n/i18n.ts';
 import { starsOf } from '../recog/score.ts';
 import { PLAYER_IDS, type ScanResult, type ScannedGlyph } from '../vision/types.ts';
 import { COUNTDOWN_SECONDS, drawBanner, drawCountdown, type Banner } from './cinema.ts';
@@ -65,12 +66,12 @@ export interface TowerSceneSave {
 
 /** what Zork says when the ground has sunk this many metres */
 const SIGHTS = [
-  { at: 4, say: 'Die Bäume werden ja ganz klein!' },
-  { at: 12, say: 'Huch, wir sind in den Wolken!' },
-  { at: 20, say: 'Winke, winke, Flugzeug!' },
-  { at: 34, say: 'Wir sind im Weltall!' },
-  { at: 46, say: 'Hallo ISS! Habt ihr Kekse?' },
-  { at: 80, say: 'Da vorne ist der Mond!' },
+  { at: 4, say: tk('Die Bäume werden ja ganz klein!') },
+  { at: 12, say: tk('Huch, wir sind in den Wolken!') },
+  { at: 20, say: tk('Winke, winke, Flugzeug!') },
+  { at: 34, say: tk('Wir sind im Weltall!') },
+  { at: 46, say: tk('Hallo ISS! Habt ihr Kekse?') },
+  { at: 80, say: tk('Da vorne ist der Mond!') },
 ];
 
 export const ALIEN_NAMES = ['Zork', 'Zip', 'Zap', 'Zisch', 'Zuppi', 'Zibbel', 'Zonk', 'Zappel'];
@@ -152,7 +153,7 @@ export class TowerScene implements Scene {
     for (const st of sim.stats) if (st.best) ids.add(st.best.glyphId);
     const kept = [...ids].map((id) => this.glyphs.get(id)).filter((g) => !!g);
     const top = Math.max(...this.sim.towers.map((t) => t.metres));
-    const summary = `Höchster Turm ${top} m von ${this.sim.goal} m`;
+    const summary = t('Höchster Turm {top} m von {goal} m', { top, goal: this.sim.goal });
     const state: TowerSceneSave = { sim, glyphs: await Promise.all(kept.map((g) => saveGlyph(g.glyph))) };
     return { state, summary };
   }
@@ -166,9 +167,9 @@ export class TowerScene implements Scene {
     this.countdown = -1;
     this.portalOpen = 1;
     this.seen = SIGHTS.filter((s) => s.at <= this.sunk()).length;
-    this.banner = { title: 'Weiter geht’s!', sub: 'Die Türme stehen noch – baut weiter!', t: 0, dur: 2.6 };
+    this.banner = { title: t('Weiter geht’s!'), sub: t('Die Türme stehen noch – baut weiter!'), t: 0, dur: 2.6 };
     const zork = this.sim.aliens[0];
-    if (zork) this.talk(zork, 'Da seid ihr ja wieder!', 2.4);
+    if (zork) this.talk(zork, t('Da seid ihr ja wieder!'), 2.4);
   }
 
   resize(worldW: number): void {
@@ -255,9 +256,9 @@ export class TowerScene implements Scene {
   private runSeq(dt: number): void {
     const s = this.seq!;
     s.t += dt;
-    const t = s.t;
+    const st = s.t;
     if (s.name === 'intro') {
-      this.portalOpen = ease.outBack(clamp(t / 0.9));
+      this.portalOpen = ease.outBack(clamp(st / 0.9));
       this.at(0, 0, () => sfx.portal());
       this.at(1, 1.0, () => {
         const a = this.sim.enterFirst();
@@ -266,10 +267,10 @@ export class TowerScene implements Scene {
       });
       this.at(2, 1.7, () => {
         const a = this.sim.aliens[0];
-        if (a) this.talk(a, 'Hallo! Ich bin Zork. Ich baue eure Türme!', 2.6);
+        if (a) this.talk(a, t('Hallo! Ich bin Zork. Ich baue eure Türme!'), 2.6);
       });
       this.at(3, 2.0, () => {
-        this.banner = { title: 'Türme bauen!', sub: 'Je schöner der Buchstabe, desto höher der Baustein. Wer ist zuerst oben?', t: 0, dur: 2.2 };
+        this.banner = { title: t('Türme bauen!'), sub: t('Je schöner der Buchstabe, desto höher der Baustein. Wer ist zuerst oben?'), t: 0, dur: 2.2 };
       });
       this.at(4, 3.4, () => {
         this.countdown = 0;
@@ -289,10 +290,13 @@ export class TowerScene implements Scene {
         const reason = this.sim.over?.reason;
         this.banner =
           w === null || w === undefined
-            ? { title: 'Unentschieden!', sub: 'Die Zeit ist um – alle Türme sind gleich toll!', t: 0, dur: 4.6 }
+            ? { title: t('Unentschieden!'), sub: t('Die Zeit ist um – alle Türme sind gleich toll!'), t: 0, dur: 4.6 }
             : {
-                title: `Sieg für ${this.names[w]}!`,
-                sub: reason === 'time' ? `Die Zeit ist um – mit ${this.sim.towers[w].metres} m der höchste Turm!` : `Zuerst über der Ziellinie – ${this.sim.towers[w].metres} m hoch!`,
+                title: t('Sieg für {name}!', { name: this.names[w] }),
+                sub:
+                  reason === 'time'
+                    ? t('Die Zeit ist um – mit {n} m der höchste Turm!', { n: this.sim.towers[w].metres })
+                    : t('Zuerst über der Ziellinie – {n} m hoch!', { n: this.sim.towers[w].metres }),
                 t: 0,
                 dur: 4.6,
               };
@@ -300,7 +304,7 @@ export class TowerScene implements Scene {
       this.at(2, 1.2, () => sfx.win());
       this.at(3, 1.0, () => this.confetti(80));
       this.at(4, 2.8, () => this.confetti(60));
-      if (t > 0.8 && t < 5.5 && Math.floor(t / 0.45) !== Math.floor((t - dt) / 0.45)) {
+      if (st > 0.8 && st < 5.5 && Math.floor(st / 0.45) !== Math.floor((st - dt) / 0.45)) {
         const x = w === null || w === undefined ? this.W / 2 : this.sim.towers[w].x;
         const y = w === null || w === undefined ? 300 : Math.max(200, this.sim.topY(w) - 150);
         this.firework(x + (Math.random() - 0.5) * 360, y - Math.random() * 120);
@@ -383,9 +387,9 @@ export class TowerScene implements Scene {
         return p === null ? '#9a9a9a' : this.colors[p];
       },
     );
-    if (res.duplicates) this.host.toast(res.duplicates === 1 ? 'Diesen Zettel kenne ich schon!' : `${res.duplicates} Zeichen kenne ich schon!`, 'info');
-    if (neutral) this.host.toast(`${neutral} Zeichen konnte ich keinem Turm zuordnen. Stiftfarbe prüfen!`, 'warn');
-    if (!res.glyphs.length) this.host.toast('Ich sehe keine Buchstaben. Legt die Zettel unter die Kamera!', 'warn');
+    if (res.duplicates) this.host.toast(res.duplicates === 1 ? t('Diesen Zettel kenne ich schon!') : t('{n} Zeichen kenne ich schon!', { n: res.duplicates }), 'info');
+    if (neutral) this.host.toast(t('{n} Zeichen konnte ich keinem Turm zuordnen. Stiftfarbe prüfen!', { n: neutral }), 'warn');
+    if (!res.glyphs.length) this.host.toast(t('Ich sehe keine Buchstaben. Legt die Zettel unter die Kamera!'), 'warn');
   }
 
   // ---------------------------------------------------------------- update
@@ -525,11 +529,11 @@ export class TowerScene implements Scene {
         this.particles.add({ kind: 'ring', x: e.alien.x, y: e.alien.y, size: 110, max: 0.45, color: 'rgba(200,255,220,0.9)' });
         this.particles.burst('spark', e.alien.x, e.alien.y, 16, { colors: ['#fff6b0', '#b6ffcf', '#ffffff'], size: 13, speed: 280, max: 0.7 });
         // a big scan makes many clones at once: only a few of them introduce themselves
-        if ([...this.views.values()].filter((v) => v.talk).length < 2) this.talk(e.alien, `Ich bin ${this.name(e.alien)}! Ich helfe!`, 1.8);
+        if ([...this.views.values()].filter((v) => v.talk).length < 2) this.talk(e.alien, t('Ich bin {name}! Ich helfe!', { name: this.name(e.alien) }), 1.8);
         break;
       }
       case 'assign':
-        if (e.interrupted) this.talk(e.alien, e.interrupted === 'icecream' ? 'Oh, Arbeit! Das Eis muss warten.' : e.interrupted === 'nap' ? 'Huch! Ich komme!' : 'Oh, Arbeit!', 1.4);
+        if (e.interrupted) this.talk(e.alien, e.interrupted === 'icecream' ? t('Oh, Arbeit! Das Eis muss warten.') : e.interrupted === 'nap' ? t('Huch! Ich komme!') : t('Oh, Arbeit!'), 1.4);
         break;
       case 'grab':
         sfx.beam();
@@ -541,7 +545,7 @@ export class TowerScene implements Scene {
         const top = this.sim.topY(e.tower);
         const x = this.sim.towers[e.tower].x;
         this.particles.burst('puff', x, top, 10, { color: 'rgba(255,240,220,0.75)', size: 18, speed: 160, max: 0.6 });
-        this.particles.add({ kind: 'text', x: x + this.sim.towerW / 2 + 50, y: top + 10, vy: -40, max: 1.6, size: 40, color: '#ffffff', text: `+${b.metres} m` });
+        this.particles.add({ kind: 'text', x: x + this.sim.towerW / 2 + 50, y: top + 10, vy: -40, max: 1.6, size: 40, color: '#ffffff', text: t('+{n} m', { n: b.metres }) });
         this.particles.add({ kind: 'text', x, y: top - 24, vy: -50, max: 1.4, size: 34, color: '#ffd84a', text: '★'.repeat(b.stars) });
         if (b.stars >= 5) {
           sfx.sparkle();
@@ -553,7 +557,7 @@ export class TowerScene implements Scene {
       case 'scribble':
         sfx.pfff();
         this.particles.burst('puff', e.block.x, e.block.y, 14, { color: 'rgba(200,200,215,0.8)', size: 26, speed: 90, max: 1 });
-        this.particles.add({ kind: 'text', x: e.block.x, y: e.block.y - 50, vy: -30, max: 1.8, size: 40, color: '#f2f2ff', text: 'Pfff?' });
+        this.particles.add({ kind: 'text', x: e.block.x, y: e.block.y - 50, vy: -30, max: 1.8, size: 40, color: '#f2f2ff', text: t('Pfff?') });
         break;
       case 'poof':
         this.particles.burst('spark', e.block.x, e.block.y, 10, { color: '#ffffff', size: 10, speed: 200, max: 0.5 });
@@ -778,7 +782,7 @@ export class TowerScene implements Scene {
     ctx.restore();
     const top = ground + y;
     // height sign next to the top
-    const label = `${tw.metres} m`;
+    const label = t('{n} m', { n: tw.metres });
     ctx.save();
     ctx.font = '700 26px Fredoka, system-ui, sans-serif';
     const w = ctx.measureText(label).width + 24;
@@ -932,7 +936,17 @@ export class TowerScene implements Scene {
       if (!text) continue;
       const lines: string[] = [];
       let cur = '';
-      for (const word of text.split(' ')) {
+      // languages without spaces (Thai, Japanese): a too long word is broken between characters
+      const words = text.split(' ').flatMap((word) => {
+        if (ctx.measureText(word).width <= 300) return [word];
+        const parts = [''];
+        for (const ch of word) {
+          if (parts[parts.length - 1] && ctx.measureText(parts[parts.length - 1] + ch).width > 300) parts.push('');
+          parts[parts.length - 1] += ch;
+        }
+        return parts;
+      });
+      for (const word of words) {
         const next = cur ? `${cur} ${word}` : word;
         if (cur && ctx.measureText(next).width > 300) {
           lines.push(cur);
@@ -989,7 +1003,7 @@ export class TowerScene implements Scene {
     if (!this.high || !s || this.sunk() < s.at || this.sim.over) return;
     this.seen++;
     const zork = this.sim.aliens[0];
-    if (zork) this.talk(zork, s.say, 2.6);
+    if (zork) this.talk(zork, t(s.say), 2.6);
   }
 
   /** with high finish lines the goal is far above: a bar at the side shows how far every tower is */
@@ -1014,8 +1028,9 @@ export class TowerScene implements Scene {
     ctx.strokeStyle = 'rgba(40,20,60,0.7)';
     ctx.lineWidth = 5;
     ctx.lineJoin = 'round';
-    ctx.strokeText(`Ziel ${this.sim.goal} m`, x + 14, y0 - 30);
-    ctx.fillText(`Ziel ${this.sim.goal} m`, x + 14, y0 - 30);
+    const goal = t('Ziel {n} m', { n: this.sim.goal });
+    ctx.strokeText(goal, x + 14, y0 - 30);
+    ctx.fillText(goal, x + 14, y0 - 30);
     this.sim.towers.forEach((tw, i) => {
       const y = at(tw.metres);
       ctx.fillStyle = this.colors[i];

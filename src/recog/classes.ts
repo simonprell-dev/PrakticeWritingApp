@@ -1,4 +1,5 @@
 // Character set, confusable groups and German helpers. Must match tools/train/common.py.
+import { t, tk } from '../i18n/i18n.ts';
 
 export const CHARSET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzß';
 export const NUM_CLASSES = CHARSET.length;
@@ -35,15 +36,15 @@ export function isDigit(ch: string): boolean {
   return ch >= '0' && ch <= '9';
 }
 
-/** "das B", "die 3", "das ß" */
+/** "das B", "die 3", "das ß" (translated; other languages may drop the article) */
 export function withArticle(ch: string): string {
-  return `${isDigit(ch) ? 'die' : 'das'} ${ch}`;
+  return isDigit(ch) ? t('die {c}', { c: ch }) : t('das {c}', { c: ch });
 }
 
 export const PRACTICE_SETS = [
-  { label: 'Großbuchstaben', chars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ' },
-  { label: 'Kleinbuchstaben', chars: 'abcdefghijklmnopqrstuvwxyzäöüß' },
-  { label: 'Zahlen', chars: '0123456789' },
+  { label: tk('Großbuchstaben'), chars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ' },
+  { label: tk('Kleinbuchstaben'), chars: 'abcdefghijklmnopqrstuvwxyzäöüß' },
+  { label: tk('Zahlen'), chars: '0123456789' },
 ];
 
 export function classIndex(ch: string): number {

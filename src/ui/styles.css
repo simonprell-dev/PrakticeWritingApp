@@ -9,6 +9,57 @@
   src: url('/fonts/Druckvorlage.woff2') format('woff2');
   font-display: swap;
 }
+/* the scripts of the world map: small subsets with just the characters (public/fonts/<script>.woff2) */
+@font-face {
+  font-family: 'KK-schreib';
+  src: url('/fonts/schreib.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-hiragana';
+  src: url('/fonts/hiragana.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-katakana';
+  src: url('/fonts/katakana.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-kyrillisch';
+  src: url('/fonts/kyrillisch.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-arabisch';
+  src: url('/fonts/arabisch.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-devanagari';
+  src: url('/fonts/devanagari.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-griechisch';
+  src: url('/fonts/griechisch.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-hebraeisch';
+  src: url('/fonts/hebraeisch.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-hangul';
+  src: url('/fonts/hangul.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KK-thai';
+  src: url('/fonts/thai.woff2') format('woff2');
+  font-display: swap;
+}
 @font-face {
   font-family: 'Grundschrift';
   src: url('/fonts/PlaywriteDEGrund.woff2') format('woff2');
@@ -297,7 +348,7 @@ body {
 }
 .tiles {
   display: grid;
-  grid-template-columns: repeat(7, minmax(130px, 1fr));
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
   gap: clamp(12px, 1.6vw, 24px);
   width: min(1560px, 100%);
 }
@@ -2218,4 +2269,61 @@ input[type='range'] {
   .welcome-keep {
     margin: 10px 0 4px;
   }
+}
+
+/* characters of the chosen script in its own font (--script-font is set by the app) */
+:root:not([data-script='druck']):not([data-script='grund']) .glyph,
+.script-glyphs .picker-key,
+.glyph.script {
+  font-family: var(--script-font, inherit);
+}
+
+/* "Schriften der Welt": the map tile and the script picker (src/ui/scriptPicker.ts) */
+.tile-map .map-frame {
+  aspect-ratio: 4 / 3;
+  background: #d8efff;
+  display: flex;
+  align-items: center;
+}
+.tile-map .world-map {
+  pointer-events: none;
+}
+.script-picker {
+  width: min(1000px, 92vw);
+}
+.script-picker .map-frame.big {
+  border-radius: 22px;
+  overflow: hidden;
+  margin: 8px 0 14px;
+}
+.script-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+.script-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+  text-align: start;
+}
+.script-btn .script-sample {
+  font-size: 1.7rem;
+  min-width: 2.2em;
+  text-align: center;
+}
+.script-btn.on {
+  background: var(--primary);
+}
+
+/* language menu */
+.lang-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+.lang-list .btn.on {
+  background: var(--primary);
 }

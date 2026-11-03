@@ -6,11 +6,14 @@ import type { CardScan } from '../vision/cards.ts';
 import type { RGBAImage, ScanResult, VisionOptions } from '../vision/types.ts';
 import type { EngineInfo, SavedMemory } from './engine.ts';
 import type { Analysis } from './recognizer.ts';
+import type { ScriptId } from './scripts.ts';
 
 type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: number };
 
 export interface VisionClient {
   init(): Promise<EngineInfo>;
+  /** loads the model of a script (every worker); scans with that script wait for it */
+  useScript(script: ScriptId): Promise<EngineInfo>;
   scan(frame: RGBAImage, opts: VisionOptions): Promise<ScanResult>;
   reset(): Promise<void>;
   /** the remembered glyphs (to continue a saved game on the same sheet) */
@@ -75,6 +78,11 @@ class WorkerPool implements VisionClient {
     return infos[0];
   }
 
+  async useScript(script: ScriptId) {
+    const infos = await Promise.all(this.workers.map((w) => w.call<EngineInfo>({ type: 'load', script }, [], 60000)));
+    return infos[0];
+  }
+
   async scan(frame: RGBAImage, opts: VisionOptions): Promise<ScanResult> {
     if (this.workers.length === 1) return this.main.call<ScanResult>({ type: 'scan', frame, opts }, [frame.data.buffer as ArrayBuffer]);
     const { id, jobs } = await this.main.call<{ id: number; jobs: GlyphJob[] }>({ type: 'segment', frame, opts }, [frame.data.buffer as ArrayBuffer]);
@@ -126,6 +134,9 @@ class InlineVision implements VisionClient {
   }
   async init() {
     return (await this.engine).init(BASE);
+  }
+  async useScript(script: ScriptId) {
+    return (await this.engine).load(script);
   }
   async scan(frame: RGBAImage, opts: VisionOptions) {
     return (await this.engine).scan(frame, opts);

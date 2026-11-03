@@ -2,7 +2,7 @@
 import { sfx } from '../game/audio.ts';
 import { canvasFromRGBA, makeCanvas, type AnyCanvas } from '../game/canvas.ts';
 import { bubbleSprite } from '../game/creatures/bubble.ts';
-import { drawPencil, drawSchoolLines, drawWriting, writeDuration, writtenGlyph, type WrittenGlyph } from '../game/strokes.ts';
+import { drawGuideLines, drawPencil, drawWriting, writeDuration, writtenGlyph, type WrittenGlyph } from '../game/strokes.ts';
 import { makeGenome, type Archetype, type Genome } from '../game/creatures/genome.ts';
 import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
 import { clamp, ease, lerp, TAU } from '../game/math.ts';
@@ -12,11 +12,13 @@ import { Particles } from '../game/particles.ts';
 import { hashBytes } from '../game/rng.ts';
 import { SpawnFx } from '../game/spawnFx.ts';
 import { WORLD_H } from '../game/stage.ts';
-import { surprisePool, withArticle } from '../recog/classes.ts';
+import { withArticle } from '../recog/classes.ts';
+import { strokeStyle, surprisePool } from '../recog/scripts.ts';
 import { TIER_LABEL, TIP_TEXT } from '../recog/score.ts';
 import type { RGBAImage, ScanResult, ScannedGlyph } from '../vision/types.ts';
 import { loadGlyph, saveGlyph, type SavedGlyph, type SceneSave } from './saved.ts';
 import type { Scene, SceneHost, Snapshot } from './scene.ts';
+import { t } from '../i18n/i18n.ts';
 
 export interface Creature {
   id: number;
@@ -80,7 +82,10 @@ export interface Bounds {
 export interface HabitatDef {
   id: 'meer' | 'weltraum' | 'savanne';
   archetype: Archetype;
+  /** name of one creature (tk-marked, translated where shown) */
   word: [string, string];
+  /** the counter, one text for one creature and one for several, e.g. tk('{n} Fisch') / tk('{n} Fische') */
+  count: [string, string];
   makeSprite(g: Genome, sticker: AnyCanvas): Sprite;
   bounds(W: number): Bounds;
   paint(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, W: number, H: number): void;
@@ -221,7 +226,7 @@ export class HabitatScene implements Scene {
     if (wish && wishGlyph) wish.claimed = true;
     else if (wish) {
       const near = fresh.find((g) => g.score.scoredAs === wish.char);
-      if (near) wish.hint = { text: near.score.tip === 'spiegel' ? 'Andersrum!' : 'Fast! Nochmal!', t: 0 };
+      if (near) wish.hint = { text: near.score.tip === 'spiegel' ? t('Andersrum!') : t('Fast! Nochmal!'), t: 0 };
     }
     this.fx.start(
       snap,
@@ -253,27 +258,27 @@ export class HabitatScene implements Scene {
             max: 1.8,
             size: 30,
             color: '#ffffff',
-            text: TIER_LABEL[g.score.tier] + '!',
+            text: t('{tier}!', { tier: t(TIER_LABEL[g.score.tier]) }),
           });
         }
         if (g === best && fresh.length > 1) {
           sfx.fanfare();
-          c.bubble = { text: 'Ich bin am schönsten!', t: 0, good: true };
+          c.bubble = { text: t('Ich bin am schönsten!'), t: 0, good: true };
         }
         if (target && g === worst) {
-          const tipText = g.score.tip === 'anderes' && g.score.looksLike ? `Ich sehe aus wie ${withArticle(g.score.looksLike)}!` : TIP_TEXT[g.score.tip];
+          const tipText = g.score.tip === 'anderes' && g.score.looksLike ? t('Ich sehe aus wie {c}!', { c: withArticle(g.score.looksLike) }) : t(TIP_TEXT[g.score.tip]);
           c.bubble = { text: tipText, t: 0, good: g.score.tip === 'super' };
         } else if (fresh.length === 1) {
-          c.bubble = { text: TIP_TEXT[g.score.tip], t: 0, good: g.score.score >= 70 };
+          c.bubble = { text: t(TIP_TEXT[g.score.tip]), t: 0, good: g.score.score >= 70 };
         }
         if (g === wishGlyph) this.popWish(c);
         this.host.progress();
       },
     );
-    if (res.newSheet) this.host.toast('Neues Blatt erkannt!', 'info');
+    if (res.newSheet) this.host.toast(t('Neues Blatt erkannt!'), 'info');
     if (!fresh.length && !res.glyphs.some((g) => g.isNew)) {
-      if (res.glyphs.length) this.host.toast('Ich habe nichts Neues gefunden. Schreib noch etwas!', 'info');
-      else this.host.toast('Ich sehe noch keine Buchstaben. Schreib etwas unter die Kamera!', 'warn');
+      if (res.glyphs.length) this.host.toast(t('Ich habe nichts Neues gefunden. Schreib noch etwas!'), 'info');
+      else this.host.toast(t('Ich sehe noch keine Buchstaben. Schreib etwas unter die Kamera!'), 'warn');
     }
   }
 
@@ -457,7 +462,7 @@ export class HabitatScene implements Scene {
     ctx.textBaseline = 'middle';
     if (img) {
       ctx.textAlign = 'left';
-      ctx.fillText(b.text, x + 20, y + h / 2 + 1);
+      ctx.fillText(b.text, x + 20, y + h / 2 + 1, Math.max(40, w - 50 - iw));
       ctx.drawImage(img as CanvasImageSource, x + w - 20 - iw, y + (h - ih) / 2, iw, ih);
     } else {
       ctx.textAlign = 'center';
@@ -470,7 +475,8 @@ export class HabitatScene implements Scene {
 
   /** the stroke template of a letter in the chosen script (Grundschrift with its small hooks) */
   private template(ch: string): WrittenGlyph | null {
-    return writtenGlyph(ch, this.host.settings.recog.style !== 'druck');
+    const st = strokeStyle(this.host.settings.script, this.host.settings.recog.style);
+    return st ? writtenGlyph(ch, st === 'grund') : null;
   }
 
   /** Lineatur 3 has only the two lines of the middle band */
@@ -513,10 +519,11 @@ export class HabitatScene implements Scene {
     ctx.font = '700 40px Fredoka, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`So schreibt man ${withArticle(g.char)}:`, 0, -ch / 2 + 46);
-    const u = 108;
-    const top = -ch / 2 + 130;
-    drawSchoolLines(ctx, -cw / 2 + 30, cw / 2 - 30, top, u, this.lineKind());
+    ctx.fillText(t('So schreibt man {c}:', { c: withArticle(g.char) }), 0, -ch / 2 + 46, cw - 40);
+    // kana: one square box (2 bands) instead of the three bands of the school lines, so a bit bigger
+    const u = g.box ? 135 : 108;
+    const top = g.box ? -110 : -ch / 2 + 130;
+    drawGuideLines(ctx, g, -cw / 2 + 30, cw / 2 - 30, top, u, this.lineKind());
     const ox = (-g.w * u) / 2;
     const pen = drawWriting(ctx, g, ox, top, d.t - 0.7, { unit: u, ink: '#5b3bd6', ghost: true, guides: true, pen: 0.16 });
     if (pen) drawPencil(ctx, ox + pen.x * u, top + pen.y * u, 1.6);
@@ -582,13 +589,13 @@ export class HabitatScene implements Scene {
     const x = lo < hi ? lerp(lo, hi, Math.random()) : left ? B.x0 + 110 : B.x1 - 110;
     this.wish = { char, x, y, t: 0, pop: -1, claimed: false, hint: null };
     sfx.sparkle();
-    this.host.toast(`Überraschung! Wer ${withArticle(char)} schreibt, lässt die Blase platzen!`, 'info');
+    this.host.toast(t('Überraschung! Wer {c} schreibt, lässt die Blase platzen!', { c: withArticle(char) }), 'info');
   }
 
   /** letters a surprise bubble may show: none of the practice letters, nothing confusable with them */
   private surpriseLetters(): string[] {
     const t = this.practiceTarget;
-    return t ? surprisePool(t, this.host.settings.practice.targets) : [];
+    return t ? surprisePool(this.host.settings.script, t, this.host.settings.practice.targets) : [];
   }
 
   private wishPos(w: Wish): { x: number; y: number } {
@@ -606,8 +613,8 @@ export class HabitatScene implements Scene {
     this.particles.add({ kind: 'ring', x, y, size: WISH_R * 1.7, max: 0.45, color: 'rgba(255,255,255,0.95)' });
     this.particles.burst('drop', x, y, 18, { color: 'rgba(210,240,255,0.95)', size: 7, speed: 340, gravity: 600, max: 0.7 });
     this.particles.burst('confetti', x, y, 28, { colors: ['#ff6f91', '#ffd84a', '#7cdcff', '#8dff6b'], size: 13, speed: 320, max: 1.4, gravity: 420 });
-    this.particles.add({ kind: 'text', x, y: y - WISH_R - 40, vy: -40, max: 2, size: 46, color: '#ffd84a', text: 'Befreit!' });
-    c.bubble = { text: 'Juhu, du hast mich befreit!', t: 0, good: true };
+    this.particles.add({ kind: 'text', x, y: y - WISH_R - 40, vy: -40, max: 2, size: 46, color: '#ffd84a', text: t('Befreit!') });
+    c.bubble = { text: t('Juhu, du hast mich befreit!'), t: 0, good: true };
   }
 
   /** the surprise bubble: the letter as a template on writing lines, inside a soap bubble */
@@ -637,13 +644,14 @@ export class HabitatScene implements Scene {
     ctx.fill();
     if (g) {
       // the letter writes itself on school lines inside the bubble, again and again
-      const u = R * 0.52;
-      const top = -1.5 * u;
+      // (kana: in their square box, centred)
+      const u = R * (g.box ? 0.6 : 0.52);
+      const top = (g.box ? -1 : -1.5) * u;
       ctx.save();
       ctx.beginPath();
       ctx.arc(0, 0, R * 0.94, 0, TAU);
       ctx.clip();
-      drawSchoolLines(ctx, -R, R, top, u, this.lineKind());
+      drawGuideLines(ctx, g, -R, R, top, u, this.lineKind());
       ctx.restore();
       const t = w.t % (writeDuration(g) + 1.6);
       const pen = drawWriting(ctx, g, (-g.w * u) / 2, top, t, { unit: u, ink: '#5b3bd6', ghost: true, pen: 0.2 });
@@ -654,7 +662,7 @@ export class HabitatScene implements Scene {
     ctx.restore();
     if (w.pop >= 0) return;
     // label above the bubble
-    const text = w.hint?.text ?? 'Schreib mich!';
+    const text = w.hint?.text ?? t('Schreib mich!');
     const pulse = 1 + Math.sin(this.t * 4) * 0.05;
     ctx.save();
     ctx.translate(x, y - R * appear - 34);
@@ -692,7 +700,7 @@ export class HabitatScene implements Scene {
 
   /** a creature was tapped */
   protected showCreature(c: Creature): void {
-    if (c.glyph && c.sticker) this.host.showCard({ glyph: c.glyph, sticker: c.sticker, name: this.def.word[0] });
+    if (c.glyph && c.sticker) this.host.showCard({ glyph: c.glyph, sticker: c.sticker, name: t(this.def.word[0]) });
   }
 
   /** Random wander target inside the bounds. */
@@ -709,7 +717,7 @@ export class HabitatScene implements Scene {
   /** e.g. "12 Fische" */
   countText(): string {
     const n = this.count();
-    return `${n} ${n === 1 ? this.def.word[0] : this.def.word[1]}`;
+    return n === 1 ? t(this.def.count[0], { n }) : t(this.def.count[1], { n });
   }
 
   async saveState(): Promise<SceneSave | null> {

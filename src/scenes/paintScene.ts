@@ -19,6 +19,7 @@ import { aquarium, sandLine } from './aquarium.ts';
 import { HabitatScene, type Creature, type PaintedSkin } from './habitat.ts';
 import type { SceneSave } from './saved.ts';
 import type { SceneHost, Snapshot } from './scene.ts';
+import { t, tk } from '../i18n/i18n.ts';
 
 /** a card seen before: it does not hatch a second animal */
 export interface KnownCard {
@@ -52,17 +53,15 @@ export interface PaintGallery {
   unseen: number;
 }
 
-const UNSURE ='Diese Karte erkenne ich nicht sicher – bitte flach und ganz ins Bild legen';
+const UNSURE = tk('Diese Karte erkenne ich nicht sicher – bitte flach und ganz ins Bild legen');
 
 /** a species from a saved game; old saves (and unknown animals) are the fish */
 const savedSpecies = (sp: unknown): SpeciesId => (typeof sp === 'string' && Object.hasOwn(SPECIES, sp) ? (sp as SpeciesId) : 'fisch');
 
 /** "Ein neuer Hai!", "Eine neue Qualle!", "3 neue Tiere!" */
 function newText(n: number, sp: SpeciesId): string {
-  if (n > 1) return `${n} neue Tiere!`;
-  if (sp === 'freiform') return 'Ein neues Tier!';
-  const { article, name } = SPECIES[sp];
-  return `${article === 'der' ? 'Ein neuer' : article === 'die' ? 'Eine neue' : 'Ein neues'} ${name}!`;
+  if (n > 1) return t('{n} neue Tiere!', { n });
+  return t(SPECIES[sp].newOne);
 }
 
 /** colour thumbnails closer than this are the same card */
@@ -149,18 +148,18 @@ export class PaintScene extends HabitatScene {
     }
     const parts = [
       hatched ? newText(hatched, hatchedAs) : '',
-      recoloured ? 'Neue Farben!' : '',
-      again ? `${again} kenne ich schon` : '',
-      blank ? `${blank} noch nicht ausgemalt` : '',
+      recoloured ? t('Neue Farben!') : '',
+      again ? t('{n} kenne ich schon', { n: again }) : '',
+      blank ? t('{n} noch nicht ausgemalt', { n: blank }) : '',
     ].filter(Boolean);
     // a card that was there but not clear is no „Keine Karte“
-    const nothing = res.unsure > 0 ? 'Karte nicht erkannt' : 'Keine Karte gefunden';
+    const nothing = res.unsure > 0 ? t('Karte nicht erkannt') : t('Keine Karte gefunden');
     this.fx.show(snap, this.W, parts.length ? parts.join(' · ') : nothing, items);
     // one toast per scan at most: a card that was not clear matters most (it did not hatch)
-    if (res.unsure > 0) this.host.toast(UNSURE, 'warn');
-    else if (!res.cards.length) this.host.toast('Ich sehe keine Karte. Liegt sie ganz im Bild, mit dem schwarzen Rahmen?', 'warn');
-    else if (!hatched && !recoloured && blank && !again) this.host.toast('Dieses Tier ist noch ganz weiß – erst bunt ausmalen!', 'info');
-    else if (!hatched && !recoloured && again) this.host.toast('Dieses Tier kenne ich schon! Leg eine neue Karte unter die Kamera.', 'info');
+    if (res.unsure > 0) this.host.toast(t(UNSURE), 'warn');
+    else if (!res.cards.length) this.host.toast(t('Ich sehe keine Karte. Liegt sie ganz im Bild, mit dem schwarzen Rahmen?'), 'warn');
+    else if (!hatched && !recoloured && blank && !again) this.host.toast(t('Dieses Tier ist noch ganz weiß – erst bunt ausmalen!'), 'info');
+    else if (!hatched && !recoloured && again) this.host.toast(t('Dieses Tier kenne ich schon! Leg eine neue Karte unter die Kamera.'), 'info');
     if (this.known.length > 300) this.known.splice(0, this.known.length - 300);
   }
 
@@ -177,7 +176,7 @@ export class PaintScene extends HabitatScene {
       sfx.hatch(85);
       this.particles.burst('puff', x, y, 12, { color: 'rgba(255,255,255,0.85)', size: 30, speed: 180, max: 0.6 });
       this.particles.burst('spark', x, y, 12, { color: '#fff6a8', size: 14, speed: 280, max: 0.9 });
-      c.bubble = skin.name ? { text: 'Hallo, ich bin', t: 0, good: true, image: skin.name } : { text: 'Hallo! Blubb blubb!', t: 0, good: true };
+      c.bubble = skin.name ? { text: t('Hallo, ich bin'), t: 0, good: true, image: skin.name } : { text: t('Hallo! Blubb blubb!'), t: 0, good: true };
       this.host.progress();
     }
     return c;
@@ -190,7 +189,7 @@ export class PaintScene extends HabitatScene {
     c.special = 1;
     sfx.sparkle();
     this.particles.burst('spark', c.x, c.y, 16, { colors: ['#fff6a8', '#ff9fd0', '#9fe8ff'], size: 14, speed: 260, max: 1 });
-    c.bubble = { text: 'Juhu, neue Farben!', t: 0, good: true };
+    c.bubble = { text: t('Juhu, neue Farben!'), t: 0, good: true };
   }
 
   protected showCreature(c: Creature): void {
@@ -201,7 +200,7 @@ export class PaintScene extends HabitatScene {
       name: p.name,
       release: () => {
         c.leaving = true;
-        c.bubble = { text: 'Tschüss!', t: 0, good: true };
+        c.bubble = { text: t('Tschüss!'), t: 0, good: true };
         this.host.progress();
       },
     });
@@ -253,7 +252,7 @@ export class PaintScene extends HabitatScene {
   /** "12 Tiere" (there are not only fish) */
   countText(): string {
     const n = this.count();
-    return `${n} ${n === 1 ? 'Tier' : 'Tiere'}`;
+    return n === 1 ? t('{n} Tier', { n }) : t('{n} Tiere', { n });
   }
 
   /** the crab walks, the pike darts, the jellyfish pulses …; the fish swim the aquarium's way */

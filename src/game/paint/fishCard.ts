@@ -2,6 +2,7 @@
 // on an A4 sheet. Pure geometry in millimetres, shared by the print sheet, the card detection in the worker
 // and the sprite of the painted fish.
 
+import { tk } from '../../i18n/i18n.ts';
 import { SPECIES, type SpeciesId } from './species.ts';
 
 export type Pt = [number, number];
@@ -20,7 +21,7 @@ export const LINE = { outline: 1.1, inner: 0.6, frameDash: 0.35 } as const;
 
 /** texts and the line for the fish's name (card mm) */
 export const LABELS = {
-  hint: { text: 'Mal mich bunt an!', x: CARD.w - 6, y: 8.6, size: 3.4 },
+  hint: { text: tk('Mal mich bunt an!'), x: CARD.w - 6, y: 8.6, size: 3.4 },
   name: { text: 'Mein Fisch heißt:', x: 6, y: 80.5, size: 3.6 },
   line: { x0: 38, x1: CARD.w - 6, y: 81.5 },
   /** area cut out to show the name in the game */

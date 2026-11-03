@@ -2,6 +2,7 @@
 // presses the big shutter. The camera only runs while the viewfinder is open.
 import { CameraError, type Camera, type Grab } from '../camera/camera.ts';
 import { button, h } from './dom.ts';
+import { t } from '../i18n/i18n.ts';
 
 export interface ViewfinderOptions {
   camera: Camera;
@@ -22,7 +23,7 @@ export function openViewfinder(o: ViewfinderOptions): Promise<Grab | null> {
   return new Promise((resolve) => {
     const video = o.camera.video;
     video.className = 'vf-video';
-    const msg = h('div', { class: 'vf-msg' }, 'Kamera startet …');
+    const msg = h('div', { class: 'vf-msg' }, t('Kamera startet …'));
     const flash = h('div', { class: 'vf-flash' });
     const guide = h('div', { class: `vf-guide ${o.frame ?? 'sheet'}` }, h('i'), h('i'), h('i'), h('i'));
     const hint = h('div', { class: 'vf-hint' }, o.hint);
@@ -31,9 +32,9 @@ export function openViewfinder(o: ViewfinderOptions): Promise<Grab | null> {
       torch = !torch;
       torchBtn.classList.toggle('on', torch);
       void o.camera.setTorch(torch);
-    }, 'btn icon vf-torch', 'Licht an/aus');
+    }, 'btn icon vf-torch', t('Licht an/aus'));
     torchBtn.style.display = 'none';
-    const shutter = button(h('span', { class: 'vf-dot' }), () => void shoot(), 'vf-shutter', 'Foto machen (Leertaste)');
+    const shutter = button(h('span', { class: 'vf-dot' }), () => void shoot(), 'vf-shutter', t('Foto machen (Leertaste)'));
     shutter.disabled = true;
     const back = h(
       'div',
@@ -44,7 +45,7 @@ export function openViewfinder(o: ViewfinderOptions): Promise<Grab | null> {
         video,
         guide,
         msg,
-        h('div', { class: 'vf-top' }, button('✕', () => done(null), 'btn icon vf-close', 'Abbrechen (Esc)'), h('div', { class: 'vf-title' }, o.title), torchBtn),
+        h('div', { class: 'vf-top' }, button('✕', () => done(null), 'btn icon vf-close', t('Abbrechen (Esc)')), h('div', { class: 'vf-title' }, o.title), torchBtn),
         hint,
         shutter,
         flash,
@@ -66,7 +67,7 @@ export function openViewfinder(o: ViewfinderOptions): Promise<Grab | null> {
     const shoot = async () => {
       if (shutter.disabled || finished) return;
       shutter.disabled = true;
-      hint.textContent = 'Ganz still halten …';
+      hint.textContent = t('Ganz still halten …');
       try {
         const g = await o.grab();
         flash.classList.add('on');
@@ -90,7 +91,7 @@ export function openViewfinder(o: ViewfinderOptions): Promise<Grab | null> {
     document.body.append(back);
 
     const start = async () => {
-      msg.textContent = 'Kamera startet …';
+      msg.textContent = t('Kamera startet …');
       msg.style.display = '';
       try {
         if (!o.camera.ready()) await o.open();
@@ -104,9 +105,9 @@ export function openViewfinder(o: ViewfinderOptions): Promise<Grab | null> {
         if (finished) return;
         msg.textContent = '';
         msg.append(
-          h('b', null, e instanceof CameraError ? e.message : 'Die Kamera konnte nicht gestartet werden.'),
+          h('b', null, e instanceof CameraError ? e.message : t('Die Kamera konnte nicht gestartet werden.')),
           h('p', null, e instanceof CameraError ? e.hint : String((e as Error).message ?? e)),
-          button('Nochmal versuchen', () => void start(), 'btn primary'),
+          button(t('Nochmal versuchen'), () => void start(), 'btn primary'),
         );
       }
     };

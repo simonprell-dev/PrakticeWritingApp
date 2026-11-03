@@ -8,7 +8,10 @@ export type LayerSpec =
 export interface GlyphNetMeta {
   version: string;
   input: [number, number];
-  classes: string;
+  /** class of every output: a string of single characters (Druckschrift) or a list */
+  classes: string | string[];
+  /** the script the model is for (missing: Druckschrift) */
+  script?: string;
   dtype: 'f16';
   temperature: number;
   preprocess: { size: number; fit: number; strokePx: number; blur: number };

@@ -1,5 +1,6 @@
 import type { Settings } from '../app/settings.ts';
-import { PRACTICE_SETS } from '../recog/classes.ts';
+import { t } from '../i18n/i18n.ts';
+import { scriptOf } from '../recog/scripts.ts';
 import { button, h, modal, segmented } from './dom.ts';
 
 /**
@@ -14,7 +15,7 @@ export function openTargetPicker(settings: Settings, onDone: () => void): void {
   const keys: HTMLButtonElement[] = [];
   const order = h('span', { class: 'glyphs' });
   const info = h('span', { class: 'help' });
-  const done = button('Fertig', () => finish(), 'btn primary');
+  const done = button(t('Fertig'), () => finish(), 'btn primary');
 
   const refresh = () => {
     for (const k of keys) {
@@ -24,13 +25,14 @@ export function openTargetPicker(settings: Settings, onDone: () => void): void {
       else delete k.dataset.n;
     }
     order.textContent = chosen.join(' → ');
-    info.textContent = chosen.length ? (chosen.length === 1 ? 'Tippe weitere Buchstaben an, um mehrere nacheinander zu üben.' : 'Reihenfolge wie angetippt.') : 'Bitte mindestens einen Buchstaben antippen.';
+    info.textContent = chosen.length ? (chosen.length === 1 ? t('Tippe weitere Buchstaben an, um mehrere nacheinander zu üben.') : t('Reihenfolge wie angetippt.')) : t('Bitte mindestens einen Buchstaben antippen.');
     done.disabled = !chosen.length;
   };
 
-  for (const set of PRACTICE_SETS) {
-    const row = h('div', { class: 'picker-set' });
-    for (const ch of set.chars) {
+  const def = scriptOf(settings.script);
+  for (const set of def.practice) {
+    const row = h('div', { class: 'picker-set script-glyphs', lang: def.lang, dir: def.dir });
+    for (const ch of [...set.chars]) {
       const k = button(ch, () => {
         chosen = chosen.includes(ch) ? chosen.filter((c) => c !== ch) : [...chosen, ch];
         refresh();
@@ -38,7 +40,7 @@ export function openTargetPicker(settings: Settings, onDone: () => void): void {
       keys.push(k);
       row.append(k);
     }
-    grids.append(h('h3', null, set.label), row);
+    grids.append(h('h3', null, t(set.label)), row);
   }
 
   const finish = () => {
@@ -53,13 +55,13 @@ export function openTargetPicker(settings: Settings, onDone: () => void): void {
   const content = h(
     'div',
     null,
-    h('h2', null, 'Was wollen wir üben?'),
+    h('h2', null, t('Was wollen wir üben?')),
     h(
       'div',
       { class: 'picker-order' },
-      h('b', null, 'Reihenfolge:'),
+      h('b', null, t('Reihenfolge:')),
       order,
-      button('✕ Leeren', () => {
+      button(`✕ ${t('Leeren')}`, () => {
         chosen = [];
         refresh();
       }, 'btn small'),
@@ -69,9 +71,9 @@ export function openTargetPicker(settings: Settings, onDone: () => void): void {
     h(
       'div',
       { class: 'row' },
-      h('label', null, 'Wie oft jeder?'),
+      h('label', null, t('Wie oft jeder?')),
       segmented(
-        [3, 5, 10].map((n) => ({ value: String(n), label: `${n}×` })),
+        [3, 5, 10].map((n) => ({ value: String(n), label: t('{n}×', { n }) })),
         String(count),
         (v) => (count = Number(v)),
       ),
@@ -79,17 +81,17 @@ export function openTargetPicker(settings: Settings, onDone: () => void): void {
     h(
       'div',
       { class: 'row' },
-      h('label', null, 'Überraschungs-Buchstaben'),
+      h('label', null, t('Überraschungs-Buchstaben')),
       segmented(
         [
-          { value: 'an', label: 'An' },
-          { value: 'aus', label: 'Aus' },
+          { value: 'an', label: t('An') },
+          { value: 'aus', label: t('Aus') },
         ],
         surprise ? 'an' : 'aus',
         (v) => (surprise = v === 'an'),
       ),
     ),
-    h('p', { class: 'help' }, 'Ab und zu schwebt eine Blase mit einem anderen Buchstaben durchs Bild. Wer ihn schreibt, lässt die Blase platzen – und ein neues Wesen kommt heraus.'),
+    h('p', { class: 'help' }, t('Ab und zu schwebt eine Blase mit einem anderen Buchstaben durchs Bild. Wer ihn schreibt, lässt die Blase platzen – und ein neues Wesen kommt heraus.')),
     h('div', { class: 'actions' }, done),
   );
   refresh();

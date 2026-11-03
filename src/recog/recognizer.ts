@@ -1,6 +1,7 @@
 // Recognises glyphs (CNN + templates) and scores them.
 import type { GlyphScore, Strictness, TemplateStyle } from '../vision/types.ts';
-import { baseOf, CHARSET, expectedDots, groupOf, GROUPS, UMLAUTS, zoneDeviation, type Zone } from './classes.ts';
+import { baseOf as latinBase, expectedDots, GROUPS, UMLAUTS, zoneDeviation, type Zone } from './classes.ts';
+import { groupMapOf, scriptOf, type ScriptDef } from './scripts.ts';
 import type { GlyphNet } from './cnn.ts';
 import type { QualityFeatures } from './quality.ts';
 import { combine, type ScoreInput } from './score.ts';
@@ -76,10 +77,26 @@ export class Recognizer {
   /** median over all characters: the calibration only evens out differences between letters */
   private calibRef: number;
 
-  constructor(bank: TemplateBank, net: GlyphNet | null, calib: Record<string, number> = {}) {
+  /** the script this recogniser is for (its model knows only that script) */
+  readonly script: ScriptDef;
+  /** class of every CNN output, in the model's order */
+  private classes: string[];
+  private groupOf: (ch: string) => string;
+  /** German school rules (umlauts, case by height, school lines, mirror writing) */
+  private latin: boolean;
+  /** the letter without umlaut dots (Latin), the character itself otherwise */
+  private baseOf: (ch: string) => string;
+
+  constructor(bank: TemplateBank, net: GlyphNet | null, calib: Record<string, number> = {}, script: ScriptDef = scriptOf('druck')) {
     this.bank = bank;
     this.net = net;
     this.calib = calib;
+    this.script = script;
+    this.latin = script.seg === 'latin';
+    const cls = net?.meta.classes ?? script.chars;
+    this.classes = typeof cls === 'string' ? [...cls] : cls;
+    this.groupOf = groupMapOf(script);
+    this.baseOf = this.latin ? latinBase : (ch: string) => ch;
     const meds = Object.values(calib).sort((a, b) => a - b);
     this.calibRef = meds.length ? meds[meds.length >> 1] : 1;
   }
@@ -87,7 +104,7 @@ export class Recognizer {
   private groupProbs(p: Float32Array): Map<string, number> {
     const m = new Map<string, number>();
     for (let i = 0; i < p.length; i++) {
-      const g = groupOf(CHARSET[i]);
+      const g = this.groupOf(this.classes[i]);
       m.set(g, (m.get(g) ?? 0) + p[i]);
     }
     return m;
@@ -112,12 +129,14 @@ export class Recognizer {
   }
 
   analyze(f: GlyphFeatures, opts: ScoreOptions): Analysis {
+    // the Vorlage setting (Druck-/Grundschrift templates) only concerns the Druckschrift model
+    if (this.script.id !== 'druck') opts = { ...opts, style: 'beide' };
     const probs = this.net ? this.net.probs(f.cnn) : null;
     const gp = probs ? this.groupProbs(probs) : null;
     let top3: Analysis['top3'];
     if (probs) {
       top3 = [...probs]
-        .map((p, i) => ({ char: CHARSET[i], p }))
+        .map((p, i) => ({ char: this.classes[i], p }))
         .sort((a, b) => b.p - a.p)
         .slice(0, 3);
     }
@@ -132,19 +151,19 @@ export class Recognizer {
 
     if (opts.target) {
       const target = this.chooseTarget(f, gp, opts);
-      scoredBase = baseOf(target);
-      const grp = groupOf(scoredBase);
+      scoredBase = this.baseOf(target);
+      const grp = this.groupOf(scoredBase);
       match = this.bestMatch(f.skel, grp, opts.style);
       if (gp) {
         L = gp.get(grp) ?? 0;
         const [topG, topP] = [...gp.entries()].sort((a, b) => b[1] - a[1])[0];
         if (topG !== grp && topP > 0.6 && L < 0.15) looksLike = topG[0];
         // an i without its dot looks like l/I/1: that is a missing dot, not a different letter
-        if (scoredBase === 'i' && f.dots === 0) {
-          L = Math.max(L, gp.get(groupOf('l')) ?? 0);
+        if (this.latin && scoredBase === 'i' && f.dots === 0) {
+          L = Math.max(L, gp.get(this.groupOf('l')) ?? 0);
           looksLike = undefined;
         }
-        if (!SYMMETRIC.has(scoredBase) && f.cnnMirror && this.net && L < 0.2) {
+        if (this.latin && !SYMMETRIC.has(scoredBase) && f.cnnMirror && this.net && L < 0.2) {
           const pm = this.groupProbs(this.net.probs(f.cnnMirror)).get(grp) ?? 0;
           if (pm > 0.5) {
             mirrored = true;
@@ -153,13 +172,13 @@ export class Recognizer {
         }
       } else {
         // template-only legibility: margin to the best other character
-        const others = this.coarseRank(f.skel, opts.style).filter((c) => groupOf(c) !== grp).slice(0, 5);
+        const others = this.coarseRank(f.skel, opts.style).filter((c) => this.groupOf(c) !== grp).slice(0, 5);
         const other = this.bestMatch(f.skel, others.join(''), opts.style);
         const dT = match?.D ?? 8;
         const dO = other?.D ?? 8;
         margin = (dO - dT) / Math.max(0.5, dT);
         if (margin < -0.35 && other) looksLike = other.template.char;
-        if (!SYMMETRIC.has(scoredBase)) {
+        if (this.latin && !SYMMETRIC.has(scoredBase)) {
           const mm = this.bestMatch(f.skel, grp, opts.style, true);
           if (mm && match && mm.D < match.D - 1) mirrored = true;
         }
@@ -169,7 +188,7 @@ export class Recognizer {
       // free writing: candidates from the CNN (or a coarse template ranking)
       let cands: string[];
       if (gp) cands = [...gp.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([g]) => g);
-      else cands = [...new Set(this.coarseRank(f.skel, opts.style).slice(0, 8).map(groupOf))];
+      else cands = [...new Set(this.coarseRank(f.skel, opts.style).slice(0, 8).map(this.groupOf))];
       let bestScore = -Infinity;
       let bestGroup = cands[0];
       let bestM: MatchResult | null = null;
@@ -196,7 +215,7 @@ export class Recognizer {
       if (probs) {
         let bp = -1;
         for (const c of bestGroup) {
-          const p = probs[CHARSET.indexOf(c)] ?? 0;
+          const p = probs[this.classes.indexOf(c)] ?? 0;
           if (p > bp) {
             bp = p;
             ch = c;
@@ -205,18 +224,18 @@ export class Recognizer {
       } else if (match) ch = match.template.char;
       scoredBase = ch;
       charOut = ch;
-      if (f.dots >= 2 && UMLAUTS[ch]) charOut = UMLAUTS[ch];
-      if (f.dots >= 2 && (ch === 'o' || ch === '0' || ch === 'O')) charOut = 'ö';
-      if (f.dots === 1 && (ch === 'l' || ch === 'I' || ch === '1')) charOut = 'i';
+      if (this.latin && f.dots >= 2 && UMLAUTS[ch]) charOut = UMLAUTS[ch];
+      if (this.latin && f.dots >= 2 && (ch === 'o' || ch === '0' || ch === 'O')) charOut = 'ö';
+      if (this.latin && f.dots === 1 && (ch === 'l' || ch === 'I' || ch === '1')) charOut = 'i';
       // mirror writing: the mirror image is a clearly better character than the glyph itself (CNN and
       // template together, as above) and its template fits clearly closer. The CNN alone is not enough:
       // it also reads a mirrored S as a 2 and a mirrored 3 as an E. A mirrored b is a d, a real letter:
       // b/d and p/q stay what they look like.
-      if (gp && f.cnnMirror && this.net) {
+      if (this.latin && gp && f.cnnMirror && this.net) {
         const pm = this.net.probs(f.cnnMirror);
         const [mg, mp] = [...this.groupProbs(pm).entries()].sort((a, b) => b[1] - a[1])[0];
         let mch = mg[0];
-        for (const c of mg) if ((pm[CHARSET.indexOf(c)] ?? 0) > (pm[CHARSET.indexOf(mch)] ?? 0)) mch = c;
+        for (const c of mg) if ((pm[this.classes.indexOf(c)] ?? 0) > (pm[this.classes.indexOf(mch)] ?? 0)) mch = c;
         const twin = MIRROR_TWIN[mch];
         if (mp > 0.5 && mg !== bestGroup && !SYMMETRIC.has(mch) && !(twin && bestGroup.includes(twin))) {
           const mm = this.bestMatch(f.skel, mg, opts.style, true);
@@ -254,9 +273,9 @@ export class Recognizer {
       aspectG: f.aspect,
       aspectT: tpl.aspect,
       dots: f.dots,
-      expectedDots: expectedDots(charOut),
+      expectedDots: this.latin ? expectedDots(charOut) : f.dots,
       baselineDev: f.baselineDev,
-      zoneDev: f.zone ? zoneDeviation(charOut, f.zone) : undefined,
+      zoneDev: this.latin && f.zone ? zoneDeviation(charOut, f.zone) : undefined,
       mirrored,
       looksLike,
       free: !opts.target,
@@ -271,12 +290,12 @@ export class Recognizer {
   private chooseTarget(f: GlyphFeatures, gp: Map<string, number> | null, opts: ScoreOptions): string {
     const target = opts.target!;
     if (!opts.bonus?.length) return target;
-    const tg = groupOf(baseOf(target));
+    const tg = this.groupOf(this.baseOf(target));
     let best = target;
     if (gp) {
       let bestP = gp.get(tg) ?? 0;
       for (const b of opts.bonus) {
-        const p = gp.get(groupOf(baseOf(b))) ?? 0;
+        const p = gp.get(this.groupOf(this.baseOf(b))) ?? 0;
         if (p > bestP && p > 0.35) {
           best = b;
           bestP = p;
@@ -287,7 +306,7 @@ export class Recognizer {
     // template-only: the clearly closer skeleton decides
     let bestD = this.bestMatch(f.skel, tg, opts.style)?.D ?? Infinity;
     for (const b of opts.bonus) {
-      const d = this.bestMatch(f.skel, groupOf(baseOf(b)), opts.style)?.D ?? Infinity;
+      const d = this.bestMatch(f.skel, this.groupOf(this.baseOf(b)), opts.style)?.D ?? Infinity;
       if (d < bestD * 0.8) {
         best = b;
         bestD = d;
@@ -326,7 +345,7 @@ export class Recognizer {
     // free writing: c/C, o/O, s/S, u/U ... are told apart by their height, measured in x-heights
     // of the unambiguous letters of the same scan (font metrics of the templates)
     // with school lines the band a letter reaches decides: c/C, o/O, s/S ... (also for a single letter)
-    if (!opts.target) {
+    if (this.latin && !opts.target) {
       for (const a of an) {
         const pair = CASE_PAIRS.get(a.char) ?? UMLAUT_CASE[a.char];
         if (!pair || !a.zone) continue;
@@ -334,9 +353,9 @@ export class Recognizer {
         a.scoredAs = a.char;
       }
     }
-    if (!opts.target && an.length >= 2) {
+    if (this.latin && !opts.target && an.length >= 2) {
       const units = (ch: string) => {
-        const t = this.bank.forChar(baseOf(ch))[0];
+        const t = this.bank.forChar(this.baseOf(ch))[0];
         return t ? Math.max(0.6, t.top + Math.max(0, t.bottom)) : 1;
       };
       const ref = an.filter((a) => !CASE_PAIRS.has(a.char) && !UMLAUT_CASE[a.char]).map((a) => a.normH);
@@ -353,7 +372,7 @@ export class Recognizer {
         }
       }
     }
-    for (const a of an) if (a.zone) a.input.zoneDev = zoneDeviation(a.scoredAs, a.zone);
+    if (this.latin) for (const a of an) if (a.zone) a.input.zoneDev = zoneDeviation(a.scoredAs, a.zone);
     return an.map((a) => {
       const c = combine(a.input, opts.strictness);
       return {

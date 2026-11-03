@@ -2,6 +2,7 @@ import { TIER_LABEL, TIP_TEXT } from '../recog/score.ts';
 import type { CreatureInfo } from '../scenes/scene.ts';
 import { starCount } from '../scenes/habitat.ts';
 import { button, h, modal } from './dom.ts';
+import { t } from '../i18n/i18n.ts';
 
 export function starsEl(score: number, cls = 'stars'): HTMLElement {
   const n = starCount(score);
@@ -17,7 +18,7 @@ export function openGlyphCard(info: CreatureInfo, debug: boolean): void {
   const s = 180 / Math.max(st.width, st.height);
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(st as CanvasImageSource, 110 - (st.width * s) / 2, 110 - (st.height * s) / 2, st.width * s, st.height * s);
-  const tip = g.score.tip === 'anderes' && g.score.looksLike ? `Das sieht aus wie ein ${g.score.looksLike}.` : TIP_TEXT[g.score.tip];
+  const tip = g.score.tip === 'anderes' && g.score.looksLike ? t('Das sieht aus wie ein {c}.', { c: g.score.looksLike }) : t(TIP_TEXT[g.score.tip]);
   const content = h(
     'div',
     null,
@@ -28,10 +29,10 @@ export function openGlyphCard(info: CreatureInfo, debug: boolean): void {
       h(
         'div',
         null,
-        h('div', { class: 'tier' }, TIER_LABEL[g.score.tier]),
+        h('div', { class: 'tier' }, t(TIER_LABEL[g.score.tier])),
         starsEl(g.score.score, 'stars big-stars'),
         h('p', { style: 'font-size:1.3rem;margin:.4em 0' }, tip),
-        h('p', { class: 'help' }, `Ich glaube, das ist ${/[0-9]/.test(g.score.char) ? 'die' : 'ein'} „${g.score.char}“.`),
+        h('p', { class: 'help' }, /[0-9]/.test(g.score.char) ? t('Ich glaube, das ist die „{c}“.', { c: g.score.char }) : t('Ich glaube, das ist ein „{c}“.', { c: g.score.char })),
         debug
           ? h(
               'p',
@@ -42,7 +43,7 @@ export function openGlyphCard(info: CreatureInfo, debug: boolean): void {
           : null,
       ),
     ),
-    h('div', { class: 'actions' }, button('Schließen', () => m.close(), 'btn primary')),
+    h('div', { class: 'actions' }, button(t('Schließen'), () => m.close(), 'btn primary')),
   );
   const m = modal(content);
 }

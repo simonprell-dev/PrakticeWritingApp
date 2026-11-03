@@ -2,6 +2,7 @@
 // camera and a projector, with a phone or tablet in the hand, and with a tablet and a mirror.
 import type { CameraMode } from '../app/settings.ts';
 import { button, h } from './dom.ts';
+import { t } from '../i18n/i18n.ts';
 
 const INK = '#3b2a5c';
 
@@ -112,53 +113,53 @@ export function howtoSection(d: HowtoDeps): HTMLElement {
     return h(
       'article',
       { class: `howto-card${active ? ' active' : ''}${opt.soon ? ' soon' : ''}` },
-      opt.soon ? h('span', { class: 'soon-badge' }, 'Kommt bald') : active ? h('span', { class: 'soon-badge on' }, '✓ So spielt ihr gerade') : null,
+      opt.soon ? h('span', { class: 'soon-badge' }, t('Kommt bald')) : active ? h('span', { class: 'soon-badge on' }, t('✓ So spielt ihr gerade')) : null,
       art,
       h('h3', null, opt.title),
       h('p', { class: 'howto-who' }, opt.who),
       h('ol', null, ...opt.steps.map((s) => h('li', null, s))),
       opt.mode
-        ? button(active ? '📷 Kamera einrichten' : 'So spielen', () => d.choose(opt.mode!), `btn small${active ? '' : ' primary'}`)
-        : button('Kommt bald', () => undefined, 'btn small'),
+        ? button(active ? t('📷 Kamera einrichten') : t('So spielen'), () => d.choose(opt.mode!), `btn small${active ? '' : ' primary'}`)
+        : button(t('Kommt bald'), () => undefined, 'btn small'),
     );
   };
   const mirror = card({
     svg: MIRROR,
-    title: '🪞 Tablet mit Spiegel',
-    who: 'Ganz ohne Halten – wie beim Osmo',
+    title: t('🪞 Tablet mit Spiegel'),
+    who: t('Ganz ohne Halten – wie beim Osmo'),
     steps: [
-      'Das Tablet steht im Ständer, ein kleiner Spiegel sitzt auf der Frontkamera.',
-      'Davor schreiben oder malen: Das Tablet schaut über den Spiegel zu.',
-      'Einmal die vier Ecken des Blatts festlegen, dann nur noch „Fertig!“ tippen.',
+      t('Das Tablet steht im Ständer, ein kleiner Spiegel sitzt auf der Frontkamera.'),
+      t('Davor schreiben oder malen: Das Tablet schaut über den Spiegel zu.'),
+      t('Einmal die vier Ecken des Blatts festlegen, dann nur noch „Fertig!“ tippen.'),
     ],
     mode: 'spiegel',
   });
   return h(
     'section',
-    { class: 'howto', 'aria-label': 'So spielt ihr' },
-    h('h2', null, 'So spielt ihr'),
+    { class: 'howto', 'aria-label': t('So spielt ihr') },
+    h('h2', null, t('So spielt ihr')),
     h(
       'div',
       { class: 'howto-cards' },
       card({
         svg: DOC_CAM,
-        title: '📽️ Dokumentenkamera & Beamer',
-        who: 'Für die ganze Klasse',
+        title: t('📽️ Dokumentenkamera & Beamer'),
+        who: t('Für die ganze Klasse'),
         steps: [
-          'Die Kamera schaut von oben aufs Blatt, der Beamer zeigt das Spiel.',
-          'Schreiben oder malen – dann „Fertig!“ oder die Leertaste.',
-          'Aus jedem Buchstaben schlüpft ein Wesen an der Tafel.',
+          t('Die Kamera schaut von oben aufs Blatt, der Beamer zeigt das Spiel.'),
+          t('Schreiben oder malen – dann „Fertig!“ oder die Leertaste.'),
+          t('Aus jedem Buchstaben schlüpft ein Wesen an der Tafel.'),
         ],
         mode: 'fest',
       }),
       card({
         svg: HANDHELD,
-        title: '📱 Handy oder Tablet',
-        who: 'Für zu Hause und kleine Gruppen',
+        title: t('📱 Handy oder Tablet'),
+        who: t('Für zu Hause und kleine Gruppen'),
         steps: [
-          'Schreiben oder malen, das Blatt flach hinlegen.',
-          '„Fertig!“ tippen, das Gerät übers Blatt halten und auf den runden Knopf tippen.',
-          'Das Wesen erscheint direkt auf dem Gerät.',
+          t('Schreiben oder malen, das Blatt flach hinlegen.'),
+          t('„Fertig!“ tippen, das Gerät übers Blatt halten und auf den runden Knopf tippen.'),
+          t('Das Wesen erscheint direkt auf dem Gerät.'),
         ],
         mode: 'hand',
       }),

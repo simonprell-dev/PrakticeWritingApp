@@ -1,4 +1,5 @@
 // Combines legibility, template similarity, stroke quality and proportions into a 0..100 beauty score.
+import { tk } from '../i18n/i18n.ts';
 import type { GlyphScore, Strictness, Tier, TipId } from '../vision/types.ts';
 
 export interface ScoreInput {
@@ -90,11 +91,11 @@ export function tierOf(score: number): Tier {
 }
 
 export const TIER_LABEL: Record<Tier, string> = {
-  zerknittert: 'Knautschi',
-  schief: 'Wackelchen',
-  nett: 'Freundlich',
-  schoen: 'Schick',
-  prachtvoll: 'Prachtstück',
+  zerknittert: tk('Knautschi'),
+  schief: tk('Wackelchen'),
+  nett: tk('Freundlich'),
+  schoen: tk('Schick'),
+  prachtvoll: tk('Prachtstück'),
 };
 
 /** 1..5 stars for the HUD */
@@ -162,15 +163,15 @@ export function combine(si: ScoreInput, strictness: Strictness): Combined {
 }
 
 export const TIP_TEXT: Record<TipId, string> = {
-  form: 'Schau dir das Vorbild genau an!',
-  ruhig: 'Ganz langsam und ruhig schreiben.',
-  gerade: 'Schön gerade halten!',
-  bauch: 'Bäuche schön zumachen!',
-  punkt: 'Punkte nicht vergessen!',
-  groesse: 'Alle gleich groß schreiben.',
-  linie: 'Auf der Linie sitzen!',
-  zone: 'Genau bis an die Linien schreiben!',
-  anderes: 'Das sieht aus wie ein anderes Zeichen.',
-  spiegel: 'Dreh mich um – ich bin gespiegelt!',
-  super: 'Wunderschön!',
+  form: tk('Schau dir das Vorbild genau an!'),
+  ruhig: tk('Ganz langsam und ruhig schreiben.'),
+  gerade: tk('Schön gerade halten!'),
+  bauch: tk('Bäuche schön zumachen!'),
+  punkt: tk('Punkte nicht vergessen!'),
+  groesse: tk('Alle gleich groß schreiben.'),
+  linie: tk('Auf der Linie sitzen!'),
+  zone: tk('Genau bis an die Linien schreiben!'),
+  anderes: tk('Das sieht aus wie ein anderes Zeichen.'),
+  spiegel: tk('Dreh mich um – ich bin gespiegelt!'),
+  super: tk('Wunderschön!'),
 };

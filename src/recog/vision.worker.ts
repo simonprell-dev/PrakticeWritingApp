@@ -3,9 +3,11 @@ import type { GlyphJob } from '../vision/pipeline.ts';
 import type { RGBAImage, ScanResult, VisionOptions } from '../vision/types.ts';
 import { Engine, type SavedMemory } from './engine.ts';
 import type { Analysis } from './recognizer.ts';
+import type { ScriptId } from './scripts.ts';
 
 export type WorkerRequest =
   | { id: number; type: 'init'; base: string }
+  | { id: number; type: 'load'; script: ScriptId }
   | { id: number; type: 'scan'; frame: RGBAImage; opts: VisionOptions }
   | { id: number; type: 'segment'; frame: RGBAImage; opts: VisionOptions }
   | { id: number; type: 'analyze'; jobs: GlyphJob[]; opts: VisionOptions }
@@ -33,6 +35,8 @@ scope.onmessage = async (e: MessageEvent<WorkerRequest>) => {
     if (msg.type === 'init') {
       const info = await engine.init(msg.base);
       scope.postMessage({ id: msg.id, ok: true, value: info });
+    } else if (msg.type === 'load') {
+      scope.postMessage({ id: msg.id, ok: true, value: await engine.load(msg.script) });
     } else if (msg.type === 'scan') {
       const res = engine.scan(msg.frame, msg.opts);
       scope.postMessage({ id: msg.id, ok: true, value: res }, transferables(res));

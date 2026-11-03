@@ -3,6 +3,7 @@ import { fishSprite } from '../game/creatures/fish.ts';
 import { clamp, hsl, lerp, TAU } from '../game/math.ts';
 import { mulberry32 } from '../game/rng.ts';
 import type { Creature, HabitatDef, HabitatScene } from './habitat.ts';
+import { tk } from '../i18n/i18n.ts';
 
 interface Weed {
   x: number;
@@ -18,7 +19,8 @@ export const sandLine = (H: number) => H - 120;
 export const aquarium: HabitatDef = {
   id: 'meer',
   archetype: 'fish',
-  word: ['Fisch', 'Fische'],
+  word: [tk('Fisch'), tk('Fische')],
+  count: [tk('{n} Fisch'), tk('{n} Fische')],
   makeSprite: fishSprite,
   bounds: (W) => ({ x0: 110, x1: W - 110, y0: 150, y1: 880 }),
 

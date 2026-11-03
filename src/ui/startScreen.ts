@@ -6,6 +6,9 @@ import { howtoSection } from './howto.ts';
 import { legalLinks, legalWarning } from './legal.ts';
 import { continueBanner } from './savesPanel.ts';
 import { tilePreview, type TileKind } from './previews.ts';
+import { openScriptPicker, scriptTile } from './scriptPicker.ts';
+import { languageButton } from './languagePicker.ts';
+import type { ScriptId } from '../recog/scripts.ts';
 
 const DONATE_URL = 'https://www.paypal.com/donate/?hosted_button_id=8PTR5EKKK72WW';
 
@@ -27,6 +30,10 @@ export interface StartDeps {
   lastGame: () => Promise<SaveMeta | null>;
   resume: (id: string) => void;
   openSaves: () => void;
+  /** another script was chosen on the world map */
+  setScript: (s: ScriptId) => void;
+  /** another page language was chosen (the page reloads) */
+  setLanguage: (lang: string) => void;
 }
 
 const COLORS = ['#ff6f91', '#ff9671', '#ffc75f', '#7ccf6b', '#4fb3ff', '#8f7bff', '#ff6fd8'];
@@ -106,6 +113,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
       h(
         'div',
         { class: 'tiles' },
+        scriptTile(s.script, () => openScriptPicker(s.script, d.setScript)),
         tile('meer', '🐠 Meer', 'Fische im Ozean', () => d.startHabitat('meer')),
         tile('weltraum', '👽 Weltraum', 'Aliens zwischen den Planeten', () => d.startHabitat('weltraum')),
         tile('savanne', '🦒 Savanne', 'Tiere in der Steppe', () => d.startHabitat('savanne')),
@@ -119,6 +127,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         'div',
         { class: 'footer' },
         camChip,
+        languageButton(d.setLanguage),
         button('📂 Spielstände', d.openSaves, 'btn small'),
         button('⚙️ Einstellungen', d.openSettings, 'btn small'),
         button('👩‍🏫 Für Lehrer und Eltern', openGuide, 'btn small'),

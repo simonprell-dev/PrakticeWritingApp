@@ -1,5 +1,10 @@
 import './ui/styles.css';
 import { App } from './app/app.ts';
+import { loadSettings } from './app/settings.ts';
+import { setLanguage } from './i18n/i18n.ts';
+
+// the page language before anything is shown (first visit: chosen from the browser in loadSettings)
+await setLanguage(loadSettings().lang);
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const ui = document.getElementById('ui') as HTMLElement;

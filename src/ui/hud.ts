@@ -1,11 +1,13 @@
 // In-game overlay: title, practice task, camera thumbnail, auto-scan ring, big "Fertig!" button.
 import type { Settings } from '../app/settings.ts';
 import type { Camera } from '../camera/camera.ts';
-import { drawPencil, drawSchoolLines, drawWriting, writeDuration, writtenGlyph } from '../game/strokes.ts';
-import { withArticle } from '../recog/classes.ts';
+import { drawGuideLines, drawPencil, drawWriting, writeDuration, writtenGlyph } from '../game/strokes.ts';
+import { isDigit } from '../recog/classes.ts';
+import { strokeStyle } from '../recog/scripts.ts';
 import type { PlayerId } from '../vision/types.ts';
 import { button, h } from './dom.ts';
 import { fairBadge } from './fairBadge.ts';
+import { t } from '../i18n/i18n.ts';
 
 export interface HudDeps {
   title: string;
@@ -61,7 +63,7 @@ export class Hud {
     this.d = d;
     this.titleEl = h('div', { class: 'hud-title' }, d.title);
     this.cam = h('canvas', { width: 256, height: 144 });
-    const thumb = h('div', { class: 'camthumb', title: 'Kamera einrichten' }, this.cam, h('span', { class: 'camlabel' }, '📷'));
+    const thumb = h('div', { class: 'camthumb', title: t('Kamera einrichten') }, this.cam, h('span', { class: 'camlabel' }, '📷'));
     thumb.addEventListener('click', d.onCamera);
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
@@ -78,24 +80,24 @@ export class Hud {
     this.ring.style.strokeDasharray = `${2 * Math.PI * 29}`;
     this.ring.style.strokeDashoffset = `${2 * Math.PI * 29}`;
     svg.append(this.ring);
-    this.autoBtn = button('👁', d.onToggleAuto, 'btn icon auto-btn', 'Automatisch scannen (A)');
+    this.autoBtn = button('👁', d.onToggleAuto, 'btn icon auto-btn', t('Automatisch scannen (A)'));
     this.autoBtn.append(svg);
     if (d.practice) {
       this.task = h('div', { class: 'task' });
-      this.writing = h('canvas', { class: 'writing', title: 'So schreibt man ihn – antippen zum Zeigen' });
+      this.writing = h('canvas', { class: 'writing', title: t('So schreibt man ihn – antippen zum Zeigen') });
       this.writing.addEventListener('click', () => d.onTemplate?.());
       this.raf = requestAnimationFrame(this.animate);
     }
-    this.goLabel = h('span', null, 'Fertig!');
-    this.go = button([h('span', { class: 'spin' }), h('span', { class: 'go-icon' }), this.goLabel], d.onScan, 'btn primary go-btn', 'Foto machen (Leertaste)');
-    this.counter = d.onCounter ? button('', d.onCounter, 'counter clickable', 'Alle Tiere ansehen') : h('div', { class: 'counter' });
+    this.goLabel = h('span', null, t('Fertig!'));
+    this.go = button([h('span', { class: 'spin' }), h('span', { class: 'go-icon' }), this.goLabel], d.onScan, 'btn primary go-btn', t('Foto machen (Leertaste)'));
+    this.counter = d.onCounter ? button('', d.onCounter, 'counter clickable', t('Alle Tiere ansehen')) : h('div', { class: 'counter' });
     this.root = h(
       'div',
       { class: 'hud' },
       h(
         'div',
         { class: 'hud-top' },
-        button('⌂', d.onMenu, 'btn icon', 'Menü (Esc)'),
+        button('⌂', d.onMenu, 'btn icon', t('Menü (Esc)')),
         this.titleEl,
         this.task,
         h(
@@ -106,26 +108,26 @@ export class Hud {
             'div',
             { class: 'hud-buttons' },
             this.autoBtn,
-            d.onSave ? button('💾', d.onSave, 'btn icon', 'Spiel speichern (S)') : null,
-            button('⛶', d.onFullscreen, 'btn icon', 'Vollbild (F)'),
+            d.onSave ? button('💾', d.onSave, 'btn icon', t('Spiel speichern (S)')) : null,
+            button('⛶', d.onFullscreen, 'btn icon', t('Vollbild (F)')),
           ),
         ),
       ),
       h(
         'div',
         { class: 'hud-bottom' },
-        h('div', { class: 'side-btns' }, button(d.newSheetLabel ?? '🗒 Neues Blatt', d.onNewSheet, 'btn small', `${(d.newSheetLabel ?? 'Neues Blatt').replace(/^\S+ /, '')} (N)`)),
+        h('div', { class: 'side-btns' }, button(d.newSheetLabel ?? t('🗒 Neues Blatt'), d.onNewSheet, 'btn small', `${d.newSheetLabel ? d.newSheetLabel.replace(/^\S+ /, '') : t('Neues Blatt')} (N)`)),
         this.go,
         d.teams?.length
           ? h(
               'div',
               { class: `team-btns${d.teams.length > 4 ? ' compact' : ''}` },
-              ...d.teams.map((t, i) =>
+              ...d.teams.map((tm, i) =>
                 button(
-                  [h('span', { class: 'dot', style: `background:${t.color}` }, String(i + 1)), h('span', { class: 'name' }, t.name)],
-                  () => d.onTeamScan?.(t.id),
+                  [h('span', { class: 'dot', style: `background:${tm.color}` }, String(i + 1)), h('span', { class: 'name' }, tm.name)],
+                  () => d.onTeamScan?.(tm.id),
                   'btn team-btn',
-                  `Foto nur für ${t.name} (Taste ${i + 1})`,
+                  t('Foto nur für {name} (Taste {n})', { name: tm.name, n: i + 1 }),
                 ),
               ),
             )
@@ -177,9 +179,9 @@ export class Hud {
     this.titleEl.textContent = t;
   }
 
-  setBusy(busy: boolean, busyLabel = 'Schaue …'): void {
+  setBusy(busy: boolean, busyLabel = t('Schaue …')): void {
     this.go.classList.toggle('busy', busy);
-    this.goLabel.textContent = busy ? busyLabel : 'Fertig!';
+    this.goLabel.textContent = busy ? busyLabel : t('Fertig!');
   }
 
   setCounter(text: string): void {
@@ -190,21 +192,25 @@ export class Hud {
   /** practice task; with several letters a small queue shows which are done and which come next */
   setTask(target: string, done: number, count: number, list: string[] = [target], index = 0): void {
     if (!this.task) return;
-    const style = this.d.settings.recog.style === 'druck' ? 'glyph druck' : 'glyph';
+    const s = this.d.settings;
+    const stroke = strokeStyle(s.script, s.recog.style);
+    // other scripts are shown in their own font (CSS variable --script-font)
+    const style = s.script !== 'druck' && s.script !== 'grund' ? 'glyph script' : stroke === 'druck' ? 'glyph druck' : 'glyph';
     const n = Math.min(done, count);
     this.task.innerHTML = '';
     if (target !== this.writeChar) {
       this.writeChar = target;
       this.writeStart = performance.now();
     }
-    const known = !!writtenGlyph(target, false);
+    const known = !!stroke && !!writtenGlyph(target, false);
     this.task.append(
-      h('span', null, `Schreibe ${count}× ${withArticle(target).split(' ')[0]}`),
+      // the letter itself follows as its own element (animated template or glyph)
+      h('span', null, isDigit(target) ? t('Schreibe {n}× die', { n: count }) : t('Schreibe {n}× das', { n: count })),
       known && this.writing ? this.writing : h('span', { class: style }, target),
       h('span', { class: 'stars' }, '★'.repeat(n), h('span', { class: 'off' }, '★'.repeat(Math.max(0, count - n)))),
     );
     if (list.length > 1) {
-      this.task.append(h('span', { class: 'task-queue', title: 'Reihenfolge' }, ...list.map((c, i) => h('span', { class: i < index ? 'done' : i === index ? 'now' : '' }, c))));
+      this.task.append(h('span', { class: 'task-queue', title: t('Reihenfolge') }, ...list.map((c, i) => h('span', { class: i < index ? 'done' : i === index ? 'now' : '' }, c))));
     }
   }
 
@@ -219,13 +225,15 @@ export class Hud {
     const cv = this.writing;
     if (!cv || !cv.isConnected || !this.writeChar) return;
     const s = this.d.settings;
-    const g = writtenGlyph(this.writeChar, s.recog.style !== 'druck');
+    const st = strokeStyle(s.script, s.recog.style);
+    const g = st ? writtenGlyph(this.writeChar, st === 'grund') : null;
     if (!g) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const cssH = cv.clientHeight || 60;
-    // room above the top line for the dots of Ä, Ö, Ü (half a band up), below the bottom line a little
-    const unit = (cssH * dpr) / 3.75;
-    const W = Math.ceil(Math.max(2.4, g.w + 0.9) * unit);
+    // room above the top line for the dots of Ä, Ö, Ü (half a band up), below the bottom line a little;
+    // kana have only their square box (2 bands) and can be bigger
+    const unit = (cssH * dpr) / (g.box ? 2.5 : 3.75);
+    const W = Math.ceil(Math.max(2.4, g.w + (g.box ? 0.6 : 0.9)) * unit);
     const H = Math.ceil(cssH * dpr);
     if (cv.width !== W || cv.height !== H) {
       cv.width = W;
@@ -234,8 +242,8 @@ export class Hud {
     }
     const ctx = cv.getContext('2d')!;
     ctx.clearRect(0, 0, W, H);
-    const top = unit * 0.55;
-    drawSchoolLines(ctx, 0, W, top, unit, s.recog.lineatur === 'L3' ? 2 : 4);
+    const top = unit * (g.box ? 0.25 : 0.55);
+    drawGuideLines(ctx, g, 0, W, top, unit, s.recog.lineatur === 'L3' ? 2 : 4);
     // write, hold, write again
     const dur = writeDuration(g);
     const t = ((now - this.writeStart) / 1000) % (dur + 1.8);

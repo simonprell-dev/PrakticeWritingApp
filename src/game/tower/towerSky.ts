@@ -1,6 +1,7 @@
 // "Türme bauen" with high finish lines: the sky changes while the ground sinks away. `c` is how many
 // metres the ground has sunk. First the trees on the horizon get smaller, birds, a balloon, clouds and a
 // plane pass by, the sky turns dark, the earth curves, then come a satellite, the ISS and the moon.
+import { t } from '../../i18n/i18n.ts';
 import type { Ctx } from '../canvas.ts';
 import { clamp, hsl, lerp, TAU } from '../math.ts';
 import { mulberry32 } from '../rng.ts';
@@ -326,10 +327,10 @@ function satellite(ctx: Ctx, x: number, y: number, t: number): void {
 }
 
 /** the space station: a long truss with big solar wings and modules in the middle */
-function iss(ctx: Ctx, x: number, y: number, t: number): void {
+function iss(ctx: Ctx, x: number, y: number, time: number): void {
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(-0.06 + Math.sin(t * 0.2) * 0.03);
+  ctx.rotate(-0.06 + Math.sin(time * 0.2) * 0.03);
   ctx.strokeStyle = '#c9cede';
   ctx.lineWidth = 8;
   ctx.beginPath();
@@ -362,7 +363,7 @@ function iss(ctx: Ctx, x: number, y: number, t: number): void {
   ctx.font = '700 22px Fredoka, system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText('ISS', 0, 96);
+  ctx.fillText(t('ISS'), 0, 96);
   ctx.restore();
 }
 

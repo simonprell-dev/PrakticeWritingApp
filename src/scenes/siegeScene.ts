@@ -9,6 +9,7 @@ import { SIEGE } from '../game/duel/balance.ts';
 import type { DuelEvent, Fighter, SiegeStage, TeamStats } from '../game/duel/duelSim.ts';
 import { clamp, ease, hsl, lerp, TAU } from '../game/math.ts';
 import { WORLD_H } from '../game/stage.ts';
+import { t } from '../i18n/i18n.ts';
 import type { ScanResult, TeamId } from '../vision/types.ts';
 import { COUNTDOWN_SECONDS, drawBanner, drawCountdown, type Banner } from './cinema.ts';
 import { DuelScene, type DuelSceneSave } from './duelScene.ts';
@@ -82,13 +83,13 @@ export class SiegeScene extends DuelScene {
   constructor(host: SceneHost, worldW: number) {
     const st = host.settings.siege;
     super(host, worldW, {
-      names: { A: st.className || 'Unsere Klasse', B: 'Riesenburg' },
+      names: { A: st.className || t('Unsere Klasse'), B: t('Riesenburg') },
       colors: { A: CLASS_COLOR, B: GIANT_COLOR },
       castle: 'mittel',
       timeLimit: 0,
     });
     this.autoFinish = false;
-    this.className = st.className || 'Unsere Klasse';
+    this.className = st.className || t('Unsere Klasse');
     this.timeLimitSec = st.timeLimit * 60;
     this.walls = SIEGE.walls[st.size].map((w) => ({ ...w }));
     this.sim.configureSiege(this.walls);
@@ -171,14 +172,14 @@ export class SiegeScene extends DuelScene {
   private runSeq(dt: number): void {
     const s = this.seq!;
     s.t += dt;
-    const t = s.t;
+    const st = s.t;
     const n = this.walls.length;
     const home = this.home();
     if (s.name === 'intro') {
-      this.rise = ease.outBack(clamp(t / 1.4));
-      this.giantPop = clamp((t - 1.5) / 0.5);
-      this.cam = t < 2.9 ? this.castleView(1.35, 430) : this.camLerp(this.castleView(1.35, 430), home, (t - 2.9) / 1.2);
-      if (t < 1.4 && Math.random() < 0.7) this.dust();
+      this.rise = ease.outBack(clamp(st / 1.4));
+      this.giantPop = clamp((st - 1.5) / 0.5);
+      this.cam = st < 2.9 ? this.castleView(1.35, 430) : this.camLerp(this.castleView(1.35, 430), home, (st - 2.9) / 1.2);
+      if (st < 1.4 && Math.random() < 0.7) this.dust();
       this.at(0, 0, () => {
         sfx.rumble();
         this.shake = 0.8;
@@ -186,10 +187,15 @@ export class SiegeScene extends DuelScene {
       this.at(1, 1.6, () => {
         this.setMood('laugh', 2);
         sfx.laugh();
-        this.say('Hohoho! An meiner Riesenburg kommt keiner vorbei!', 2.4);
+        this.say(t('Hohoho! An meiner Riesenburg kommt keiner vorbei!'), 2.4);
       });
       this.at(2, 3.3, () => {
-        this.banner = { title: 'Klasse gegen Riesenburg', sub: `${this.className}: Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!`, t: 0, dur: 2.1 };
+        this.banner = {
+          title: t('Klasse gegen Riesenburg'),
+          sub: t('{name}: Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!', { name: this.className }),
+          t: 0,
+          dur: 2.1,
+        };
       });
       this.at(3, 5.0, () => {
         this.countdown = 0;
@@ -200,7 +206,7 @@ export class SiegeScene extends DuelScene {
       this.at(6, 6.65, () => sfx.go());
     } else if (s.name === 'wall') {
       const k = s.wall;
-      this.cam = t < 4.3 ? this.camLerp(home, this.castleView(1.3), t / 0.7) : this.camLerp(this.castleView(1.3), home, (t - 4.3) / 1.0);
+      this.cam = st < 4.3 ? this.camLerp(home, this.castleView(1.3), st / 0.7) : this.camLerp(this.castleView(1.3), home, (st - 4.3) / 1.0);
       this.at(0, 0, () => {
         this.setMood('shock', 1.8);
         this.shake = 0.6;
@@ -213,8 +219,8 @@ export class SiegeScene extends DuelScene {
       this.at(2, 1.7, () => {
         const left = n - k - 1;
         this.banner = {
-          title: `Mauer ${k + 1} geschafft!`,
-          sub: left === 1 ? 'Noch eine Mauer bis zum Riesen!' : `Noch ${left} Mauern bis zum Riesen!`,
+          title: t('Mauer {n} geschafft!', { n: k + 1 }),
+          sub: left === 1 ? t('Noch eine Mauer bis zum Riesen!') : t('Noch {n} Mauern bis zum Riesen!', { n: left }),
           t: 0,
           dur: 2.2,
         };
@@ -224,7 +230,7 @@ export class SiegeScene extends DuelScene {
       this.at(3, 2.3, () => {
         this.setMood('angry', 2.2);
         sfx.grumble();
-        this.say(k === n - 2 ? 'Grrr! Jetzt kommt meine allerletzte Mauer!' : `Grrr! Das war erst Mauer ${k + 1}!`, 2.2);
+        this.say(k === n - 2 ? t('Grrr! Jetzt kommt meine allerletzte Mauer!') : t('Grrr! Das war erst Mauer {n}!', { n: k + 1 }), 2.2);
       });
       this.at(4, 3.5, () => {
         this.sim.nextStage();
@@ -234,9 +240,9 @@ export class SiegeScene extends DuelScene {
         this.shake = 0.5;
       });
     } else if (s.name === 'victory') {
-      this.cam = t < 4.5 ? this.camLerp(home, this.castleView(1.25, 590), t / 0.8) : this.camLerp(this.castleView(1.25, 590), home, (t - 4.5) / 1.4);
-      this.flag = clamp((t - 2.4) / 0.8);
-      this.giantFall = clamp((t - 1.4) / 0.9);
+      this.cam = st < 4.5 ? this.camLerp(home, this.castleView(1.25, 590), st / 0.8) : this.camLerp(this.castleView(1.25, 590), home, (st - 4.5) / 1.4);
+      this.flag = clamp((st - 2.4) / 0.8);
+      this.giantFall = clamp((st - 1.4) / 0.9);
       this.at(7, 2.1, () => {
         this.shake = 0.9;
         sfx.bonk();
@@ -252,11 +258,11 @@ export class SiegeScene extends DuelScene {
       });
       this.at(2, 2.4, () => {
         this.setMood('defeat');
-        this.say('Ihr habt gewonnen! So schöne Buchstaben habe ich noch nie gesehen!', 3.8);
+        this.say(t('Ihr habt gewonnen! So schöne Buchstaben habe ich noch nie gesehen!'), 3.8);
       });
       this.at(3, 3.0, () => this.confetti(90));
       this.at(4, 3.4, () => {
-        this.banner = { title: 'Die Riesenburg ist erobert!', sub: `${this.className} hat gewonnen!`, t: 0, dur: 4.2 };
+        this.banner = { title: t('Die Riesenburg ist erobert!'), sub: t('{name} hat gewonnen!', { name: this.className }), t: 0, dur: 4.2 };
       });
       this.at(5, 4.4, () => this.confetti(70));
       this.at(6, 5.6, () => this.confetti(70));
@@ -264,13 +270,13 @@ export class SiegeScene extends DuelScene {
       this.at(0, 0, () => {
         this.setMood('laugh', 2.5);
         sfx.laugh();
-        this.say('Puh! Die Zeit ist um – meine Burg steht noch!', 2.6);
+        this.say(t('Puh! Die Zeit ist um – meine Burg steht noch!'), 2.6);
       });
       this.at(1, 1.6, () => {
         const w = this.wallsDown;
         this.banner = {
-          title: 'Die Zeit ist um!',
-          sub: w ? `Ihr habt ${w} von ${n} Mauern geschafft – super gekämpft!` : 'Beim nächsten Mal schafft ihr die erste Mauer!',
+          title: t('Die Zeit ist um!'),
+          sub: w ? t('Ihr habt {w} von {n} Mauern geschafft – super gekämpft!', { w, n }) : t('Beim nächsten Mal schafft ihr die erste Mauer!'),
           t: 0,
           dur: 4,
         };
@@ -344,7 +350,7 @@ export class SiegeScene extends DuelScene {
     this.particles.burst('puff', f.x, 640, 8, { color: 'rgba(60,40,120,0.45)', size: 22, speed: 120, max: 0.6 });
     if (this.guardCount % 3 === 1) {
       this.setMood('laugh', 1.2);
-      this.say(['Wächter, los!', 'Haltet sie auf!', 'Tintenkleckse, an die Arbeit!'][Math.floor(Math.random() * 3)], 1.6);
+      this.say([t('Wächter, los!'), t('Haltet sie auf!'), t('Tintenkleckse, an die Arbeit!')][Math.floor(Math.random() * 3)], 1.6);
     }
   }
 
@@ -397,7 +403,7 @@ export class SiegeScene extends DuelScene {
   }
 
   protected summary(): string {
-    return `Mauer ${Math.min(this.walls.length, this.wallsDown + 1)} von ${this.walls.length}`;
+    return t('Mauer {n} von {total}', { n: Math.min(this.walls.length, this.wallsDown + 1), total: this.walls.length });
   }
 
   async saveState(): Promise<SceneSave | null> {
@@ -424,9 +430,14 @@ export class SiegeScene extends DuelScene {
     this.giantPop = 1;
     this.burst = null;
     this.cam = this.home();
-    this.banner = { title: 'Weiter geht’s!', sub: `${this.className} gegen Riese Rumpel – Mauer ${this.sim.stage + 1} von ${this.walls.length}`, t: 0, dur: 2.6 };
+    this.banner = {
+      title: t('Weiter geht’s!'),
+      sub: t('{name} gegen Riese Rumpel – Mauer {n} von {total}', { name: this.className, n: this.sim.stage + 1, total: this.walls.length }),
+      t: 0,
+      dur: 2.6,
+    };
     this.setMood('laugh', 1.8);
-    this.say('Ihr schon wieder? Hohoho! Meine Burg steht noch!', 2.4);
+    this.say(t('Ihr schon wieder? Hohoho! Meine Burg steht noch!'), 2.4);
   }
 
   private siegeResult(): SiegeResult {
@@ -691,7 +702,7 @@ export class SiegeScene extends DuelScene {
     ctx.fillText(this.className, x + 22, 64, barW - 44);
     ctx.fillStyle = '#4a3b6b';
     ctx.font = '600 24px Fredoka, system-ui, sans-serif';
-    ctx.fillText(`${this.sim.stats.A.written} Zeichen · ${this.stars} Sterne`, x + 22, 100);
+    ctx.fillText(t('{n} Zeichen · {stars} Sterne', { n: this.sim.stats.A.written, stars: this.stars }), x + 22, 100, barW - 44);
     // giant castle
     x = this.W / 2 + gap / 2;
     const c = this.sim.castles.B;
@@ -703,11 +714,11 @@ export class SiegeScene extends DuelScene {
     ctx.fillStyle = hsl(GIANT_HUE, 0.5, 0.45);
     ctx.font = '700 32px Fredoka, system-ui, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(`Mauer ${Math.min(n, this.sim.stage + 1)} von ${n}`, x + barW - 22, 64);
+    ctx.fillText(t('Mauer {n} von {total}', { n: Math.min(n, this.sim.stage + 1), total: n }), x + barW - 22, 64, barW * 0.55 - 22);
     ctx.textAlign = 'left';
     ctx.fillStyle = '#4a3b6b';
     ctx.font = '600 24px Fredoka, system-ui, sans-serif';
-    ctx.fillText(`${left} ${left === 1 ? 'Blase' : 'Blasen'}`, x + 22, 64);
+    ctx.fillText(left === 1 ? t('{n} Blase', { n: left }) : t('{n} Blasen', { n: left }), x + 22, 64, barW * 0.45 - 22);
     ctx.fillStyle = 'rgba(0,0,0,0.12)';
     ctx.beginPath();
     ctx.roundRect(x + 20, 80, barW - 40, 20, 10);

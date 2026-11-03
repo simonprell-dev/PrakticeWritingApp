@@ -6,6 +6,7 @@ import { DEFAULT_QUAD, quadPoint, type Quad } from '../camera/perspective.ts';
 import { TIER_LABEL } from '../recog/score.ts';
 import type { ScanResult } from '../vision/types.ts';
 import { button, h, modal, segmented } from './dom.ts';
+import { t, tk } from '../i18n/i18n.ts';
 
 export interface CameraSetupDeps {
   camera: Camera;
@@ -25,7 +26,7 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
   const cam = d.settings.camera;
   const view = h('canvas');
   const overlay = h('canvas', { style: 'position:absolute;inset:0;width:100%;height:100%' });
-  const msg = h('div', { class: 'cam-msg' }, 'Kamera wird gestartet …');
+  const msg = h('div', { class: 'cam-msg' }, t('Kamera wird gestartet …'));
   const wrap = h('div', { class: 'cam-view' }, view, overlay);
   const errBox = h('div');
   const select = h('select') as HTMLSelectElement;
@@ -37,11 +38,11 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     const devs = await Camera.devices();
     select.innerHTML = '';
     devs.forEach((dv, i) => {
-      const o = h('option', { value: dv.deviceId }, (dv.label || `Kamera ${i + 1}`) + (Camera.isDocCam(dv.label) ? ' 📄' : ''));
+      const o = h('option', { value: dv.deviceId }, (dv.label || t('Kamera {n}', { n: i + 1 })) + (Camera.isDocCam(dv.label) ? ' 📄' : ''));
       if (dv.deviceId === d.camera.deviceId) o.selected = true;
       select.append(o);
     });
-    if (!devs.length) select.append(h('option', null, 'Keine Kamera gefunden'));
+    if (!devs.length) select.append(h('option', null, t('Keine Kamera gefunden')));
   };
 
   const showError = (e: unknown) => {
@@ -62,7 +63,7 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     } catch (e) {
       showError(e);
       if (!msg.isConnected) wrap.prepend(msg);
-      msg.textContent = 'Keine Kamera';
+      msg.textContent = t('Keine Kamera');
     }
   };
 
@@ -226,8 +227,9 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     c.fillStyle = '#fff';
     const mx = (pts[0][0] + pts[1][0]) / 2;
     const my = (pts[0][1] + pts[1][1]) / 2 - 12 * k;
-    c.strokeText('oben', mx, my);
-    c.fillText('oben', mx, my);
+    const top = t('oben');
+    c.strokeText(top, mx, my);
+    c.fillText(top, mx, my);
     c.textAlign = 'start';
     for (const [x, y] of pts) {
       c.fillStyle = 'rgba(255,207,61,0.35)';
@@ -288,21 +290,21 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     h(
       'div',
       { class: 'row' },
-      button('⟳ Drehen', () => {
+      button(t('⟳ Drehen'), () => {
         cam.rotation = ((cam.rotation + 90) % 360) as Settings['camera']['rotation'];
         cam.roi = undefined;
         d.save();
       }, 'btn small'),
-      button('⇋ Spiegeln', () => {
+      button(t('⇋ Spiegeln'), () => {
         cam.mirror = !cam.mirror;
         d.save();
       }, 'btn small'),
-      button('▢ Ganzes Bild', () => {
+      button(t('▢ Ganzes Bild'), () => {
         cam.roi = undefined;
         d.save();
       }, 'btn small'),
     ),
-    h('p', { class: 'help' }, 'Ziehe im Bild einen Rahmen um das Blatt. Nur dort wird gesucht. Die Schrift sollte aufrecht zu sehen sein – sonst „Drehen“.'),
+    h('p', { class: 'help' }, t('Ziehe im Bild einen Rahmen um das Blatt. Nur dort wird gesucht. Die Schrift sollte aufrecht zu sehen sein – sonst „Drehen“.')),
   );
   // a tablet with a mirror sees the sheet at a slant: four corners instead of a rectangle
   const mirrorOnly = h(
@@ -311,16 +313,16 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     h(
       'div',
       { class: 'row' },
-      button('⟳ Drehen', () => {
+      button(t('⟳ Drehen'), () => {
         cam.rotation = ((cam.rotation + 90) % 360) as Settings['camera']['rotation'];
         cam.quad = structuredClone(DEFAULT_QUAD);
         d.save();
       }, 'btn small'),
-      button('⇋ Spiegeln', () => {
+      button(t('⇋ Spiegeln'), () => {
         cam.mirror = !cam.mirror;
         d.save();
       }, 'btn small'),
-      button('↺ Ecken zurücksetzen', () => {
+      button(t('↺ Ecken zurücksetzen'), () => {
         cam.quad = structuredClone(DEFAULT_QUAD);
         d.save();
       }, 'btn small'),
@@ -328,14 +330,14 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     h(
       'p',
       { class: 'help' },
-      'Ziehe die vier gelben Punkte auf die Ecken des Blatts – oder auf die Ecken des Teils, der zu sehen ist. Die dicke Linie mit „oben“ gehört an den oberen Rand der Schrift. Die App rechnet das Blatt dann gerade. Steht die Schrift auf dem Kopf oder spiegelverkehrt: „Drehen“ oder „Spiegeln“.',
+      t('Ziehe die vier gelben Punkte auf die Ecken des Blatts – oder auf die Ecken des Teils, der zu sehen ist. Die dicke Linie mit „oben“ gehört an den oberen Rand der Schrift. Die App rechnet das Blatt dann gerade. Steht die Schrift auf dem Kopf oder spiegelverkehrt: „Drehen“ oder „Spiegeln“.'),
     ),
   );
   const handOnly = h(
     'div',
     { class: 'hand-help' },
-    h('p', null, h('b', null, 'So geht es mit Handy oder Tablet: '), 'Beim Spielen auf „Fertig!“ tippen – dann geht die Kamera auf. Das Gerät ruhig über das Blatt halten, bis alles im Rahmen ist, und auf den runden Knopf tippen.'),
-    h('p', { class: 'help' }, 'Die Kamera ist nur an, solange der Sucher offen ist. Am besten das Gerät quer halten: dann ist das Spiel am größten.'),
+    h('p', null, h('b', null, t('So geht es mit Handy oder Tablet: ')), t('Beim Spielen auf „Fertig!“ tippen – dann geht die Kamera auf. Das Gerät ruhig über das Blatt halten, bis alles im Rahmen ist, und auf den runden Knopf tippen.')),
+    h('p', { class: 'help' }, t('Die Kamera ist nur an, solange der Sucher offen ist. Am besten das Gerät quer halten: dann ist das Spiel am größten.')),
   );
   const tips = h('ul', { class: 'help', style: 'padding-left:1.2em;margin:0' });
   const showMode = () => {
@@ -346,18 +348,18 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
     wrap.classList.toggle('roi', cam.mode !== 'hand');
     tips.replaceChildren(
       ...(cam.mode === 'hand'
-        ? ['Gutes Licht, kein Schatten vom Gerät auf dem Blatt (🔦 hilft)', 'Das Blatt flach hinlegen', 'Beim Auslösen kurz ganz still halten', 'Datenschutz: nur das Papier fotografieren, keine Gesichter']
+        ? [tk('Gutes Licht, kein Schatten vom Gerät auf dem Blatt (🔦 hilft)'), tk('Das Blatt flach hinlegen'), tk('Beim Auslösen kurz ganz still halten'), tk('Datenschutz: nur das Papier fotografieren, keine Gesichter')]
         : cam.mode === 'spiegel'
-          ? ['Das Blatt immer an dieselbe Stelle vor das Tablet legen (z. B. mit Klebeband markieren)', 'Groß und kräftig schreiben: hinten auf dem Blatt wird die Schrift im Bild klein', 'Gutes Licht von oben, Schatten der Hand vermeiden', 'Datenschutz: nur das Papier ins Bild, keine Gesichter']
-          : ['Filzstift oder weicher Bleistift (B/2B)', 'Licht der Dokumentenkamera einschalten, Schatten vermeiden', 'Zwischen den Buchstaben etwas Platz lassen', 'Bei Zetteln: dunkle Unterlage hilft', 'Datenschutz: nur das Papier filmen, keine Gesichter']
-      ).map((t) => h('li', null, t)),
+          ? [tk('Das Blatt immer an dieselbe Stelle vor das Tablet legen (z. B. mit Klebeband markieren)'), tk('Groß und kräftig schreiben: hinten auf dem Blatt wird die Schrift im Bild klein'), tk('Gutes Licht von oben, Schatten der Hand vermeiden'), tk('Datenschutz: nur das Papier ins Bild, keine Gesichter')]
+          : [tk('Filzstift oder weicher Bleistift (B/2B)'), tk('Licht der Dokumentenkamera einschalten, Schatten vermeiden'), tk('Zwischen den Buchstaben etwas Platz lassen'), tk('Bei Zetteln: dunkle Unterlage hilft'), tk('Datenschutz: nur das Papier filmen, keine Gesichter')]
+      ).map((tip) => h('li', null, t(tip))),
     );
   };
   const modeSwitch = segmented(
     [
-      { value: 'fest', label: '📽️ Kamera steht fest' },
-      { value: 'hand', label: '📱 Handy/Tablet in der Hand' },
-      { value: 'spiegel', label: '🪞 Tablet mit Spiegel' },
+      { value: 'fest', label: t('📽️ Kamera steht fest') },
+      { value: 'hand', label: t('📱 Handy/Tablet in der Hand') },
+      { value: 'spiegel', label: t('🪞 Tablet mit Spiegel') },
     ],
     cam.mode,
     (v: CameraMode) => {
@@ -365,7 +367,7 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
       lastScan = null;
       showMode();
       if (!msg.isConnected) wrap.prepend(msg);
-      msg.textContent = 'Kamera wird gestartet …';
+      msg.textContent = t('Kamera wird gestartet …');
       void start(undefined);
     },
     'cam-mode',
@@ -374,7 +376,7 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
   const content = h(
     'div',
     null,
-    h('h2', null, '📷 Kamera einrichten'),
+    h('h2', null, t('📷 Kamera einrichten')),
     h('div', { class: 'row' }, modeSwitch),
     h(
       'div',
@@ -383,30 +385,30 @@ export function openCameraSetup(d: CameraSetupDeps, onClose?: () => void): void 
       h(
         'div',
         null,
-        h('div', { class: 'row' }, h('label', { style: 'min-width:auto' }, 'Kamera'), select),
+        h('div', { class: 'row' }, h('label', { style: 'min-width:auto' }, t('Kamera')), select),
         handOnly,
         fixedOnly,
         mirrorOnly,
         h(
           'div',
           { class: 'row' },
-          button('✏️ Testscan', async () => {
-            info.textContent = 'Schaue …';
+          button(t('✏️ Testscan'), async () => {
+            info.textContent = t('Schaue …');
             const res = await d.testScan();
             if (res) {
               lastScan = { res, until: performance.now() + 8000 };
               info.textContent = res.glyphs.length
-                ? `${res.glyphs.length} Zeichen gefunden: ${res.glyphs.map((g) => `${g.score.char} (${TIER_LABEL[g.score.tier]})`).join(', ')}`
-                : 'Keine Zeichen gefunden. Schreib ein paar Buchstaben mit einem dunklen Stift und versuche es nochmal.';
+                ? t('{n} Zeichen gefunden: {list}', { n: res.glyphs.length, list: res.glyphs.map((g) => `${g.score.char} (${t(TIER_LABEL[g.score.tier])})`).join(', ') })
+                : t('Keine Zeichen gefunden. Schreib ein paar Buchstaben mit einem dunklen Stift und versuche es nochmal.');
             } else info.textContent = '';
           }, 'btn accent'),
         ),
         info,
-        h('h3', null, 'Tipps für gute Erkennung'),
+        h('h3', null, t('Tipps für gute Erkennung')),
         tips,
       ),
     ),
-    h('div', { class: 'actions' }, button('Fertig', () => m.close(), 'btn primary')),
+    h('div', { class: 'actions' }, button(t('Fertig'), () => m.close(), 'btn primary')),
   );
   showMode();
   const m = modal(content, () => {

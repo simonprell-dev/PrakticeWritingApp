@@ -3,6 +3,7 @@ import type { CameraMode, Settings } from '../app/settings.ts';
 import { quadSize, warpQuad, type Quad } from './perspective.ts';
 import { DETECT_SIZE } from '../vision/constants.ts';
 import type { RGBAImage } from '../vision/types.ts';
+import { t } from '../i18n/i18n.ts';
 
 const DOC_CAM = /ipevo|elmo|doc|visuali[sz]er|lumens|aver|hovercam|dokument|okiolabs|joyusing|ziggi|vzr|presenter|wolfvision/i;
 
@@ -17,17 +18,17 @@ export class CameraError extends Error {
 function explain(err: unknown): CameraError {
   const name = (err as DOMException)?.name ?? '';
   if (!window.isSecureContext)
-    return new CameraError('Die Kamera funktioniert nur über eine sichere Adresse.', 'Bitte die App über https:// (z. B. die Railway-Adresse) oder http://localhost öffnen.');
+    return new CameraError(t('Die Kamera funktioniert nur über eine sichere Adresse.'), t('Bitte die App über https:// (z. B. die Railway-Adresse) oder http://localhost öffnen.'));
   if (name === 'NotAllowedError' || name === 'SecurityError')
     return new CameraError(
-      'Der Kamera-Zugriff wurde nicht erlaubt.',
-      'Im Browser auf das Schloss neben der Adresse klicken und „Kamera: Zulassen“ wählen. Unter Windows zusätzlich: Einstellungen → Datenschutz → Kamera → Zugriff für Desktop-Apps erlauben.',
+      t('Der Kamera-Zugriff wurde nicht erlaubt.'),
+      t('Im Browser auf das Schloss neben der Adresse klicken und „Kamera: Zulassen“ wählen. Unter Windows zusätzlich: Einstellungen → Datenschutz → Kamera → Zugriff für Desktop-Apps erlauben.'),
     );
   if (name === 'NotFoundError' || name === 'OverconstrainedError')
-    return new CameraError('Keine Kamera gefunden.', 'Ist die Dokumentenkamera per USB angeschlossen und eingeschaltet? Danach „Nochmal versuchen“.');
+    return new CameraError(t('Keine Kamera gefunden.'), t('Ist die Dokumentenkamera per USB angeschlossen und eingeschaltet? Danach „Nochmal versuchen“.'));
   if (name === 'NotReadableError' || name === 'AbortError')
-    return new CameraError('Die Kamera ist gerade belegt.', 'Ein anderes Programm (Teams, Zoom, Kamera-App, Dokumentenkamera-Software) benutzt sie. Bitte dort schließen und nochmal versuchen.');
-  return new CameraError('Die Kamera konnte nicht gestartet werden.', String((err as Error)?.message ?? err));
+    return new CameraError(t('Die Kamera ist gerade belegt.'), t('Ein anderes Programm (Teams, Zoom, Kamera-App, Dokumentenkamera-Software) benutzt sie. Bitte dort schließen und nochmal versuchen.'));
+  return new CameraError(t('Die Kamera konnte nicht gestartet werden.'), String((err as Error)?.message ?? err));
 }
 
 /** Laplacian variance on a sparse grid of the green channel (cheap focus measure). */
@@ -125,7 +126,7 @@ export class Camera {
     }
     const track = this.stream.getVideoTracks()[0];
     this.deviceId = track?.getSettings().deviceId;
-    this.label = track?.label ?? 'Kamera';
+    this.label = track?.label ?? t('Kamera');
     track?.addEventListener('ended', () => {
       this.stream = null;
       this.onEnded?.();
@@ -221,7 +222,7 @@ export class Camera {
    * `sharpest`: a camera in the hand moves, so only the single sharpest frame is used.
    */
   async grab(cam: Settings['camera'], frames = 2, maxSide = DETECT_SIZE, sharpest = false): Promise<Grab> {
-    if (!this.ready()) throw new CameraError('Die Kamera ist noch nicht bereit.', 'Einen Moment warten oder die Kamera neu verbinden.');
+    if (!this.ready()) throw new CameraError(t('Die Kamera ist noch nicht bereit.'), t('Einen Moment warten oder die Kamera neu verbinden.'));
     if (cam.quad) return this.grabQuad(cam, cam.quad, frames, maxSide);
     const roi = this.roiPx(cam);
     // the graphics card scales straight to detection size (the recognition does not need more)

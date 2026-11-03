@@ -13,6 +13,7 @@ import { Particles } from '../game/particles.ts';
 import { hashBytes, mulberry32 } from '../game/rng.ts';
 import { SpawnFx } from '../game/spawnFx.ts';
 import { WORLD_H } from '../game/stage.ts';
+import { t } from '../i18n/i18n.ts';
 import { PEN_PRESETS, SLIP_PRESETS } from '../vision/color.ts';
 import type { ScanResult, ScannedGlyph, TeamId } from '../vision/types.ts';
 import { loadGlyph, restoredId, saveGlyph, type SavedGlyph, type SceneSave } from './saved.ts';
@@ -294,9 +295,9 @@ export class DuelScene implements Scene {
         return team ? this.colors[team] : '#9a9a9a';
       },
     );
-    if (res.duplicates) this.host.toast(res.duplicates === 1 ? 'Diesen Zettel kenne ich schon!' : `${res.duplicates} Zeichen kenne ich schon!`, 'info');
-    if (neutral) this.host.toast(`${neutral} Zeichen konnte ich keinem Team zuordnen. Stiftfarbe prüfen!`, 'warn');
-    if (!res.glyphs.length) this.host.toast('Ich sehe keine Zettel. Legt sie unter die Kamera!', 'warn');
+    if (res.duplicates) this.host.toast(res.duplicates === 1 ? t('Diesen Zettel kenne ich schon!') : t('{n} Zeichen kenne ich schon!', { n: res.duplicates }), 'info');
+    if (neutral) this.host.toast(t('{n} Zeichen konnte ich keinem Team zuordnen. Stiftfarbe prüfen!', { n: neutral }), 'warn');
+    if (!res.glyphs.length) this.host.toast(t('Ich sehe keine Zettel. Legt sie unter die Kamera!'), 'warn');
   }
 
   protected makeSprite(f: Fighter): Sprite {
@@ -374,7 +375,7 @@ export class DuelScene implements Scene {
         sfx.pfff();
         const x = this.sim.gateX(e.team);
         this.particles.burst('puff', x, 620, 14, { color: 'rgba(160,160,170,0.7)', size: 30, speed: 90, max: 1.1 });
-        this.particles.add({ kind: 'text', x, y: 540, vy: -30, max: 1.8, size: 40, color: '#e9e9f2', text: 'Pfff?' });
+        this.particles.add({ kind: 'text', x, y: 540, vy: -30, max: 1.8, size: 40, color: '#e9e9f2', text: t('Pfff?') });
       }
     }
     // the pile settles: bubbles above a popped one slide down
@@ -444,7 +445,7 @@ export class DuelScene implements Scene {
     sfx.plopp(f.radius / 30);
     this.particles.add({ kind: 'ring', x: f.x, y, size: f.radius * 1.4, max: 0.35, color: 'rgba(255,255,255,0.95)' });
     this.particles.burst('drop', f.x, y, 10, { color: 'rgba(210,240,255,0.95)', size: 5, speed: 260, gravity: 600, max: 0.55 });
-    if (exhausted) this.particles.add({ kind: 'text', x: f.x, y: y - f.radius - 20, vy: -40, max: 1.2, size: 30, color: '#ffffff', text: 'Puh!' });
+    if (exhausted) this.particles.add({ kind: 'text', x: f.x, y: y - f.radius - 20, vy: -40, max: 1.2, size: 30, color: '#ffffff', text: t('Puh!') });
     const info = this.glyphs.get(f.glyphId);
     if (info) this.falling.push({ sticker: info.sticker, x: f.x, y: y - f.radius * 0.2, vx: (Math.random() - 0.5) * 60, vy: -120, rot: 0, vr: (Math.random() - 0.5) * 6, t: 0 });
     this.views.delete(f.id);
@@ -667,7 +668,7 @@ export class DuelScene implements Scene {
     ctx.fillStyle = '#3b2a5c';
     ctx.font = '700 22px Fredoka, system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(empty ? 'leer' : String(c.tank), tx + tw / 2, ty - 12);
+    ctx.fillText(empty ? t('leer') : String(c.tank), tx + tw / 2, ty - 12, tw + 60);
     ctx.restore();
   }
 
@@ -749,7 +750,7 @@ export class DuelScene implements Scene {
       ctx.fillStyle = '#4a3b6b';
       ctx.font = '600 24px Fredoka, system-ui, sans-serif';
       ctx.textAlign = team === 'A' ? 'right' : 'left';
-      ctx.fillText(`${left} ${left === 1 ? 'Blase' : 'Blasen'}`, team === 'A' ? x + barW - 22 : x + 22, 64);
+      ctx.fillText(left === 1 ? t('{n} Blase', { n: left }) : t('{n} Blasen', { n: left }), team === 'A' ? x + barW - 22 : x + 22, 64);
       ctx.restore();
     }
     if (this.sim.timeLimit > 0) {
@@ -779,7 +780,7 @@ export class DuelScene implements Scene {
   }
 
   protected summary(): string {
-    return `Noch ${this.sim.remaining('A')} : ${this.sim.remaining('B')} Blasen`;
+    return t('Noch {a} : {b} Blasen', { a: this.sim.remaining('A'), b: this.sim.remaining('B') });
   }
 
   async saveState(): Promise<SceneSave | null> {

@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- Dev-only preview of the world map. Run `npx vite` and open /tools/preview-worldmap.html -->
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weltkarte Vorschau</title>
+  <style>
+    body { margin: 0; padding: 16px; background: #fdf6ff; font-family: system-ui, sans-serif; }
+    .tile { max-width: 1000px; margin: 0 auto 16px; background: #fff; border-radius: 26px; padding: 12px; }
+    .small { max-width: 380px; }
+  </style>
+</head>
+<body>
+  <div class="tile" id="big"></div>
+  <div class="tile small" id="small"></div>
+  <p id="log"></p>
+  <script type="module">
+    import { renderWorldMap, setWorldMapSelected } from '../src/ui/worldMap.ts';
+    const labels = {
+      worldMap: 'Schriften der Welt', druck: 'Druckschrift', grund: 'Grundschrift', schreib: 'Schreibschrift',
+      hiragana: 'Hiragana', katakana: 'Katakana', kyrillisch: 'Kyrillisch', arabisch: 'Arabisch',
+      devanagari: 'Devanagari', griechisch: 'Griechisch', hebraeisch: 'Hebräisch', hangul: 'Hangul', thai: 'Thailändisch',
+    };
+    const sel = new URLSearchParams(location.search).get('sel') ?? 'druck';
+    for (const id of ['big', 'small']) {
+      const svg = renderWorldMap({
+        selected: sel, labels,
+        onPick: (s) => { document.getElementById('log').textContent = 'onPick: ' + s; if (!['latin','japan'].includes(s)) setWorldMapSelected(svg, s); },
+      });
+      const vb = new URLSearchParams(location.search).get('vb'); if (vb) svg.setAttribute('viewBox', vb);
+      document.getElementById(id).append(svg);
+    }
+  </script>
+</body>
+</html>

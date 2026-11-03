@@ -6,6 +6,7 @@ import { setSound, sfx, unlockAudio } from '../game/audio.ts';
 import { Loop } from '../game/loop.ts';
 import { Stage } from '../game/stage.ts';
 import { withArticle } from '../recog/classes.ts';
+import { scriptOf, type ScriptId } from '../recog/scripts.ts';
 import type { EngineInfo, SavedMemory } from '../recog/engine.ts';
 import { createVision, type VisionClient } from '../recog/workerClient.ts';
 import { aquarium } from '../scenes/aquarium.ts';
@@ -40,7 +41,7 @@ import { DETECT_SIZE } from '../vision/constants.ts';
 import type { PlayerId, ScanResult, VisionOptions } from '../vision/types.ts';
 import { packTyped, unpackTyped } from './imageCodec.ts';
 import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSaves, loadSave, MODES, newSaveId, putSave, readSaveFile, type GameMode, type SaveGame } from './saves.ts';
-import { loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
+import { firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
 
 const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna };
 /** the paper setting as the recognition sees it: Lineatur 1 and 2 have the same four-line shape */
@@ -72,6 +73,8 @@ export class App {
   camera = new Camera();
   vision: VisionClient = createVision();
   visionReady: Promise<EngineInfo>;
+  /** the model of the chosen script is loaded (each script has its own) */
+  scriptReady: Promise<unknown>;
   engineInfo: EngineInfo | null = null;
   probe: MotionProbe;
   auto: AutoScan;
@@ -106,6 +109,8 @@ export class App {
         throw e;
       },
     );
+    this.scriptReady = this.visionReady;
+    this.applyScript();
     this.probe = new MotionProbe(this.camera, () => this.settings.camera);
     this.auto = new AutoScan(
       this.probe,
@@ -330,6 +335,15 @@ export class App {
       },
       openCamera: () => this.cameraSetup(),
       openSettings: () => this.openSettingsPanel(),
+      setLanguage: (lang) => {
+        this.settings.lang = lang;
+        this.save();
+        location.reload();
+      },
+      setScript: (script) => {
+        this.setScript(script);
+        this.showStart();
+      },
       openPicker: (done) => openTargetPicker(this.settings, () => {
         this.save();
         done();
@@ -570,6 +584,7 @@ export class App {
         replace: (s) => {
           this.settings = s;
           this.save();
+          this.applyScript();
           this.showStart();
         },
         modelInfo: info?.hasModel
@@ -888,6 +903,36 @@ export class App {
 
   // ---------------------------------------------------------------- scanning
 
+  /** switches to another script (world map): its model, practice letters and font */
+  setScript(script: ScriptId): void {
+    const s = this.settings;
+    if (s.script === script) return;
+    s.script = script;
+    const chars = scriptOf(script).chars;
+    if (!s.practice.targets.every((c) => chars.includes(c))) s.practice.targets = [firstChar(script)];
+    this.save();
+    this.applyScript();
+    void this.vision.reset().catch(() => undefined);
+  }
+
+  /** loads the model of the chosen script and shows its characters in its font */
+  private applyScript(): void {
+    const def = scriptOf(this.settings.script);
+    document.documentElement.style.setProperty('--script-font', def.font);
+    document.documentElement.dataset.script = def.id;
+    if (def.id === 'druck') {
+      this.scriptReady = this.visionReady;
+      return;
+    }
+    this.scriptReady = this.visionReady.then(() =>
+      this.vision.useScript(def.id).catch((e) => {
+        toast(`Die Schrift „${def.name}“ konnte nicht geladen werden: ${(e as Error).message}`, 'warn', 8000);
+        throw e;
+      }),
+    );
+    this.scriptReady.catch(() => undefined);
+  }
+
   private visionOptions(forTest = false): VisionOptions {
     const s = this.settings;
     const kind = this.mode.kind;
@@ -900,6 +945,7 @@ export class App {
       lineatur: LINEATUR[s.recog.lineatur],
       strictness: s.recog.strictness,
       style: s.recog.style,
+      script: s.script,
       noMirror: s.recog.noMirror,
       target: !forTest && this.scene instanceof HabitatScene ? this.scene.practiceTarget : undefined,
       // a surprise letter floating in the scene may be written instead of the practice letter
@@ -922,7 +968,7 @@ export class App {
   /** Grabs a frame and runs the recognition. Test scans do not touch the duplicate memory. */
   private async scanOnce(test = false): Promise<{ res: ScanResult; snapshot: HTMLCanvasElement } | null> {
     try {
-      await this.visionReady;
+      await this.scriptReady;
     } catch {
       return null;
     }
@@ -958,7 +1004,7 @@ export class App {
       if (!g || !this.scene) return;
       // right after the start the handwriting recognition may still be waking up
       this.hud?.setBusy(true, this.engineInfo ? 'Schaue …' : 'Wache auf …');
-      await this.visionReady;
+      await this.scriptReady;
       // show the photo right away; the recognition runs meanwhile in the worker
       const s = Math.min(1, DETECT_SIZE / Math.max(g.frame.width, g.frame.height));
       const snap: Snapshot = { canvas: g.snapshot, detW: Math.round(g.frame.width * s), detH: Math.round(g.frame.height * s) };

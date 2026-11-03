@@ -1,4 +1,5 @@
 // Colour helpers for team classification.
+import { tk } from '../i18n/i18n.ts';
 
 export type Vec3 = [number, number, number];
 
@@ -23,26 +24,26 @@ export function chroma(r: number, g: number, b: number): Vec3 {
 
 /** Typical ink absorption directions (1 - I/bg per channel) for preset pen colours. */
 export const PEN_PRESETS: Record<string, { label: string; absorb: Vec3; css: string }> = {
-  rot: { label: 'Rot', absorb: normalize3([0.12, 0.78, 0.62]), css: '#e5484d' },
-  blau: { label: 'Blau', absorb: normalize3([0.8, 0.55, 0.18]), css: '#3e7bfa' },
-  gruen: { label: 'Grün', absorb: normalize3([0.72, 0.25, 0.66]), css: '#30a46c' },
-  lila: { label: 'Lila', absorb: normalize3([0.5, 0.8, 0.3]), css: '#8e4ec6' },
-  orange: { label: 'Orange', absorb: normalize3([0.05, 0.45, 0.85]), css: '#f76b15' },
-  pink: { label: 'Pink', absorb: normalize3([0.1, 0.8, 0.3]), css: '#e93d82' },
-  tuerkis: { label: 'Türkis', absorb: normalize3([0.85, 0.2, 0.35]), css: '#12a594' },
-  braun: { label: 'Braun', absorb: normalize3([0.35, 0.65, 0.9]), css: '#8d5a3b' },
-  schwarz: { label: 'Schwarz', absorb: [...GREY_DIR], css: '#2b2b2b' },
+  rot: { label: tk('Rot'), absorb: normalize3([0.12, 0.78, 0.62]), css: '#e5484d' },
+  blau: { label: tk('Blau'), absorb: normalize3([0.8, 0.55, 0.18]), css: '#3e7bfa' },
+  gruen: { label: tk('Grün'), absorb: normalize3([0.72, 0.25, 0.66]), css: '#30a46c' },
+  lila: { label: tk('Lila'), absorb: normalize3([0.5, 0.8, 0.3]), css: '#8e4ec6' },
+  orange: { label: tk('Orange'), absorb: normalize3([0.05, 0.45, 0.85]), css: '#f76b15' },
+  pink: { label: tk('Pink'), absorb: normalize3([0.1, 0.8, 0.3]), css: '#e93d82' },
+  tuerkis: { label: tk('Türkis'), absorb: normalize3([0.85, 0.2, 0.35]), css: '#12a594' },
+  braun: { label: tk('Braun'), absorb: normalize3([0.35, 0.65, 0.9]), css: '#8d5a3b' },
+  schwarz: { label: tk('Schwarz'), absorb: [...GREY_DIR], css: '#2b2b2b' },
 };
 
 /** Typical slip colours as chromaticity + brightness. */
 export const SLIP_PRESETS: Record<string, { label: string; slip: Vec3; css: string }> = {
-  gelb: { label: 'Gelb', slip: [0.4, 0.39, 0.95], css: '#ffe066' },
-  rosa: { label: 'Rosa', slip: [0.405, 0.29, 0.95], css: '#ff9ec7' },
-  hellblau: { label: 'Hellblau', slip: [0.28, 0.335, 0.92], css: '#8ecdf5' },
-  gruen: { label: 'Grün', slip: [0.3, 0.405, 0.85], css: '#9be39b' },
-  orange: { label: 'Orange', slip: [0.46, 0.33, 0.95], css: '#ffb366' },
-  weiss: { label: 'Weiß', slip: [0.333, 0.333, 0.95], css: '#ffffff' },
-  lila: { label: 'Lila', slip: [0.33, 0.27, 0.93], css: '#c9a6f5' },
-  rot: { label: 'Rot', slip: [0.53, 0.235, 0.9], css: '#f26b6b' },
-  blau: { label: 'Blau', slip: [0.19, 0.32, 0.9], css: '#6aa5f2' },
+  gelb: { label: tk('Gelb'), slip: [0.4, 0.39, 0.95], css: '#ffe066' },
+  rosa: { label: tk('Rosa'), slip: [0.405, 0.29, 0.95], css: '#ff9ec7' },
+  hellblau: { label: tk('Hellblau'), slip: [0.28, 0.335, 0.92], css: '#8ecdf5' },
+  gruen: { label: tk('Grün'), slip: [0.3, 0.405, 0.85], css: '#9be39b' },
+  orange: { label: tk('Orange'), slip: [0.46, 0.33, 0.95], css: '#ffb366' },
+  weiss: { label: tk('Weiß'), slip: [0.333, 0.333, 0.95], css: '#ffffff' },
+  lila: { label: tk('Lila'), slip: [0.33, 0.27, 0.93], css: '#c9a6f5' },
+  rot: { label: tk('Rot'), slip: [0.53, 0.235, 0.9], css: '#f26b6b' },
+  blau: { label: tk('Blau'), slip: [0.19, 0.32, 0.9], css: '#6aa5f2' },
 };

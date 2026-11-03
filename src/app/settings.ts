@@ -1,5 +1,7 @@
 // App settings, persisted in localStorage (only on this device, nothing personal).
 import type { Quad } from '../camera/perspective.ts';
+import { detectLocale } from '../i18n/detect.ts';
+import { isScriptId, scriptOf, type ScriptId } from '../recog/scripts.ts';
 import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
 
 export type HabitatId = 'meer' | 'weltraum' | 'savanne';
@@ -36,6 +38,10 @@ export interface TeamSettings {
 
 export interface Settings {
   version: 1;
+  /** the script being practised (each has its own model); chosen on the world map */
+  script: ScriptId;
+  /** language of the page ('' = not chosen yet: the browser language decides) */
+  lang: string;
   camera: {
     mode: CameraMode;
     deviceId?: string;
@@ -106,6 +112,8 @@ export interface Settings {
 
 export const DEFAULTS: Settings = {
   version: 1,
+  script: 'druck',
+  lang: '',
   camera: { mode: 'fest', rotation: 0, mirror: false },
   recog: { pen: 'auto', lineatur: 'auto', strictness: 'mittel', style: 'beide', autoScan: false, autoDelay: 1.5, noMirror: false },
   game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: null, fair: false },
@@ -152,10 +160,20 @@ function merge<T>(base: T, over: unknown): T {
   return out as T;
 }
 
+/** the first character of a script (the practice target after switching) */
+export function firstChar(script: ScriptId): string {
+  return scriptOf(script).practice[0].chars[0];
+}
+
 /** the defaults for this device (phones and tablets hold the camera in the hand) */
 function freshSettings(): Settings {
   const s = structuredClone(DEFAULTS);
   s.camera.mode = isHandheld() ? 'hand' : 'fest';
+  // first visit: language and script from the browser (language list and time zone; no location query)
+  const loc = detectLocale();
+  s.lang = loc.lang;
+  s.script = loc.script;
+  s.practice.targets = [firstChar(loc.script)];
   return s;
 }
 
@@ -181,6 +199,9 @@ export function loadSettings(): Settings {
     if (!Array.isArray(parsed.practice?.targets)) s.practice.targets = typeof oldTarget === 'string' ? [oldTarget] : [...DEFAULTS.practice.targets];
     if (!s.practice.targets.length) s.practice.targets = [...DEFAULTS.practice.targets];
     delete (s.practice as { target?: unknown }).target;
+    // older versions only knew the Latin letters: they keep the Druckschrift
+    if (!isScriptId(s.script)) s.script = 'druck';
+    if (typeof s.lang !== 'string') s.lang = '';
     return s;
   } catch {
     return freshSettings();

@@ -1,5 +1,6 @@
 // Trade fair mode: a small sign with a QR code and the web address, so visitors find the game again at home.
 import qrcode from 'qrcode-generator';
+import { t } from '../i18n/i18n.ts';
 import { h } from './dom.ts';
 
 /** the QR code of a text as an SVG (one path, no quiet zone: the sign is white around it) */
@@ -15,7 +16,7 @@ export function qrSvg(text: string): SVGSVGElement {
   svg.setAttribute('viewBox', `0 0 ${n} ${n}`);
   svg.setAttribute('shape-rendering', 'crispEdges');
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `QR-Code: ${text}`);
+  svg.setAttribute('aria-label', t('QR-Code: {text}', { text }));
   const path = document.createElementNS(ns, 'path');
   path.setAttribute('d', d);
   path.setAttribute('fill', 'currentColor');
@@ -29,7 +30,7 @@ export function fairBadge(): HTMLElement {
   return h(
     'div',
     { class: 'fair-badge' },
-    h('div', { class: 'fair-title' }, 'Spiel mit – auch zu Hause!'),
+    h('div', { class: 'fair-title' }, t('Spiel mit – auch zu Hause!')),
     qrSvg(url),
     h('div', { class: 'fair-url' }, location.host),
   );

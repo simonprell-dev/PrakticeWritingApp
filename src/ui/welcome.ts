@@ -4,6 +4,7 @@
 import type { CameraMode } from '../app/settings.ts';
 import { button, h, modal, segmented, toggle } from './dom.ts';
 import { openLegal } from './legal.ts';
+import { t } from '../i18n/i18n.ts';
 
 export interface WelcomeDeps {
   mode: CameraMode;
@@ -22,14 +23,14 @@ export function openWelcome(d: WelcomeDeps): void {
     'div',
     { class: 'welcome' },
     h('div', { class: 'welcome-wave', 'aria-hidden': 'true' }, '👋'),
-    h('h2', null, 'Willkommen bei Krakel & Krone!'),
-    h('p', { class: 'welcome-lead' }, 'Kinder schreiben oder malen auf Papier, eine Kamera schaut zu – daraus werden kleine Wesen.'),
-    h('h3', null, 'Womit spielt ihr?'),
+    h('h2', null, t('Willkommen bei Krakel & Krone!')),
+    h('p', { class: 'welcome-lead' }, t('Kinder schreiben oder malen auf Papier, eine Kamera schaut zu – daraus werden kleine Wesen.')),
+    h('h3', null, t('Womit spielt ihr?')),
     segmented(
       [
-        { value: 'fest', label: '📽️ Dokumentenkamera oder Webcam' },
-        { value: 'hand', label: '📱 Handy oder Tablet' },
-        { value: 'spiegel', label: '🪞 Tablet mit Spiegel' },
+        { value: 'fest', label: t('📽️ Dokumentenkamera oder Webcam') },
+        { value: 'hand', label: t('📱 Handy oder Tablet') },
+        { value: 'spiegel', label: t('🪞 Tablet mit Spiegel') },
       ],
       d.mode,
       (v: CameraMode) => d.setMode(v),
@@ -38,14 +39,15 @@ export function openWelcome(d: WelcomeDeps): void {
     h(
       'div',
       { class: 'welcome-keep' },
-      toggle('💾 Spiele auf diesem Gerät merken', d.autosave === true, (on) => d.setAutosave(on)),
-      h('p', { class: 'help' }, 'Dann könnt ihr später weiterspielen. Gespeichert werden nur Buchstaben und Bilder (keine Fotos), nur in diesem Browser.'),
+      toggle(t('💾 Spiele auf diesem Gerät merken'), d.autosave === true, (on) => d.setAutosave(on)),
+      h('p', { class: 'help' }, t('Dann könnt ihr später weiterspielen. Gespeichert werden nur Buchstaben und Bilder (keine Fotos), nur in diesem Browser.')),
     ),
     h(
       'p',
       { class: 'help' },
-      'Gleich fragt der Browser nach der Kamera. Die Bilder bleiben auf diesem Gerät, Cookies gibt es keine. ',
-      button('Datenschutz', () => {
+      t('Gleich fragt der Browser nach der Kamera. Die Bilder bleiben auf diesem Gerät, Cookies gibt es keine.'),
+      ' ',
+      button(t('Datenschutz'), () => {
         next = () => void openLegal('datenschutz');
         m.close();
       }, 'btn-link'),
@@ -53,9 +55,9 @@ export function openWelcome(d: WelcomeDeps): void {
     h(
       'div',
       { class: 'actions' },
-      button('Erst mal umschauen', () => m.close(), 'btn'),
+      button(t('Erst mal umschauen'), () => m.close(), 'btn'),
       button(
-        '📷 Kamera einrichten',
+        t('📷 Kamera einrichten'),
         () => {
           next = d.setupCamera;
           m.close();

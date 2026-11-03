@@ -1,4 +1,5 @@
 // Shared vision types. Everything in src/vision is DOM-free so it runs in the worker and in Node tests.
+import type { ScriptId } from '../recog/scripts.ts';
 
 /** ImageData-compatible RGBA buffer. */
 export interface RGBAImage {
@@ -49,6 +50,8 @@ export interface TeamCalib {
 }
 
 export interface VisionOptions {
+  /** the script being written (its own model); missing = Druckschrift */
+  script?: ScriptId;
   pen: PenPreset;
   ruled: 'auto' | 'on' | 'off';
   /** line system of the paper (German school lines: Lineatur 1/2 = school4, Lineatur 3 = school2) */

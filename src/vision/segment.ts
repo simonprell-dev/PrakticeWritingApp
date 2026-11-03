@@ -43,11 +43,19 @@ const median = (a: number[]) => {
   return s[s.length >> 1];
 };
 
+/** how the strokes of one character are found (see ScriptDef.seg) */
+export interface SegStyle {
+  /** latin: strokes above each other + dots on top; block: all parts close together are one character */
+  mode: 'latin' | 'block';
+  /** reading order in a row */
+  dir: 'ltr' | 'rtl';
+}
+
 /**
  * @param m ink mask of one region patch
  * @param valid paper membership of the patch (components touching its edge are dropped), optional
  */
-export function findGlyphs(m: Mask, valid: Mask | null, maxGlyphs = 60): Segmentation {
+export function findGlyphs(m: Mask, valid: Mask | null, maxGlyphs = 60, style: SegStyle = { mode: 'latin', dir: 'ltr' }): Segmentation {
   const { width: w, height: h } = m;
   const { labels, comps } = label(m, true);
   const sw = Math.max(1, strokeWidth(m));
@@ -93,6 +101,8 @@ export function findGlyphs(m: Mask, valid: Mask | null, maxGlyphs = 60): Segment
     }
     bodies.push({ labels: [c.label], x0: c.x0, y0: c.y0, x1: c.x1, y1: c.y1, area: c.area, dots: [] });
   }
+
+  if (style.mode === 'block') return blockGlyphs(labels, comps, bodies, dots, H, sw, maxGlyphs, style.dir);
 
   // merge strokes of one letter (pen lifted: t, E, A, H, 4 ...)
   let merged = true;
@@ -175,7 +185,12 @@ export function findGlyphs(m: Mask, valid: Mask | null, maxGlyphs = 60): Segment
     });
   }
 
-  // reading order: rows by vertical centre, then left to right
+  readingOrder(glyphs, H, style.dir);
+  return { labels, comps, glyphs: glyphs.slice(0, maxGlyphs), H, strokeWidth: sw };
+}
+
+/** reading order: rows by vertical centre, then left to right (right to left for Arabic and Hebrew) */
+function readingOrder(glyphs: GlyphCandidate[], H: number, dir: 'ltr' | 'rtl'): void {
   glyphs.sort((a, b) => a.baseBox.y + a.baseBox.h / 2 - (b.baseBox.y + b.baseBox.h / 2));
   let row = -1;
   let rowY = -Infinity;
@@ -187,6 +202,57 @@ export function findGlyphs(m: Mask, valid: Mask | null, maxGlyphs = 60): Segment
     }
     g.row = row;
   }
-  glyphs.sort((a, b) => a.row - b.row || a.box.x - b.box.x);
-  return { labels, comps, glyphs: glyphs.slice(0, maxGlyphs), H, strokeWidth: sw };
+  const sign = dir === 'rtl' ? -1 : 1;
+  glyphs.sort((a, b) => a.row - b.row || sign * (a.box.x + a.box.w / 2 - (b.box.x + b.box.w / 2)));
+}
+
+/**
+ * Characters made of several parts that lie side by side or above and below each other (い, け, ふ, ب, ё, 가 …):
+ * the parts closest together are joined first, as long as the result is not bigger than one character.
+ * Characters have to be written with a little space between them.
+ */
+function blockGlyphs(labels: Int32Array, comps: CompStats[], bodies: Group[], dots: CompStats[], H: number, sw: number, maxGlyphs: number, dir: 'ltr' | 'rtl'): Segmentation {
+  const parts: Group[] = [...bodies, ...dots.map((c) => ({ labels: [c.label], x0: c.x0, y0: c.y0, x1: c.x1, y1: c.y1, area: c.area, dots: [] }))];
+  // size of one character: most characters have at least one stroke across nearly all of it
+  const ext = parts.filter((p) => p.area >= 4 * sw * sw).map((p) => Math.max(p.x1 - p.x0 + 1, p.y1 - p.y0 + 1)).sort((a, b) => a - b);
+  const S = Math.max(H, ext.length ? ext[Math.min(ext.length - 1, Math.floor(ext.length * 0.8))] : H);
+  const gapOf = (a: Group, b: Group) => Math.max(Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1) - 1, Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1) - 1, 0);
+  for (;;) {
+    let best: [number, number] | null = null;
+    let bestGap = Infinity;
+    for (let i = 0; i < parts.length; i++) {
+      for (let j = i + 1; j < parts.length; j++) {
+        const a = parts[i];
+        const b = parts[j];
+        const gap = gapOf(a, b);
+        // the size limit keeps neighbours apart; the gap may be wide (the two bars of ニ, the dots of ふ)
+        if (gap > 0.6 * S || gap >= bestGap) continue;
+        const mw = Math.max(a.x1, b.x1) - Math.min(a.x0, b.x0) + 1;
+        const mh = Math.max(a.y1, b.y1) - Math.min(a.y0, b.y0) + 1;
+        if (mw > 1.15 * S || mh > 1.25 * S) continue;
+        best = [i, j];
+        bestGap = gap;
+      }
+    }
+    if (!best) break;
+    const [a, b] = [parts[best[0]], parts[best[1]]];
+    a.labels.push(...b.labels);
+    a.x0 = Math.min(a.x0, b.x0);
+    a.y0 = Math.min(a.y0, b.y0);
+    a.x1 = Math.max(a.x1, b.x1);
+    a.y1 = Math.max(a.y1, b.y1);
+    a.area += b.area;
+    parts.splice(best[1], 1);
+  }
+  const glyphs: GlyphCandidate[] = [];
+  for (const g of parts) {
+    const gw = g.x1 - g.x0 + 1;
+    const gh = g.y1 - g.y0 + 1;
+    // a lone dot or speck is no character
+    if (Math.max(gw, gh) < Math.max(6, 2 * sw, 0.3 * S)) continue;
+    const box = { x: g.x0, y: g.y0, w: gw, h: gh };
+    glyphs.push({ box, baseBox: { ...box }, baseLabels: g.labels, dotLabels: [], dots: 0, row: 0 });
+  }
+  readingOrder(glyphs, S, dir);
+  return { labels, comps, glyphs: glyphs.slice(0, maxGlyphs), H: S, strokeWidth: sw };
 }

@@ -1,5 +1,6 @@
 // "Türme bauen": building blocks with the child's letter, their decorations, the plinths with the
 // team names and the finish line.
+import { t } from '../../i18n/i18n.ts';
 import type { AnyCanvas, Ctx } from '../canvas.ts';
 import { bandaid, crown, sparkleStar } from '../creatures/parts.ts';
 import { hsl, TAU } from '../math.ts';
@@ -224,7 +225,7 @@ export function drawGoalLine(ctx: Ctx, worldW: number, goal: number, ppm: number
     ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.textAlign = 'left';
-    ctx.fillText(`${m} m`, 26, y);
+    ctx.fillText(t('{n} m', { n: m }), 26, y);
   }
   const y = ground - goal * ppm;
   if (y < -10) {
@@ -257,7 +258,8 @@ export function drawGoalLine(ctx: Ctx, worldW: number, goal: number, ppm: number
   ctx.lineJoin = 'round';
   ctx.font = '700 34px Fredoka, system-ui, sans-serif';
   ctx.textAlign = 'left';
-  ctx.strokeText(`Ziel: ${goal} m`, 160, y - 30);
-  ctx.fillText(`Ziel: ${goal} m`, 160, y - 30);
+  const label = t('Ziel: {n} m', { n: goal });
+  ctx.strokeText(label, 160, y - 30);
+  ctx.fillText(label, 160, y - 30);
   ctx.restore();
 }
