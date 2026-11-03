@@ -218,7 +218,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
         rich(t('Die Kamerabilder werden {only} im Browser ausgewertet. Sie werden weder an uns noch an Dritte übertragen und nicht gespeichert.'), { only: h('b', null, t('ausschließlich auf Ihrem Gerät')) }),
         [t('Spielstände (ausgeschnittene Buchstaben, ausgemalte Bilder) werden nur in Ihrem Browser gespeichert und lassen sich jederzeit löschen.')],
         [t('Es gibt keine Benutzerkonten, keine Cookies, keine Werbung und keine Analysedienste Dritter. Deshalb gibt es auch kein Cookie-Banner.')],
-        [t('Wir zählen nur, wie oft die Seite aufgerufen wird – eine Zahl pro Tag, ohne IP-Adresse, ohne Kennung und ohne Cookie.')],
+        [t('Wir zählen nur, wie oft die Seite aufgerufen wird und aus welchem Land – Zahlen pro Tag, ohne IP-Adresse, ohne Kennung und ohne Cookie.')],
         [t('Nachrichten über das Kontaktformular speichern wir nur, um sie zu beantworten, und löschen sie spätestens nach 12 Monaten.')],
         [t('Die Kamera startet erst, wenn Sie sie einrichten oder ein Spiel beginnen.')],
         [t('Es werden keine externen Dienste eingebunden – auch Schriftarten und Programmteile kommen ausschließlich von unserem eigenen Server.')],
@@ -278,7 +278,10 @@ function datenschutz(info: LegalInfo): HTMLElement {
         t('Wenn Ihr Browser die App-Seite von unserem Server lädt, zählt der Server für diesen Tag einen Aufruf hoch. Gespeichert wird nur diese Zahl pro Kalendertag – keine IP-Adresse, keine Uhrzeit, keine Geräte- oder Benutzerkennung und kein Cookie; die App selbst sendet dafür nichts. Einzelne Personen oder Geräte lassen sich daraus nicht erkennen. Was in der App gespielt oder geschrieben wird, erfahren wir nicht.'),
       ),
       p(
-        t('Rechtsgrundlage für das Mitzählen des Aufrufs: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (berechtigtes Interesse zu wissen, ob und wie viel die App genutzt wird), bei öffentlichen Schulen lit. e DSGVO.'),
+        t('Dazu ermittelt der Server aus der IP-Adresse des Aufrufs das Land – mit einer Länderliste, die auf unserem eigenen Server liegt (IP to Country Lite von DB-IP); es wird dafür kein anderer Dienst gefragt. Gespeichert wird nur, wie viele Aufrufe an einem Tag aus welchem Land kamen. Die IP-Adresse wird danach sofort verworfen; Ort, Stadt oder Anbieter werden nicht ermittelt.'),
+      ),
+      p(
+        t('Rechtsgrundlage für das Mitzählen des Aufrufs und das Ermitteln des Landes: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (berechtigtes Interesse zu wissen, ob, wie viel und in welchen Ländern die App genutzt wird), bei öffentlichen Schulen lit. e DSGVO.'),
       ),
     ),
     section(
@@ -420,6 +423,12 @@ function lizenzen(): HTMLElement {
         ],
       ]),
       p(t('Alle Grafiken und Töne werden im Browser erzeugt. Der Server nutzt für die Datenbank node-postgres (MIT-Lizenz).')),
+      p(
+        ...rich(t('Für den Aufrufzähler ordnet der Server Aufrufe einem Land zu, mit {data} (IP to Country Lite). Lizenz: {licence}.'), {
+          data: ext('https://db-ip.com', 'IP Geolocation by DB-IP'),
+          licence: ext('https://creativecommons.org/licenses/by/4.0/deed.de', 'CC BY 4.0'),
+        }),
+      ),
     ),
   );
 }

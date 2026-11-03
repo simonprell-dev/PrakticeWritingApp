@@ -18,3 +18,6 @@ tools/.browsers/
 
 # local database settings (see .env.example)
 .env
+
+# IP-to-country list for the page view counter (downloaded by the server)
+.geoip/

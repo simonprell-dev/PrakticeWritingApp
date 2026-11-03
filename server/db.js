@@ -42,6 +42,18 @@ const MIGRATIONS = [
       DROP TABLE events;
     `,
   },
+  {
+    // page views per country (ISO 3166 code from the IP address; ZZ = unknown)
+    version: 3,
+    sql: `
+      CREATE TABLE visit_countries (
+        day date NOT NULL,
+        country char(2) NOT NULL,
+        n integer NOT NULL DEFAULT 0,
+        PRIMARY KEY (day, country)
+      );
+    `,
+  },
 ];
 
 /** the day of a page view in German time (one bucket per calendar day, no time of day is stored) */
@@ -97,9 +109,13 @@ export class Db {
     if (m.rowCount) console.log(`Datenbank: ${m.rowCount} alte Nachrichten gelöscht.`);
   }
 
-  /** one more page view today */
-  async addVisit() {
-    await this.pool.query(`INSERT INTO visits (day, n) VALUES (${TODAY}, 1) ON CONFLICT (day) DO UPDATE SET n = visits.n + 1`);
+  /** one more page view today, from `country` (ISO code, null when unknown) */
+  async addVisit(country) {
+    await this.pool.query(
+      `WITH total AS (INSERT INTO visits (day, n) VALUES (${TODAY}, 1) ON CONFLICT (day) DO UPDATE SET n = visits.n + 1)
+       INSERT INTO visit_countries (day, country, n) VALUES (${TODAY}, $1, 1) ON CONFLICT (day, country) DO UPDATE SET n = visit_countries.n + 1`,
+      [/^[A-Z]{2}$/.test(country || '') ? country : 'ZZ'],
+    );
   }
 
   async addMessage(msg) {
@@ -109,8 +125,13 @@ export class Db {
   /** page views of the last `days` days (today included), and in all since the first one */
   async stats(days) {
     const since = `${TODAY} - ($1::int - 1)`;
-    const [perDay, head] = await Promise.all([
+    const [perDay, perCountry, head] = await Promise.all([
       this.pool.query(`SELECT to_char(day, 'YYYY-MM-DD') AS day, n AS visits FROM visits WHERE day >= ${since} ORDER BY day`, [days]),
+      // page views counted before the countries (and with an unknown address) are the rest of the total
+      this.pool.query(
+        `SELECT country, sum(n)::int AS visits FROM visit_countries WHERE day >= ${since} AND country <> 'ZZ' GROUP BY country ORDER BY visits DESC, country`,
+        [days],
+      ),
       this.pool.query(
         `SELECT to_char(${since}, 'YYYY-MM-DD') AS "from", to_char(${TODAY}, 'YYYY-MM-DD') AS "to",
                 (SELECT coalesce(sum(n), 0)::int FROM visits WHERE day >= ${since}) AS visits,
@@ -120,7 +141,7 @@ export class Db {
         [days],
       ),
     ]);
-    return { days, ...head.rows[0], perDay: perDay.rows };
+    return { days, ...head.rows[0], perDay: perDay.rows, perCountry: perCountry.rows };
   }
 
   async messages(page, pageSize, status) {

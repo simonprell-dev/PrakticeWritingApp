@@ -166,7 +166,7 @@ const server = createServer(async (req, res) => {
   };
   if (admin) headers['X-Robots-Tag'] = 'noindex, nofollow';
   // the only usage statistic: one page view per opening of the app (also when the browser has it cached)
-  if (servedPath === '/index.html' && countsAsVisit(req.method, req.headers, url.search)) api.countVisit();
+  if (servedPath === '/index.html' && countsAsVisit(req.method, req.headers, url.search)) api.countVisit(req);
   // behind Railway's HTTPS proxy: tell browsers to always use HTTPS
   if (req.headers['x-forwarded-proto'] === 'https') headers['Strict-Transport-Security'] = 'max-age=31536000';
   if (req.headers['if-none-match'] === entry.etag) {

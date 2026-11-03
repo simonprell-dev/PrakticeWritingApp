@@ -165,12 +165,14 @@ Zum Entwickeln mit Hot Reload: `npm run dev:api` startet `server.js` (API auf Po
 |---|---|
 | `POST /api/contact` | Kontaktformular `{message, name?, email?}` (Honeypot `website`, Mindest-Ausfüllzeit) |
 | `POST /api/admin/login` | `{password}` gegen `ADMIN_PASSWORD` → Sitzungs-Cookie (HttpOnly, SameSite=Strict, 12 h) |
-| `GET /api/admin/stats?days=30` | Aufrufe pro Tag, im Zeitraum und insgesamt |
+| `GET /api/admin/stats?days=30` | Aufrufe pro Tag, im Zeitraum, insgesamt und nach Land |
 | `GET /api/admin/messages?page=1&status=new` · `POST /api/admin/messages/:id` | Posteingang; `{status: new\|read\|done}` oder `{delete: true}` |
 
 Schutz: 2 KB Größenlimit (Kontakt 24 KB), Rate-Limits pro IP nur im Arbeitsspeicher, strenge Whitelists. Der Server löscht Nachrichten nach 12 Monaten (beim Start und täglich).
 
-Aufrufzähler: `server.js` zählt jedes Ausliefern der App-Seite an einen Browser als einen Aufruf (eine Zahl pro Tag in der Tabelle `visits`; Crawler, Prefetches und `?e2e` zählen nicht, siehe `countsAsVisit` in `server/validate.js`). Die App selbst sendet dafür nichts. Im Vite-Dev-Server wird nicht gezählt, nur mit `npm start`. Code: `server/` (`api.js`, `db.js` mit versionierten Migrationen, `validate.js`, `session.js`).
+Aufrufzähler: `server.js` zählt jedes Ausliefern der App-Seite an einen Browser als einen Aufruf (eine Zahl pro Tag in der Tabelle `visits`; Crawler, Prefetches und `?e2e` zählen nicht, siehe `countsAsVisit` in `server/validate.js`). Die App selbst sendet dafür nichts. Im Vite-Dev-Server wird nicht gezählt, nur mit `npm start`.
+
+Land der Aufrufe: `server/geo.js` lädt beim Start und dann monatlich die freie Länderliste „IP to Country Lite“ von DB-IP (CC BY 4.0, etwa 5 MB) nach `.geoip/` (Ordner mit `GEOIP_DIR` änderbar, `GEOIP=off` schaltet es ab) und sucht das Land der IP-Adresse aus `X-Forwarded-For` darin. Gespeichert wird nur Tag, Land und Anzahl (Tabelle `visit_countries`). Lokal kommen Aufrufe von `localhost` als „Unbekannt“ an; zum Ausprobieren `curl -H "Accept: text/html" -H "X-Forwarded-For: 8.8.8.8" http://localhost:3000/`. Die Länderumrisse der Admin-Karte erzeugt `tools/make-worldmap.py` (`src/admin/countryMapData.ts`). Code: `server/` (`api.js`, `db.js` mit versionierten Migrationen, `validate.js`, `session.js`).
 
 ### Auf Railway
 Railway erkennt das Projekt über `railway.json`:

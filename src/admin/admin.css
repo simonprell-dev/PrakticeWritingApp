@@ -139,6 +139,42 @@ header select {
 .chart .grid {
   stroke: var(--line);
 }
+.map .land {
+  fill: var(--line);
+}
+.map .country {
+  stroke: var(--card);
+  stroke-width: 0.6;
+}
+.map .country:not(.on) {
+  fill: var(--line);
+}
+.map .country.on:hover {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 0 12px;
+  font-size: 13px;
+  color: var(--soft);
+}
+.map-legend .step {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.map-legend i {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+}
+.map-legend i.none {
+  background: var(--line);
+}
 table {
   border-collapse: collapse;
   width: 100%;

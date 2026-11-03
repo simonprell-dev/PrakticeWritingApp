@@ -1,6 +1,8 @@
 // Admin page (/admin): login, page views per day and the contact inbox. Talks to /api/admin/* (server/api.js).
 import './admin.css';
 import { clear, h } from '../ui/dom.ts';
+import { LAND, MAP_H, MAP_W } from '../ui/worldMapData.ts';
+import { COUNTRY_PATHS } from './countryMapData.ts';
 
 interface DayRow {
   day: string;
@@ -17,6 +19,10 @@ interface Stats {
   firstDay: string | null;
   unread: number;
   perDay: DayRow[];
+  /** page views with a known country, most first */
+  perCountry: { country: string; visits: number }[];
+  /** month of the server's country list (DB-IP), null while it has none */
+  geo: string | null;
 }
 interface Message {
   id: string;
@@ -166,6 +172,76 @@ function barChart(rows: DayRow[], unit: string): HTMLElement {
   return h('div', { class: 'chart' }, g);
 }
 
+// sequential blue, light (few) to dark (many); countries without page views stay land grey
+const STEPS = ['#b7d3f6', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b'];
+const regionName = (() => {
+  try {
+    const names = new Intl.DisplayNames(['de'], { type: 'region' });
+    return (cc: string) => names.of(cc) ?? cc;
+  } catch {
+    return (cc: string) => cc;
+  }
+})();
+
+/** step of a count: logarithmic, because a few countries have most of the page views */
+function stepOf(v: number, max: number): number {
+  if (max <= 1) return STEPS.length - 1;
+  return Math.min(STEPS.length - 1, Math.floor((Math.log1p(v) / Math.log1p(max)) * STEPS.length));
+}
+
+/** the lowest count of each step, for the legend */
+function stepFloors(max: number): number[] {
+  if (max <= 1) return [1];
+  return STEPS.map((_, k) => Math.max(1, Math.ceil(Math.expm1((k / STEPS.length) * Math.log1p(max))))).filter((v, k, a) => k === 0 || v > a[k - 1]);
+}
+
+function countryMap(s: Stats): HTMLElement {
+  const by = new Map(s.perCountry.map((r) => [r.country, r.visits]));
+  const max = Math.max(0, ...by.values());
+  const g = svg('svg', { viewBox: `0 0 ${MAP_W} ${MAP_H}`, role: 'img', 'aria-label': 'Aufrufe nach Land (Weltkarte)' });
+  // land first, so countries without their own outline (and the small ones) are still there
+  g.append(svg('path', { d: LAND, class: 'land' }));
+  for (const [cc, d] of Object.entries(COUNTRY_PATHS)) {
+    const v = by.get(cc) ?? 0;
+    const attrs: Record<string, string> = { d, class: v ? 'country on' : 'country' };
+    if (v) attrs.fill = STEPS[stepOf(v, max)];
+    g.append(svg('path', attrs, svg('title', {}, `${regionName(cc)}: ${v ? `${num(v)} Aufrufe` : 'keine Aufrufe'}`)));
+  }
+  const floors = stepFloors(max);
+  const legend = h(
+    'div',
+    { class: 'map-legend' },
+    h('span', null, 'Aufrufe:'),
+    ...floors.map((f, i) =>
+      h('span', { class: 'step' }, h('i', { style: `background:${STEPS[max <= 1 ? STEPS.length - 1 : stepOf(f, max)]}` }), i + 1 >= floors.length ? `${num(f)}+` : floors[i + 1] - 1 > f ? `${num(f)}–${num(floors[i + 1] - 1)}` : num(f)),
+    ),
+    h('span', { class: 'step' }, h('i', { class: 'none' }), 'keine'),
+  );
+  return h('div', { class: 'chart map' }, g, legend);
+}
+
+function countrySection(s: Stats): HTMLElement {
+  const known = s.perCountry.reduce((a, r) => a + r.visits, 0);
+  const unknown = Math.max(0, s.visits - known);
+  const pct = (v: number) => (s.visits ? `${Math.round((v / s.visits) * 1000) / 10} %` : '–');
+  const rows: (string | number)[][] = s.perCountry.map((r) => [regionName(r.country), r.visits, pct(r.visits)]);
+  if (unknown) rows.push(['Unbekannt', unknown, pct(unknown)]);
+  return h(
+    'div',
+    { class: 'panel' },
+    h('h2', null, 'Aufrufe nach Land'),
+    s.perCountry.length ? countryMap(s) : null,
+    table(['Land', 'Aufrufe', 'Anteil'], rows, [false, true, true]),
+    h(
+      'p',
+      { class: 'muted' },
+      s.geo ? `Länderliste ${s.geo}. ` : 'Die Länderliste ist auf dem Server noch nicht geladen – bis dahin zählen Aufrufe als „Unbekannt“. ',
+      '„Unbekannt“: Aufrufe von vor der Länderzählung, aus privaten Netzen oder ohne Treffer in der Liste. ',
+      h('a', { href: 'https://db-ip.com', target: '_blank', rel: 'noopener' }, 'IP Geolocation by DB-IP'),
+    ),
+  );
+}
+
 async function renderStats(box: HTMLElement): Promise<number> {
   const s = await api<Stats>(`/api/admin/stats?days=${days}`);
   clear(box);
@@ -181,6 +257,7 @@ async function renderStats(box: HTMLElement): Promise<number> {
       card('Neue Nachrichten', num(s.unread)),
     ),
     h('div', { class: 'panel' }, h('h2', null, 'Aufrufe pro Tag'), barChart(rows, 'Aufrufe')),
+    countrySection(s),
     h(
       'details',
       { class: 'panel' },

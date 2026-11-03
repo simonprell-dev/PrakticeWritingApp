@@ -13,13 +13,14 @@
 | **Einstellungen** (Kamera, Bildausschnitt, Strenge, Teamnamen, Übungsbuchstabe) | `localStorage` des Browsers | keine | bis „Alles zurücksetzen“ oder Löschen der Websitedaten |
 | **App-Dateien** (Offline-Betrieb) | Cache des Service Workers | keine | bis zur nächsten Aktualisierung |
 | **Kontaktformular** (Nachricht, Datum/Uhrzeit, App-Sprache; Name und E-Mail nur wenn angegeben) | Postgres-Datenbank beim Hoster **Railway** | keine | bis erledigt (Löschen im Admin-Bereich), spätestens **12 Monate** – der Server löscht ältere Nachrichten automatisch (beim Start und täglich) |
-| **Aufrufzähler** (eine Zahl pro Kalendertag: wie oft die App-Seite geladen wurde) | Postgres-Datenbank beim Hoster **Railway** | keine | unbegrenzt (kein Personenbezug); keine IP, keine Uhrzeit, keine Kennung, kein Cookie |
+| **Aufrufzähler** (Zahlen pro Kalendertag: wie oft die App-Seite geladen wurde, insgesamt und je Land) | Postgres-Datenbank beim Hoster **Railway** | keine | unbegrenzt (kein Personenbezug); keine IP, keine Uhrzeit, keine Kennung, kein Cookie |
 | **Admin-Sitzung** (nur für den Betreiber) | Cookie `kk_admin` (HttpOnly, SameSite=Strict, nur für `/api/admin`) | keine | 12 Stunden |
 | **Verbindungsdaten** (IP-Adresse, Zeit, URL, Statuscode, Datenmenge, Browser) | beim Hoster **Railway** (Auftragsverarbeiter) | Railway Corporation, USA | 7 Tage (Railway-Tarife Trial/Hobby) bzw. 30 Tage (Pro) |
 
 Außerdem:
 - **Es gibt keine Cookies für Besucher, kein Tracking über Seiten hinweg, keine Analysedienste Dritter, keine Werbung und keine Konten.** Einziges Cookie ist die Anmeldung des Betreibers auf `/admin`.
 - **Nur ein Aufrufzähler:** Lädt ein Browser die App-Seite, zählt `server.js` für den Tag eins hoch. Gespeichert wird nur die Zahl pro Kalendertag. Die App sendet dafür nichts und liest nichts vom Gerät; deshalb braucht es weder eine Einwilligung (§ 25 TDDDG) noch einen Schalter zum Abschalten.
+- **Land der Aufrufe:** `server/geo.js` sucht die IP-Adresse des Aufrufs in einer Länderliste auf dem eigenen Server (DB-IP „IP to Country Lite“, CC BY 4.0, monatlich vom Server selbst geladen) und verwirft sie danach sofort. Gespeichert wird nur „Tag · Land · Anzahl“, kein Ort, keine Stadt, kein Anbieter. Rechtsgrundlage ist das berechtigte Interesse (Art. 6 Abs. 1 lit. f DSGVO); beschrieben in der Datenschutzerklärung unter „Aufrufzähler“. Die Quellenangabe „IP Geolocation by DB-IP“ steht auf der Lizenzseite und im Admin-Bereich. Abschalten mit der Variablen `GEOIP=off`.
 - **Kontaktformular:** Nachricht Pflicht, Name/E-Mail freiwillig, kein Speichern der IP. Ein verstecktes Feld (Honeypot) und eine Mindest-Ausfüllzeit halten Bots ab. Nachrichten im Admin-Bereich nach Erledigung löschen; nach 12 Monaten löscht der Server sie automatisch.
 - **Es werden keine Dienste Dritter eingebunden.** Schriften, Modell und Programm liegen auf dem eigenen Server. Die Content-Security-Policy (`default-src 'self'`) erzwingt das technisch.
   - Hintergrund zu den Schriften: Das LG München I (Urteil vom 20.01.2022, Az. 3 O 17493/20) hat die Einbindung von Google Fonts über Googles Server als Datenschutzverstoß gewertet.

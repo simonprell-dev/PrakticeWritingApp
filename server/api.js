@@ -1,6 +1,7 @@
 // The /api routes: the contact form and the admin area, plus the page view counter (called by server.js).
 // No IP address is stored and no cookie is set except the admin's own session cookie.
 import { Db } from './db.js';
+import { GeoIp } from './geo.js';
 import { clearCookie, COOKIE, makeToken, readCookie, safeEqual, sessionCookie, sessionSecret, verifyToken } from './session.js';
 import {
   clientIp,
@@ -86,6 +87,9 @@ export function createApi(env = process.env) {
     admin: new RateLimiter(300, 60_000),
   };
   const timers = [];
+  // the country of a page view; GEOIP=off counts without countries
+  const geo = db && env.GEOIP !== 'off' ? new GeoIp({ dir: env.GEOIP_DIR || '.geoip' }) : null;
+  void geo?.start();
 
   if (db) {
     const start = async () => {
@@ -148,7 +152,8 @@ export function createApi(env = process.env) {
 
       if (path === '/api/admin/me' && method === 'GET') return send(res, 200, { ok: true, db: !!db?.ready });
       if (path === '/api/admin/stats' && method === 'GET') {
-        return send(res, 200, await needDb().stats(parseDays(url.searchParams.get('days'))));
+        // geo: the month of the loaded country list, null while there is none
+        return send(res, 200, { ...(await needDb().stats(parseDays(url.searchParams.get('days')))), geo: geo?.month ?? null });
       }
       if (path === '/api/admin/messages' && method === 'GET') {
         const page = Math.max(1, Math.min(10_000, Math.round(Number(url.searchParams.get('page')) || 1)));
@@ -168,10 +173,11 @@ export function createApi(env = process.env) {
   }
 
   return {
-    /** one page view today; without a database it is not counted, a failure only gets logged */
-    countVisit() {
+    /** one page view today, with its country; without a database it is not counted, a failure only gets logged */
+    countVisit(req) {
       if (!db?.ready) return;
-      db.addVisit().catch((e) => console.warn('Aufrufzähler:', e.message));
+      const country = geo?.country(clientIp(req.headers, req.socket.remoteAddress)) ?? null;
+      db.addVisit(country).catch((e) => console.warn('Aufrufzähler:', e.message));
     },
     /** answers a request below /api/ */
     async handle(req, res, url) {
@@ -190,6 +196,7 @@ export function createApi(env = process.env) {
     },
     async close() {
       timers.forEach((t) => clearTimeout(t));
+      geo?.stop();
       await db?.close().catch(() => undefined);
     },
   };
