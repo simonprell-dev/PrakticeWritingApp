@@ -3,13 +3,14 @@
 // browser (IndexedDB) unless a file is downloaded.
 import { t, tk } from '../i18n/i18n.ts';
 
-export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'malen' | 'duell' | 'riesenburg' | 'tuerme';
+export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'malen' | 'duell' | 'riesenburg' | 'tuerme';
 
 /** title: German, translated where it is shown (t(MODES[m].title)) */
 export const MODES: Record<GameMode, { icon: string; title: string }> = {
   meer: { icon: '🐠', title: tk('Meer') },
   weltraum: { icon: '👽', title: tk('Weltraum') },
   savanne: { icon: '🦒', title: tk('Savanne') },
+  zauberland: { icon: '🦄', title: tk('Zauberland') },
   malen: { icon: '🎨', title: tk('Mal-Aquarium') },
   duell: { icon: '⚔️', title: tk('Team-Duell') },
   riesenburg: { icon: '🏰', title: tk('Riesenburg') },

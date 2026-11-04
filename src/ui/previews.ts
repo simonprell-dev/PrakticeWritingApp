@@ -11,6 +11,10 @@ import { drawBeam, drawPortal, drawUfo } from '../game/creatures/ufo.ts';
 import { inkGuardSprite } from '../game/creatures/inkGuard.ts';
 import { makeGenome, type Archetype, type Genome } from '../game/creatures/genome.ts';
 import { animalSprite } from '../game/creatures/savanna.ts';
+import { fableSprite } from '../game/creatures/fable.ts';
+import { princessSprite } from '../game/creatures/princess.ts';
+import { Castle } from '../game/castle/castle.ts';
+import { drawCastle } from '../game/castle/castleDraw.ts';
 import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
 import { TAU } from '../game/math.ts';
 import { blockWidth, drawBlock } from '../game/tower/towerArt.ts';
@@ -43,7 +47,7 @@ function genome(score: number, seed: number, a: Archetype, hue?: number, variant
   return g;
 }
 
-export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'duell' | 'riesenburg' | 'tuerme' | 'malen';
+export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'duell' | 'riesenburg' | 'tuerme' | 'malen';
 
 const PAINTED: CardLook = { fills: { body: '#ff9a3c', tail: '#ff5f8f', dorsal: '#4fb3ff', anal: '#4fb3ff', pelvic: '#4fb3ff', pectoral: '#ffd84a' } };
 const PAINTED_2: CardLook = { fills: { body: '#8f6bff', tail: '#7ccf6b', dorsal: '#ffd84a', anal: '#ffd84a', pelvic: '#ffd84a', pectoral: '#ff6fd8' } };
@@ -98,6 +102,21 @@ export function tilePreview(kind: TileKind, canvas: HTMLCanvasElement): void {
     ctx.fill();
     draw(ctx, animalSprite(genome(70, 2, 'animal', undefined, 2), letterSticker('7')), 110, 200, 0.6);
     draw(ctx, animalSprite(genome(96, 4, 'animal', undefined, 0), letterSticker('L')), 300, 250, 0.75);
+  } else if (kind === 'zauberland') {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#b9a4ff');
+    g.addColorStop(0.62, '#ffe1ef');
+    g.addColorStop(0.63, '#b6e8b0');
+    g.addColorStop(1, '#86cf8e');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    const castle = new Castle();
+    const tiers = ['nett', 'schoen', 'prachtvoll', 'nett', 'schoen', 'prachtvoll'] as const;
+    for (let i = 0; i < 6; i++) castle.add(castle.nextSlot()!, { q: 0.8, tier: tiers[i], glyphId: null });
+    const cell = 60;
+    drawCastle(ctx, castle, { x0: (W - 7 * cell) / 2, y0: 236, cell, rowH: cell * 0.86, cols: 7, rows: 5 }, new Map());
+    draw(ctx, fableSprite(genome(96, 3, 'fable', undefined, 0), letterSticker('E')), 105, 300, 0.5);
+    draw(ctx, princessSprite(genome(90, 7, 'fable'), letterSticker('p')), 385, 335, 0.46);
   } else if (kind === 'tuerme') {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#1d1450');

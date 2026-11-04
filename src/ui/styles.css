@@ -350,13 +350,13 @@ body {
 }
 .tiles {
   display: grid;
-  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
   gap: clamp(12px, 1.6vw, 24px);
   width: min(1560px, 100%);
 }
 @media (max-width: 1400px) {
   .tiles {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 @media (max-width: 1100px) {

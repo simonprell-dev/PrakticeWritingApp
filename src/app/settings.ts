@@ -5,7 +5,7 @@ import { t, tk } from '../i18n/i18n.ts';
 import { isScriptId, scriptOf, type ScriptId } from '../recog/scripts.ts';
 import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
 
-export type HabitatId = 'meer' | 'weltraum' | 'savanne';
+export type HabitatId = 'meer' | 'weltraum' | 'savanne' | 'zauberland';
 
 /**
  * fest: a document camera or webcam looks at the paper all the time (projector in class);

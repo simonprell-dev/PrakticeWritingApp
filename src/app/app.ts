@@ -16,6 +16,7 @@ import { TowerScene, type TowerResult } from '../scenes/towerScene.ts';
 import { HabitatScene, type HabitatDef } from '../scenes/habitat.ts';
 import { PaintScene } from '../scenes/paintScene.ts';
 import { savanna } from '../scenes/savanna.ts';
+import { zauberland, ZauberScene } from '../scenes/zauberland.ts';
 import type { Scene, SceneHost, Snapshot } from '../scenes/scene.ts';
 import { space } from '../scenes/space.ts';
 import { openCameraSetup } from '../ui/cameraSetup.ts';
@@ -45,7 +46,8 @@ import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSav
 import { firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
 import { t } from '../i18n/i18n.ts';
 
-const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna };
+const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna, zauberland };
+const isHabitat = (m: string): m is HabitatId => m in HABITATS;
 /** the paper setting as the recognition sees it: Lineatur 1 and 2 have the same four-line shape */
 const LINEATUR = { auto: 'auto', L1: 'school4', L2: 'school4', L3: 'school2', liniert: 'plain', blanko: 'none' } as const;
 const DEBUG = new URLSearchParams(location.search).has('debug');
@@ -441,7 +443,7 @@ export class App {
   /** settings a game depends on (they come back with the game) */
   private configFor(mode: GameMode): Record<string, unknown> {
     const s = this.settings;
-    if (mode === 'meer' || mode === 'weltraum' || mode === 'savanne') return { practice: structuredClone(s.practice) };
+    if (isHabitat(mode)) return { practice: structuredClone(s.practice) };
     if (mode === 'duell') return { duel: structuredClone(s.duel) };
     if (mode === 'riesenburg') return { siege: structuredClone(s.siege) };
     if (mode === 'tuerme') return { tower: structuredClone(s.tower) };
@@ -554,7 +556,7 @@ export class App {
     this.save();
     const m = g.mode;
     // the new scene waits (frozen) until the saved game is inside
-    if (m === 'meer' || m === 'weltraum' || m === 'savanne') this.startHabitat(m, true);
+    if (isHabitat(m)) this.startHabitat(m, true);
     else if (m === 'malen') this.startPaint(true);
     else if (m === 'duell') this.startDuel(true);
     else if (m === 'riesenburg') this.startSiege(true);
@@ -664,10 +666,10 @@ export class App {
     this.save();
     const def = HABITATS[id];
     const practice = this.settings.practice.mode === 'ueben';
-    const scene = new HabitatScene(def, this.host(), this.stage.worldW);
+    const scene = id === 'zauberland' ? new ZauberScene(this.host(), this.stage.worldW) : new HabitatScene(def, this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
-      title: { meer: t('🐠 Meer'), weltraum: t('👽 Weltraum'), savanne: t('🦒 Savanne') }[id],
+      title: { meer: t('🐠 Meer'), weltraum: t('👽 Weltraum'), savanne: t('🦒 Savanne'), zauberland: t('🦄 Zauberland') }[id],
       settings: this.settings,
       camera: this.camera,
       handheld: this.handheld,

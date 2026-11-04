@@ -38,7 +38,8 @@ export const zauberland: HabitatDef = {
   id: 'zauberland',
   archetype: 'fable',
   word: [tk('Wesen'), tk('Wesen')],
-  count: [tk('{n} Wesen'), tk('{n} Wesen')],
+  // German has one form for both; other languages get their singular from 'Ein Wesen'
+  count: [tk('Ein Wesen'), tk('{n} Wesen')],
   makeSprite: fableSprite,
   sortY: true,
   bounds: (W) => ({ x0: 140, x1: W - 140, y0: MEADOW_Y0, y1: MEADOW_Y1 }),
@@ -644,14 +645,14 @@ export class ZauberScene extends HabitatScene {
     if (room === null) return;
     const z = this.zs.get(c.id)!;
     const wr = windowRect(this.layout, room);
-    const r = wr.w * 0.36;
+    const r = wr.w * 0.42;
     z.bust ??= princessBust(c.genome, r);
     const b = z.bust;
     // rises into the window, waves, and sinks back down
     const up = clamp(c.stateT / 0.5) * clamp((z.dur - c.stateT) / 0.5);
     ctx.save();
     ctx.clip(archPath(wr));
-    ctx.translate(wr.x + wr.w / 2, wr.y + wr.h * 0.42 + (1 - up) * wr.h);
+    ctx.translate(wr.x + wr.w / 2, wr.y + wr.h * 0.5 + (1 - up) * wr.h);
     ctx.rotate(Math.sin(c.stateT * 3) * 0.08);
     ctx.drawImage(b as CanvasImageSource, -b.width / 2, -r * 1.5);
     ctx.restore();
