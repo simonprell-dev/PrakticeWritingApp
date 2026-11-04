@@ -219,7 +219,6 @@ export class HabitatScene implements Scene {
     const target = this.practiceTarget;
     const best = fresh.reduce<ScannedGlyph | null>((b, g) => (!b || g.score.score > b.score.score ? g : b), null);
     const worst = fresh.reduce<ScannedGlyph | null>((b, g) => (!b || g.score.score < b.score.score ? g : b), null);
-    const B = this.bounds;
     // the surprise letter: the first new glyph that really is it flies into the bubble
     const wish = this.wish && this.wish.pop < 0 && !this.wish.claimed ? this.wish : null;
     const wishGlyph = wish ? fresh.find((g) => g.score.scoredAs === wish.char && !g.score.looksLike && g.score.tip !== 'spiegel') : undefined;
@@ -235,16 +234,20 @@ export class HabitatScene implements Scene {
       this.W,
       (g) => {
         if (wish && g === wishGlyph) return { x: wish.x, y: wish.y };
-        const fx = g.box.x / Math.max(1, snap.detW);
-        return { x: lerp(B.x0 + 80, B.x1 - 80, fx), y: lerp(B.y0 + 40, B.y1 - 40, Math.random()) };
+        return this.flightTarget(g, snap);
       },
       (g) => {
         const sticker = stickers.get(g.id)!;
-        const c = this.addCreature(g, sticker);
+        const c = this.hatch(g, sticker, g === wishGlyph);
         this.written++;
         // only letters that really are the target count towards the practice goal
         if (target && g.score.scoredAs === target && !g.score.looksLike && g.score.tip !== 'spiegel') this.practiceDone++;
         sfx.hatch(g.score.score);
+        if (!c) {
+          // the letter became something that is not a creature (a castle part in the Zauberland)
+          this.host.progress();
+          return;
+        }
         this.particles.burst('puff', c.x, c.y, 10, { color: 'rgba(255,255,255,0.8)', size: 26, speed: 160, max: 0.6 });
         if (g.score.score >= 70) this.particles.burst('spark', c.x, c.y, 10, { color: '#fff6a8', size: 14, speed: 260, max: 0.9 });
         const stars = '★'.repeat(starCount(g.score.score)) + '☆'.repeat(5 - starCount(g.score.score));
@@ -280,6 +283,18 @@ export class HabitatScene implements Scene {
       if (res.glyphs.length) this.host.toast(t('Ich habe nichts Neues gefunden. Schreib noch etwas!'), 'info');
       else this.host.toast(t('Ich sehe noch keine Buchstaben. Schreib etwas unter die Kamera!'), 'warn');
     }
+  }
+
+  /** where a new letter flies to */
+  protected flightTarget(g: ScannedGlyph, snap: Snapshot): { x: number; y: number } {
+    const B = this.bounds;
+    const fx = g.box.x / Math.max(1, snap.detW);
+    return { x: lerp(B.x0 + 80, B.x1 - 80, fx), y: lerp(B.y0 + 40, B.y1 - 40, Math.random()) };
+  }
+
+  /** a letter has arrived: the creature that hatches from it, or null when it became something else */
+  protected hatch(g: ScannedGlyph, sticker: AnyCanvas, _wish: boolean): Creature | null {
+    return this.addCreature(g, sticker);
   }
 
   addCreature(g: ScannedGlyph, sticker: AnyCanvas): Creature {
@@ -386,13 +401,18 @@ export class HabitatScene implements Scene {
     if (this.bg) ctx.drawImage(this.bg as CanvasImageSource, 0, 0);
     this.def.renderBack?.(this, ctx);
     const list = this.def.sortY ? [...this.creatures].sort((a, b) => a.y - b.y) : this.creatures;
-    for (const c of list) this.drawCreature(ctx, c);
+    this.renderCreatures(ctx, list);
     this.drawWish(ctx);
     this.particles.render(ctx);
     this.def.renderFront?.(this, ctx);
     for (const c of list) if (c.bubble) this.drawBubble(ctx, c);
     this.drawDemo(ctx);
     this.fx.render(ctx);
+  }
+
+  /** draws the creatures (sorted); the Zauberland draws its castle, windows and riders here too */
+  protected renderCreatures(ctx: CanvasRenderingContext2D, list: Creature[]): void {
+    for (const c of list) this.drawCreature(ctx, c);
   }
 
   drawCreature(ctx: CanvasRenderingContext2D, c: Creature): void {

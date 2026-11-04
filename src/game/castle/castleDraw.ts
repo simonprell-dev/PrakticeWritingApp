@@ -75,7 +75,7 @@ export function windowRect(L: Layout, slot: number): Rect {
   return { x: r.x + (r.w - w) / 2, y: r.y + r.h * 0.15, w, h };
 }
 
-function archPath(r: Rect): Path2D {
+export function archPath(r: Rect): Path2D {
   const p = makePath();
   const rad = r.w / 2;
   p.moveTo(r.x, r.y + r.h);
@@ -319,9 +319,9 @@ export function drawGateOpen(ctx: Ctx, L: Layout, open: number): void {
 }
 
 /** draws the castle without the cache (built in order so upper parts overlap lower ones) */
-export function drawCastle(ctx: Ctx, castle: Castle, L: Layout, stickers: Map<number, AnyCanvas>, hide = -1): void {
+export function drawCastle(ctx: Ctx, castle: Castle, L: Layout, stickers: Map<number, AnyCanvas>, hide: readonly number[] = []): void {
   drawGateWall(ctx, castle, L);
-  const parts = [...castle.parts].filter((p) => p.slot !== hide).sort((a, b) => SLOTS[a.slot].row - SLOTS[b.slot].row || a.slot - b.slot);
+  const parts = [...castle.parts].filter((p) => !hide.includes(p.slot)).sort((a, b) => SLOTS[a.slot].row - SLOTS[b.slot].row || a.slot - b.slot);
   for (const p of parts) drawPart(ctx, castle, L, p, stickers);
 }
 
@@ -341,8 +341,8 @@ export class CastleCache {
   private img: AnyCanvas | null = null;
 
   /** the castle as one picture of the whole world size; hide leaves out a part that is still popping in */
-  get(castle: Castle, worldW: number, stickers: Map<number, AnyCanvas>, hide = -1): AnyCanvas {
-    const key = `${castle.parts.map((p) => p.slot).join(',')}|${worldW}|${hide}|${stickers.size}`;
+  get(castle: Castle, worldW: number, stickers: Map<number, AnyCanvas>, hide: readonly number[] = []): AnyCanvas {
+    const key = `${castle.parts.map((p) => p.slot).join(',')}|${worldW}|${hide.join(',')}|${stickers.size}`;
     if (this.img && key === this.key) return this.img;
     const { canvas, ctx } = makeCanvas(Math.round(worldW), WORLD_H);
     drawCastle(ctx, castle, castleLayout(worldW), stickers, hide);
