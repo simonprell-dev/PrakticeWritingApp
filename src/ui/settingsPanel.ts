@@ -1,8 +1,18 @@
 import { clearSaves } from '../app/saves.ts';
 import { resetSettings, type Settings } from '../app/settings.ts';
+import { TASK_KINDS, type TaskKind } from '../game/math/tasks.ts';
 import { button, h, modal, segmented, toggle } from './dom.ts';
 import { toast } from './toast.ts';
-import { t } from '../i18n/i18n.ts';
+import { t, tk } from '../i18n/i18n.ts';
+
+/** the kinds of tasks of the Rechenmeer, as they are named in the settings */
+const MATH_LABELS: [TaskKind, string][] = [
+  ['plus20', tk('Plus bis 20')],
+  ['minus20', tk('Minus bis 20')],
+  ['pm100', tk('Plus und Minus bis 100')],
+  ['mal', tk('Einmaleins (Kernaufgaben)')],
+  ['geteilt', tk('Geteilt (Umkehr der Kernaufgaben)')],
+];
 
 export interface SettingsDeps {
   settings: Settings;
@@ -28,6 +38,22 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
     delayLabel.textContent = `${delay.value} s`;
     d.save();
   });
+  // Rechenmeer: the kinds of tasks; the last one that is on stays on
+  const mathToggles = () =>
+    MATH_LABELS.map(([kind, label]) => {
+      const el = toggle(t(label), s.math.kinds.includes(kind), (on) => {
+        const kinds = s.math.kinds.filter((k) => k !== kind);
+        if (on) kinds.push(kind);
+        if (!kinds.length) {
+          toast(t('Mindestens eine Aufgabenart muss an bleiben.'), 'info');
+          el.click();
+          return;
+        }
+        s.math.kinds = TASK_KINDS.filter((k) => kinds.includes(k));
+        d.save();
+      });
+      return el;
+    });
   const set = <T extends string>(apply: (v: T) => void) => (v: T) => {
     apply(v);
     d.save();
@@ -161,6 +187,9 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       ),
       h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Blendet im Mal-Aquarium einen QR-Code und die Webadresse ein, damit Besucher das Spiel zu Hause wiederfinden.')),
     ),
+    h('h3', null, t('Rechenmeer')),
+    h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Welche Aufgaben im Rechenmeer drankommen (Klasse 1/2). Mindestens eine bleibt an.')),
+    h('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px' }, ...mathToggles()),
     h('h3', null, t('Spielstände')),
     h(
       'div',

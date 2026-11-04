@@ -28,6 +28,9 @@ export const SECTION = 10;
 export const VISIT = 8;
 /** seconds the solution stays after the third miss */
 export const REVEAL = 4;
+/** size of the counting help */
+const HELP_W = 360;
+const HELP_H = 200;
 /** misses until the game shows the solution */
 const MAX_MISSES = 3;
 /** at most this many plants stand on the sand; the oldest fades away */
@@ -411,7 +414,8 @@ export class RechenScene extends HabitatScene {
       ctx.lineWidth = 2;
       ctx.stroke();
     }
-    if (task && (this.misses >= 2 || this.reveal)) drawHelp(ctx, task, cx + w / 2 + 40, y);
+    // the counting help under the board, in the middle (the camera picture sits in the top right corner)
+    if (task && (this.misses >= 2 || this.reveal)) drawHelp(ctx, task, cx - HELP_W / 2, y + h + 130);
     if (this.note) {
       const a = clamp(1 - (this.note.t - 2.8) / 0.7);
       ctx.save();
@@ -534,8 +538,8 @@ function drawHelp(ctx: CanvasRenderingContext2D, task: MathTask, x: number, y: n
   ctx.fillStyle = 'rgba(255,255,255,0.92)';
   ctx.strokeStyle = '#1f6fa8';
   ctx.lineWidth = 4;
-  const W = 360;
-  const H = 200;
+  const W = HELP_W;
+  const H = HELP_H;
   roundRect(ctx, x, y, W, H, 22);
   ctx.fill();
   ctx.stroke();

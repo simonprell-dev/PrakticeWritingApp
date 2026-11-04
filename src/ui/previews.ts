@@ -13,6 +13,9 @@ import { makeGenome, type Archetype, type Genome } from '../game/creatures/genom
 import { animalSprite } from '../game/creatures/savanna.ts';
 import { fableSprite } from '../game/creatures/fable.ts';
 import { princessSprite } from '../game/creatures/princess.ts';
+import { seaSprite } from '../game/creatures/seaLife.ts';
+import { drawPlant } from '../game/math/seaPlants.ts';
+import type { ScannedGlyph } from '../vision/types.ts';
 import { Castle } from '../game/castle/castle.ts';
 import { drawCastle } from '../game/castle/castleDraw.ts';
 import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
@@ -47,7 +50,7 @@ function genome(score: number, seed: number, a: Archetype, hue?: number, variant
   return g;
 }
 
-export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'duell' | 'riesenburg' | 'tuerme' | 'malen';
+export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'duell' | 'riesenburg' | 'tuerme' | 'malen';
 
 const PAINTED: CardLook = { fills: { body: '#ff9a3c', tail: '#ff5f8f', dorsal: '#4fb3ff', anal: '#4fb3ff', pelvic: '#4fb3ff', pectoral: '#ffd84a' } };
 const PAINTED_2: CardLook = { fills: { body: '#8f6bff', tail: '#7ccf6b', dorsal: '#ffd84a', anal: '#ffd84a', pelvic: '#ffd84a', pectoral: '#ff6fd8' } };
@@ -117,6 +120,31 @@ export function tilePreview(kind: TileKind, canvas: HTMLCanvasElement): void {
     drawCastle(ctx, castle, { x0: (W - 7 * cell) / 2, y0: 236, cell, rowH: cell * 0.86, cols: 7, rows: 5 }, new Map());
     draw(ctx, fableSprite(genome(96, 3, 'fable', undefined, 0), letterSticker('E')), 105, 300, 0.5);
     draw(ctx, princessSprite(genome(90, 7, 'fable'), letterSticker('p')), 385, 335, 0.46);
+  } else if (kind === 'rechenmeer') {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#8fe3f3');
+    g.addColorStop(1, '#1d6fa8');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#f2d9a2';
+    ctx.fillRect(0, H - 40, W, 40);
+    drawPlant(ctx, { kind: 'koralle', x: 70, tier: 'prachtvoll', seed: 4, born: 0, glyph: {} as ScannedGlyph, sticker: letterSticker('9') }, H - 30, 0.4, 0.75);
+    drawPlant(ctx, { kind: 'seegras', x: 420, tier: 'schoen', seed: 2, born: 0, glyph: {} as ScannedGlyph, sticker: letterSticker('6') }, H - 30, 1.3, 0.7);
+    // the task board
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.strokeStyle = '#1f6fa8';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.roundRect(W / 2 - 150, 22, 300, 84, 26);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#1d2a44';
+    ctx.font = '700 52px Fredoka, Druckvorlage, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('7 + 5 = ?', W / 2, 66);
+    draw(ctx, seaSprite('clownfisch', genome(92, 6, 'fish'), letterSticker('12')), 290, 225, 0.8);
+    draw(ctx, seaSprite('seepferdchen', genome(75, 9, 'fish'), letterSticker('8')), 150, 215, 0.7, -1);
   } else if (kind === 'tuerme') {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#1d1450');

@@ -4,9 +4,9 @@ import { detectLocale } from '../i18n/detect.ts';
 import { t, tk } from '../i18n/i18n.ts';
 import { isScriptId, scriptOf, type ScriptId } from '../recog/scripts.ts';
 import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
-import type { TaskKind } from '../game/math/tasks.ts';
+import { TASK_KINDS, type TaskKind } from '../game/math/tasks.ts';
 
-export type HabitatId = 'meer' | 'weltraum' | 'savanne' | 'zauberland';
+export type HabitatId = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer';
 
 /**
  * fest: a document camera or webcam looks at the paper all the time (projector in class);
@@ -215,6 +215,9 @@ export function loadSettings(): Settings {
     // older versions only knew the Latin letters: they keep the Druckschrift
     if (!isScriptId(s.script)) s.script = 'druck';
     if (typeof s.lang !== 'string') s.lang = '';
+    // Rechenmeer: only known task kinds, each once, at least one
+    const kinds = Array.isArray(s.math?.kinds) ? [...new Set(s.math.kinds.filter((k) => (TASK_KINDS as readonly string[]).includes(k)))] : [];
+    s.math = { kinds: kinds.length ? kinds : [...DEFAULTS.math.kinds] };
     return s;
   } catch {
     return freshSettings();

@@ -119,6 +119,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         tile('weltraum', t('👽 Weltraum'), t('Aliens zwischen den Planeten'), () => d.startHabitat('weltraum')),
         tile('savanne', t('🦒 Savanne'), t('Tiere in der Steppe'), () => d.startHabitat('savanne')),
         tile('zauberland', t('🦄 Zauberland'), t('Einhörner, Prinzessinnen und eine Burg'), () => d.startHabitat('zauberland')),
+        tile('rechenmeer', t('🐬 Rechenmeer'), t('Rechnen füllt das Meer'), () => d.startHabitat('rechenmeer')),
         tile('duell', t('⚔️ Team-Duell'), t('Zwei Teams, Zettel, Blasen-Burgen'), d.openDuel),
         tile('riesenburg', t('🏰 Riesenburg'), t('Die ganze Klasse gegen den Riesen'), d.openSiege),
         tile('tuerme', t('🏗️ Türme bauen'), t('Bis zu 8 Teams, Aliens helfen'), d.openTowers),

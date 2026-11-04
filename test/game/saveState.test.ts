@@ -15,6 +15,7 @@ import type { SceneHost, Snapshot } from '../../src/scenes/scene.ts';
 import type { CardHit } from '../../src/vision/cards.ts';
 import type { RGBAImage, ScannedGlyph } from '../../src/vision/types.ts';
 import { ZauberScene } from '../../src/scenes/zauberland.ts';
+import { RechenScene } from '../../src/scenes/rechenmeer.ts';
 import { colourful, drawLook } from '../helpers/cardScene.ts';
 
 const step = (sim: { step(dt: number): void; drain(): unknown[] }, seconds: number) => {
@@ -265,5 +266,49 @@ describe('saved Zauberland', () => {
     const s = new ZauberScene(zhost, 1920, 5);
     s.add('part', zglyph(), st());
     expect(await s.saveState()).not.toBeNull();
+  });
+});
+
+describe('saved Rechenmeer', () => {
+  beforeEach(() => {
+    vi.stubGlobal('createImageBitmap', async (blob: Blob) => Object.assign(await loadImage(Buffer.from(await blob.arrayBuffer())), { close() {} }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  let gid = 1;
+  const digit = (ch: string, x: number): ScannedGlyph => {
+    const id = gid++;
+    const data = new Uint8ClampedArray(16 * 16 * 4).map((_, i) => (i % 4 === 3 ? 255 : (i * 7 + id * 13) & 255));
+    return {
+      id,
+      box: { x, y: 100, w: 30, h: 40 },
+      regionId: 0,
+      dots: 0,
+      crop: { width: 16, height: 16, data },
+      score: { score: 80, tier: 'schoen', parts: { L: 1, T: 1, S: 1, P: 1 }, char: ch, scoredAs: ch, tip: 'super' },
+      isNew: true,
+    } as ScannedGlyph;
+  };
+  const rhost = { settings: DEFAULTS, toast() {}, showCard() {}, progress() {} } as unknown as SceneHost;
+
+  it('a Rechenmeer game comes back with its animals, plants, task and pearls', async () => {
+    const s = new RechenScene(rhost, 1920, 3);
+    for (let i = 0; i < 6; i++) {
+      const r = String(s.task!.result);
+      expect(s.answer([...r].map((ch, k) => digit(ch, 100 + k * 36)), new Map())).toBe('right');
+    }
+    const kinds = s.creatures.map((c) => c.sprite.motion);
+    const saved = await s.saveState();
+    expect(saved!.summary).toBe(s.countText());
+    const again = new RechenScene(rhost, 1600, 4);
+    await again.restoreState(JSON.parse(JSON.stringify(saved!.state)));
+    expect(again.task).toEqual(s.task);
+    expect(again.pearls).toBe(6);
+    expect(again.creatures.map((c) => c.sprite.motion)).toEqual(kinds);
+    expect(again.plants.length).toBe(s.plants.length);
+    // the numbers have their own (negative) ids: unique within the game
+    const ids = [...again.creatures.map((c) => c.glyph!.id), ...again.plants.map((p) => p.glyph.id)];
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(again.countText()).toBe(s.countText());
   });
 });
