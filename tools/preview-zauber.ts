@@ -10,6 +10,10 @@ import { makeGenome, type Genome } from '../src/game/creatures/genome.ts';
 import { princessBust, princessSprite } from '../src/game/creatures/princess.ts';
 import { drawBadgeSticker, type Sprite } from '../src/game/creatures/sprite.ts';
 import type { Tier } from '../src/vision/types.ts';
+import { Castle } from '../src/game/castle/castle.ts';
+import { CastleCache } from '../src/game/castle/castleDraw.ts';
+import { paintZauberland } from '../src/game/castle/meadow.ts';
+import { WORLD_H } from '../src/game/stage.ts';
 
 // recog/score.ts pulls in i18n (import.meta.glob), which plain node cannot load
 const tierOf = (s: number): Tier => (s < 30 ? 'zerknittert' : s < 50 ? 'schief' : s < 70 ? 'nett' : s < 88 ? 'schoen' : 'prachtvoll');
@@ -71,4 +75,28 @@ if (!process.argv.includes('--castle')) {
   });
   writeFileSync(`${out}/zauber-figures.png`, cv.toBuffer('image/png'));
   console.log(`${out}/zauber-figures.png`);
+}
+
+if (process.argv.includes('--castle')) {
+  const tiers: Tier[] = ['zerknittert', 'schief', 'nett', 'schoen', 'prachtvoll'];
+  for (const W of [1280, 1920]) {
+    for (const n of [2, 9, 18]) {
+      const c = new Castle();
+      const stickers = new Map<number, AnyCanvas>();
+      let k = 0;
+      while (c.parts.length < n) {
+        const id = 100 + k;
+        stickers.set(id, sticker('ABCDEFGHIJKLMNOP'[k % 16]));
+        c.add(c.nextSlot()!, { q: 0.5, tier: tiers[k % 5], glyphId: id });
+        k++;
+      }
+      const cv = createCanvas(W, WORLD_H);
+      const ctx = cv.getContext('2d') as unknown as CanvasRenderingContext2D;
+      paintZauberland(ctx, W, WORLD_H);
+      ctx.drawImage(new CastleCache().get(c, W, stickers) as unknown as CanvasImageSource, 0, 0);
+      const f = `${out}/zauber-castle-${W}-${n}.png`;
+      writeFileSync(f, cv.toBuffer('image/png'));
+      console.log(f);
+    }
+  }
 }
