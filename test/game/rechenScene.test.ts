@@ -218,3 +218,80 @@ describe('Rechenmeer scene', () => {
     expect(s.pearls).toBe(1);
   });
 });
+
+describe('Rechenmeer review fixes', () => {
+  const res = (glyphs: ScannedGlyph[], shift = { dx: 0, dy: 0 }) => ({ glyphs, newSheet: false, shift }) as unknown as Parameters<RechenScene['handleScan']>[0];
+  const snap = () => ({ canvas: createCanvas(640, 480) as unknown as AnyCanvas, detW: 640, detH: 480 });
+
+  it('a scan taken for one task is not judged against the next one', () => {
+    const s = scene();
+    const asked = s.task!;
+    s.task = { kind: 'plus20', a: 1, b: 1, op: '+', result: 2 };
+    expect(s.answer(num(asked.result === 3 ? 4 : 3), stickers(), undefined, asked)).toBe('busy');
+    expect(s.misses).toBe(0);
+    // the photo taken while the solution was shown: judged against nothing
+    const t = scene();
+    for (let i = 0; i < 3; i++) wrong(t);
+    t.beginCapture(snap());
+    run(t, 5);
+    const before = t.task;
+    t.handleScan(res(num(12)), snap());
+    run(t, 6);
+    expect(t.task).toBe(before);
+    expect(t.misses).toBe(0);
+  });
+
+  it('pending digits follow the paper when it moves', () => {
+    const s = scene();
+    s.task = { kind: 'pm100', a: 20, b: 3, op: '+', result: 23 };
+    s.handleScan(res([digit('3', 140)]), snap());
+    run(s, 6);
+    expect(s.pending?.length).toBe(1);
+    // the sheet moved 30 px down; the "2" is written left of the moved "3"
+    s.handleScan(res([digit('2', 104, { y: 130 })], { dx: 0, dy: 30 }), snap());
+    run(s, 6);
+    expect(s.misses).toBe(0);
+    expect(s.pearls).toBe(1);
+  });
+
+  it('changing the task kinds in the settings applies at once', () => {
+    const s = scene();
+    s.host.settings.math.kinds = ['mal'];
+    s.applySettings();
+    expect(s.task!.kind).toBe('mal');
+    for (let i = 0; i < 5; i++) {
+      right(s);
+      expect(s.task!.kind).toBe('mal');
+    }
+  });
+
+  it('the task reads left to right also in Arabic and Hebrew', () => {
+    const s = scene();
+    s.task = { kind: 'minus20', a: 12, b: 5, op: '−', result: 7 };
+    wrong(s);
+    expect(s.note!.text).toContain('⁦12 − 5⁩');
+    const c = createCanvas(1920, 1080);
+    const ctx = c.getContext('2d') as unknown as CanvasRenderingContext2D;
+    const dirs: string[] = [];
+    const fill = ctx.fillText.bind(ctx);
+    ctx.fillText = (text: string, x: number, y: number) => {
+      if (text.includes('12 − 5 =')) dirs.push(ctx.direction);
+      fill(text, x, y);
+    };
+    ctx.direction = 'rtl';
+    s.render(ctx);
+    expect(dirs.length).toBeGreaterThan(0);
+    for (const d of dirs) expect(d).toBe('ltr');
+  });
+
+  it('a half number is judged when Fertig is pressed again without new digits', () => {
+    const s = scene();
+    s.task = { kind: 'plus20', a: 8, b: 5, op: '+', result: 13 };
+    expect(s.answer([digit('3', 140)], stickers())).toBe('partial');
+    expect(s.note).not.toBeNull();
+    s.handleScan(res([{ ...digit('3', 140), isNew: false }]), snap());
+    run(s, 2);
+    expect(s.misses).toBe(1);
+    expect(s.pending).toBeNull();
+  });
+});

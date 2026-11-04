@@ -7,7 +7,7 @@ import { canvasFromRGBA, type AnyCanvas } from '../game/canvas.ts';
 import { makeGenome } from '../game/creatures/genome.ts';
 import { drawDolphin, drawShark, ON_SAND, SEA_ANIMALS, seaSprite, type SeaAnimal } from '../game/creatures/seaLife.ts';
 import { clamp, ease, lerp, TAU } from '../game/math.ts';
-import { combineGlyphs, readAnswer } from '../game/math/readNumber.ts';
+import { combineGlyphs, readAnswer, type Reading } from '../game/math/readNumber.ts';
 import { drawPlant, PLANT_KINDS, type Plant, type PlantKind } from '../game/math/seaPlants.ts';
 import { TaskPicker, taskText, type MathTask, type PickerSave, type TaskKind } from '../game/math/tasks.ts';
 import { behavePainted, OWN_STEERING } from '../game/paint/motion.ts';
@@ -74,6 +74,9 @@ export interface RechenSave extends HabitatSave {
 
 let numberId = -1;
 
+/** a task inside a translated sentence stays left to right, also in Arabic and Hebrew (LRI … PDI) */
+const ltr = (text: string) => `\u2066${text}\u2069`;
+
 export class RechenScene extends HabitatScene {
   /** letters do not hatch here: no practice letter, no surprise bubbles */
   protected letters = false;
@@ -100,6 +103,10 @@ export class RechenScene extends HabitatScene {
   note: { text: string; t: number; good: boolean } | null = null;
   /** the task changed this long ago (the board pops in) */
   taskT = 0;
+  /** who took the photo: only a press on "Fertig!" judges a half number on its own */
+  scanTrigger: 'manual' | 'auto' = 'manual';
+  /** the task that stood on the board when the photo was taken (undefined: no photo yet) */
+  private asked: MathTask | null | undefined = undefined;
 
   constructor(host: SceneHost, worldW: number, seed = Date.now()) {
     super(rechenmeer, host, worldW);
@@ -124,11 +131,36 @@ export class RechenScene extends HabitatScene {
     return [];
   }
 
+  /** the settings were changed: new task kinds apply at once */
+  applySettings(): void {
+    const kinds = this.taskKinds();
+    this.picker = TaskPicker.from(this.picker.export(), mulberry32(Date.now() ^ 0x3c6e), kinds);
+    if (this.task && !kinds.includes(this.task.kind)) this.nextTask();
+  }
+
+  beginCapture(snap: Snapshot): void {
+    this.asked = this.busy() ? null : this.task;
+    super.beginCapture(snap);
+  }
+
   // ---------------------------------------------------------------- answers
 
   handleScan(res: ScanResult, snap: Snapshot): void {
     const fresh = res.glyphs.filter((g) => g.isNew);
+    // judged against the task that was asked when the photo was taken
+    const asked = this.asked !== undefined ? this.asked : this.busy() ? null : this.task;
+    this.asked = undefined;
+    // the digits of a half number follow the paper when it was moved
+    const sh = res.shift;
+    if (this.pending && sh && (sh.dx || sh.dy)) this.pending = this.pending.map((g) => ({ ...g, box: { ...g.box, x: g.box.x + sh.dx, y: g.box.y + sh.dy } }));
     if (res.newSheet) this.host.toast(t('Neues Blatt erkannt!'), 'info');
+    if (!fresh.length && this.pending && this.scanTrigger === 'manual') {
+      // "Fertig!" pressed again without a new digit: the half number is the answer
+      this.fx.start(snap, res.glyphs, new Map(), this.W, () => null, () => {});
+      this.answer([], new Map(), undefined, asked);
+      this.host.progress();
+      return;
+    }
     if (!fresh.length) {
       this.fx.start(snap, res.glyphs, new Map(), this.W, () => null, () => {});
       if (res.glyphs.length) this.host.toast(t('Ich habe nichts Neues gefunden. Schreib noch etwas!'), 'info');
@@ -138,7 +170,7 @@ export class RechenScene extends HabitatScene {
     const stickers = new Map<number, AnyCanvas>();
     for (const g of res.glyphs) stickers.set(g.id, canvasFromRGBA(g.crop));
     // where the digits fly: to the new animal when the answer is right, else onto the board
-    const reading = this.task && !this.busy() ? readAnswer(fresh, this.task.result, this.pending) : null;
+    const reading = this.task && asked === this.task ? readAnswer(fresh, this.task.result, this.pending) : null;
     const isRight = reading?.kind === 'number' && reading.value === this.task!.result;
     const spot = isRight ? this.freeSpot() : null;
     const board = { x: this.W / 2, y: 150 };
@@ -152,7 +184,7 @@ export class RechenScene extends HabitatScene {
       () => {
         landed++;
         if (landed < fresh.length) return;
-        const out = this.answer(fresh, stickers, spot ?? undefined);
+        const out = this.answer(fresh, stickers, spot ?? undefined, asked);
         if (out !== 'right') this.particles.burst('puff', board.x, board.y + 40, 8, { color: 'rgba(255,255,255,0.8)', size: 22, speed: 140, max: 0.5 });
         this.host.progress();
       },
@@ -164,14 +196,22 @@ export class RechenScene extends HabitatScene {
     return !!this.visitor || !!this.reveal;
   }
 
-  /** judges the new digits of a scan; at: where a new animal or plant appears */
-  answer(fresh: ScannedGlyph[], stickers: Map<number, AnyCanvas>, at?: { x: number; y: number }): Outcome {
-    if (this.busy() || !this.task) {
-      if (fresh.length) this.say(t("Gleich geht's weiter!"), true);
+  /**
+   * judges the new digits of a scan; at: where a new animal or plant appears; asked: the task on the board when
+   * the photo was taken (a scan of an earlier task is not judged against the next one). No new digits with a
+   * half number waiting: the half number is the answer.
+   */
+  answer(fresh: ScannedGlyph[], stickers: Map<number, AnyCanvas>, at?: { x: number; y: number }, asked?: MathTask | null): Outcome {
+    if (this.busy() || !this.task || (asked !== undefined && asked !== this.task)) {
+      if (fresh.length || this.pending) this.say(t("Gleich geht's weiter!"), true);
       return 'busy';
     }
     const task = this.task;
-    const r = readAnswer(fresh, task.result, this.pending);
+    const waiting = this.pending;
+    const r: Reading =
+      !fresh.length && waiting?.length
+        ? { kind: 'number', value: Number(waiting.map((g) => g.score.char).join('')), glyphs: waiting }
+        : readAnswer(fresh, task.result, this.pending);
     if (r.kind === 'none') return 'none';
     if (r.kind === 'several') {
       this.pending = null;
@@ -185,6 +225,7 @@ export class RechenScene extends HabitatScene {
     }
     if (r.kind === 'partial') {
       this.pending = r.glyphs;
+      this.say(t('Ist das schon die ganze Zahl? Dann drück noch einmal „Fertig!“'), true);
       return 'partial';
     }
     this.pending = null;
@@ -196,7 +237,7 @@ export class RechenScene extends HabitatScene {
         this.reveal = { task, t: 0 };
         this.picker.again(task);
         this.say(t('Die Lösung ist {r}.', { r: task.result }), true);
-      } else this.say(t('Fast! Schau noch mal: {task}', { task: taskText(task) }), false);
+      } else this.say(t('Fast! Schau noch mal: {task}', { task: ltr(taskText(task)) }), false);
       return 'wrong';
     }
     // right
@@ -205,7 +246,7 @@ export class RechenScene extends HabitatScene {
     for (const d of r.glyphs) stickers.delete(d.id);
     const where = this.grow(g, sticker, at);
     this.lastTip = g.score.mirrored ? 'spiegel' : g.score.tip;
-    this.feedback(g, where, `${t('Richtig!')} ${taskText(task)} = ${task.result}`);
+    this.feedback(g, where, `${t('Richtig!')} ${ltr(`${taskText(task)} = ${task.result}`)}`);
     this.pearls++;
     if (this.pearls >= SECTION) {
       this.task = null;
@@ -369,6 +410,15 @@ export class RechenScene extends HabitatScene {
 
   /** the task board at the top, the pearls, the counting help and the messages */
   private drawBoard(ctx: CanvasRenderingContext2D): void {
+    // tasks read left to right in every language (the page is right to left in Arabic and Hebrew)
+    ctx.save();
+    ctx.direction = 'ltr';
+    this.drawTask(ctx);
+    ctx.restore();
+    this.drawNote(ctx);
+  }
+
+  private drawTask(ctx: CanvasRenderingContext2D): void {
     const cx = this.W / 2;
     const w = 520;
     const h = 130;
@@ -416,6 +466,13 @@ export class RechenScene extends HabitatScene {
     }
     // the counting help under the board, in the middle (the camera picture sits in the top right corner)
     if (task && (this.misses >= 2 || this.reveal)) drawHelp(ctx, task, cx - HELP_W / 2, y + h + 130);
+  }
+
+  /** the message under the board (in the page's own direction) */
+  private drawNote(ctx: CanvasRenderingContext2D): void {
+    const cx = this.W / 2;
+    const y = 40;
+    const h = 130;
     if (this.note) {
       const a = clamp(1 - (this.note.t - 2.8) / 0.7);
       ctx.save();

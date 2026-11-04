@@ -618,6 +618,8 @@ export class App {
       () => {
         if (this.mode.kind === 'start') this.showStart();
         if (this.mode.kind === 'paint') this.hud?.setFair(this.settings.game.fair);
+        // the Rechenmeer asks the newly chosen kinds of tasks at once
+        if (this.scene instanceof RechenScene) this.scene.applySettings();
         this.auto.setEnabled(this.autoAllowed() && this.mode.kind !== 'start');
       },
     );
@@ -1059,6 +1061,7 @@ export class App {
       snap.detW = res.frameW / res.scale;
       snap.detH = res.frameH / res.scale;
       if (opt.team) for (const g of res.glyphs) g.team = opt.team;
+      if (this.scene instanceof RechenScene) this.scene.scanTrigger = trigger;
       this.scene.handleScan(res, snap);
       const mirrored = res.glyphs.filter((g) => g.isNew && g.score.rejected).length;
       if (mirrored) {
