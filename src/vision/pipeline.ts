@@ -475,7 +475,7 @@ export function matchKnown(seg: FrameSegmentation, memory: GlyphMemory): GlyphJo
 export function analyzeJobs(jobs: GlyphJob[], opts: VisionOptions, recognizer: Recognizer): Analysis[] {
   return jobs.map((job) => {
     const f = featuresOf(job);
-    const a = recognizer.analyze(f, { target: opts.target, bonus: opts.bonus, strictness: opts.strictness, style: opts.style });
+    const a = recognizer.analyze(f, { target: opts.target, bonus: opts.bonus, strictness: opts.strictness, style: opts.style, digits: opts.digits });
     if (opts.debug) a.cnn = f.cnn;
     return a;
   });
@@ -512,11 +512,13 @@ export function finishScan(
   const fresh = analysed.map((a) => !!a);
   // stored analyses are copied: the scan-wide scoring adjusts them
   const all = glyphs.map((_, i) => analysed[i] ?? structuredClone(match.matched[i]!.known!.analysis));
-  const scores = deps.recognizer.finalize(all, { target: opts.target, strictness: opts.strictness, style: opts.style, noMirror: opts.noMirror });
+  // the Rechenmeer accepts mirrored digits (with a tip): mirror writing never makes a digit invalid there
+  const noMirror = opts.noMirror && !opts.digits;
+  const scores = deps.recognizer.finalize(all, { target: opts.target, strictness: opts.strictness, style: opts.style, noMirror, digits: opts.digits });
   // the setting may have changed since a known glyph was scored
   const final = glyphs.map((_, i) => {
     const s = fresh[i] ? scores[i] : match.matched[i]!.known!.score;
-    return { ...s, rejected: (opts.noMirror && s.mirrored) || undefined };
+    return { ...s, rejected: (noMirror && s.mirrored) || undefined };
   });
   const mem: MemGlyph[] = glyphs.map((g, i) => {
     if (!fresh[i]) return { box: g.box, thumb: g.thumb, dots: g.dots };

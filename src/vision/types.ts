@@ -65,6 +65,8 @@ export interface VisionOptions {
   style: 'beide' | TemplateStyle;
   /** mirror writing does not count as a letter (the glyph comes back with score.rejected) */
   noMirror?: boolean;
+  /** Rechenmeer: only digits are read, and mirrored digits are accepted (with a tip) */
+  digits?: boolean;
   /** duel mode uses stricter duplicate detection (physical slips) */
   dedup: 'sheet' | 'slips';
   debug: boolean;

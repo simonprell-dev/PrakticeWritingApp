@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PEN_PRESETS } from '../../src/vision/color.ts';
 import { GlyphMemory } from '../../src/vision/dedup.ts';
 import { runScan } from '../../src/vision/pipeline.ts';
+import { UNSURE_L } from '../../src/game/math/readNumber.ts';
 import type { TeamCalib, VisionOptions } from '../../src/vision/types.ts';
 import { loadBank, loadRecognizer } from '../helpers/load.ts';
 import { makePage, schoolWord, type GlyphSpec, type PageSpec, type SchoolLines } from '../helpers/synth.ts';
@@ -348,5 +349,37 @@ describe('pipeline on synthetic pages', () => {
     const glyphs = row('xyz789', 330, {}, 220, 150);
     const res = scan({ width: 1280, height: 720, glyphs, shadow: 1, noise: 6, table: 60 });
     expect(res.glyphs.length).toBe(6);
+  });
+});
+
+describe('digits mode', () => {
+  it('digits mode reads 0–9', () => {
+    const res = scan({ width: 1600, height: 500, glyphs: row('0123456789', 250) }, { digits: true });
+    expect(res.glyphs.map((g) => g.score.char).join('')).toBe('0123456789');
+    // clean digits are never "unsure" (UNSURE_L in readNumber.ts), also the 9 that looks a bit like g
+    for (const g of res.glyphs) expect(g.score.parts.L).toBeGreaterThanOrEqual(UNSURE_L);
+  });
+
+  it('digits mode never returns a letter; O is 0, l is 1', () => {
+    const res = scan({ width: 1000, height: 500, glyphs: row('OlSZB', 250) }, { digits: true });
+    const chars = res.glyphs.map((g) => g.score.char);
+    expect(chars.length).toBe(5);
+    for (const c of chars) expect(c).toMatch(/^[0-9]$/);
+    expect(chars[0]).toBe('0');
+    expect(chars[1]).toBe('1');
+  });
+
+  it('a mirrored 3 is read as 3, mirrored, and not rejected even with noMirror', () => {
+    const res = scan({ width: 600, height: 500, glyphs: row('3', 250, { mirror: true }) }, { digits: true, noMirror: true });
+    expect(res.glyphs.length).toBe(1);
+    expect(res.glyphs[0].score.char).toBe('3');
+    expect(res.glyphs[0].score.mirrored).toBe(true);
+    expect(res.glyphs[0].score.rejected).toBeFalsy();
+  });
+
+  it('without digits nothing changes', () => {
+    const res = scan({ width: 1000, height: 500, glyphs: row('OlSZB', 250) });
+    const chars = res.glyphs.map((g) => g.score.char);
+    expect(chars.some((c) => /[A-Za-z]/.test(c))).toBe(true);
   });
 });

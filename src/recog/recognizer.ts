@@ -31,6 +31,18 @@ export interface ScoreOptions {
   style: 'beide' | TemplateStyle;
   /** mirror writing is not a letter (setting): the glyph is marked as rejected */
   noMirror?: boolean;
+  /** Rechenmeer: only digits are read (O is 0, l is 1, a letter becomes the most probable digit) */
+  digits?: boolean;
+}
+
+const isDigitChar = (c: string) => c >= '0' && c <= '9';
+/** the digit of a character group ('0Oo' → '0'), or undefined */
+const digitOf = (g: string) => [...g].find(isDigitChar);
+/** digits mode: how clearly this is the digit it is, among the digits only (a clean 9 also looks a bit like g) */
+function digitShare(gp: Map<string, number>, group: string): number {
+  let sum = 0;
+  for (const [g, p] of gp) if (digitOf(g)) sum += p;
+  return sum > 0 ? (gp.get(group) ?? 0) / sum : 0;
 }
 
 /** Characters whose mirror image is the same character, so a mirror check makes no sense. */
@@ -187,7 +199,8 @@ export class Recognizer {
     } else {
       // free writing: candidates from the CNN (or a coarse template ranking)
       let cands: string[];
-      if (gp) cands = [...gp.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([g]) => g);
+      if (gp) cands = [...gp.entries()].filter(([g]) => !opts.digits || digitOf(g)).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([g]) => g);
+      else if (opts.digits) cands = [...new Set(this.coarseRank(f.skel, opts.style).map(this.groupOf))].filter((g) => digitOf(g)).slice(0, 8);
       else cands = [...new Set(this.coarseRank(f.skel, opts.style).slice(0, 8).map(this.groupOf))];
       let bestScore = -Infinity;
       let bestGroup = cands[0];
@@ -205,7 +218,7 @@ export class Recognizer {
         }
       }
       match = bestM;
-      if (gp) L = gp.get(bestGroup) ?? 0;
+      if (gp) L = opts.digits ? digitShare(gp, bestGroup) : (gp.get(bestGroup) ?? 0);
       else {
         ds.sort((a, b) => a - b);
         margin = ds.length > 1 ? (ds[1] - ds[0]) / Math.max(0.5, ds[0]) : 0.3;
@@ -222,20 +235,22 @@ export class Recognizer {
           }
         }
       } else if (match) ch = match.template.char;
+      if (opts.digits) ch = digitOf(bestGroup) ?? ch;
       scoredBase = ch;
       charOut = ch;
-      if (this.latin && f.dots >= 2 && UMLAUTS[ch]) charOut = UMLAUTS[ch];
-      if (this.latin && f.dots >= 2 && (ch === 'o' || ch === '0' || ch === 'O')) charOut = 'ö';
-      if (this.latin && f.dots === 1 && (ch === 'l' || ch === 'I' || ch === '1')) charOut = 'i';
+      if (this.latin && !opts.digits && f.dots >= 2 && UMLAUTS[ch]) charOut = UMLAUTS[ch];
+      if (this.latin && !opts.digits && f.dots >= 2 && (ch === 'o' || ch === '0' || ch === 'O')) charOut = 'ö';
+      if (this.latin && !opts.digits && f.dots === 1 && (ch === 'l' || ch === 'I' || ch === '1')) charOut = 'i';
       // mirror writing: the mirror image is a clearly better character than the glyph itself (CNN and
       // template together, as above) and its template fits clearly closer. The CNN alone is not enough:
       // it also reads a mirrored S as a 2 and a mirrored 3 as an E. A mirrored b is a d, a real letter:
       // b/d and p/q stay what they look like.
       if (this.latin && gp && f.cnnMirror && this.net) {
         const pm = this.net.probs(f.cnnMirror);
-        const [mg, mp] = [...this.groupProbs(pm).entries()].sort((a, b) => b[1] - a[1])[0];
+        const [mg, mp] = [...this.groupProbs(pm).entries()].filter(([g]) => !opts.digits || digitOf(g)).sort((a, b) => b[1] - a[1])[0];
         let mch = mg[0];
         for (const c of mg) if ((pm[this.classes.indexOf(c)] ?? 0) > (pm[this.classes.indexOf(mch)] ?? 0)) mch = c;
+        if (opts.digits) mch = digitOf(mg) ?? mch;
         const twin = MIRROR_TWIN[mch];
         if (mp > 0.5 && mg !== bestGroup && !SYMMETRIC.has(mch) && !(twin && bestGroup.includes(twin))) {
           const mm = this.bestMatch(f.skel, mg, opts.style, true);
@@ -246,7 +261,7 @@ export class Recognizer {
             mirrored = true;
             scoredBase = mch;
             charOut = mch;
-            L = mp;
+            L = opts.digits ? digitShare(this.groupProbs(pm), mg) : mp;
             match = mm;
           }
         }
@@ -345,7 +360,7 @@ export class Recognizer {
     // free writing: c/C, o/O, s/S, u/U ... are told apart by their height, measured in x-heights
     // of the unambiguous letters of the same scan (font metrics of the templates)
     // with school lines the band a letter reaches decides: c/C, o/O, s/S ... (also for a single letter)
-    if (this.latin && !opts.target) {
+    if (this.latin && !opts.target && !opts.digits) {
       for (const a of an) {
         const pair = CASE_PAIRS.get(a.char) ?? UMLAUT_CASE[a.char];
         if (!pair || !a.zone) continue;
@@ -353,7 +368,7 @@ export class Recognizer {
         a.scoredAs = a.char;
       }
     }
-    if (this.latin && !opts.target && an.length >= 2) {
+    if (this.latin && !opts.target && !opts.digits && an.length >= 2) {
       const units = (ch: string) => {
         const t = this.bank.forChar(this.baseOf(ch))[0];
         return t ? Math.max(0.6, t.top + Math.max(0, t.bottom)) : 1;
