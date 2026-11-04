@@ -80,7 +80,7 @@ export interface Bounds {
 }
 
 export interface HabitatDef {
-  id: 'meer' | 'weltraum' | 'savanne' | 'zauberland';
+  id: 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer';
   archetype: Archetype;
   /** name of one creature (tk-marked, translated where shown) */
   word: [string, string];

@@ -4,6 +4,7 @@ import { detectLocale } from '../i18n/detect.ts';
 import { t, tk } from '../i18n/i18n.ts';
 import { isScriptId, scriptOf, type ScriptId } from '../recog/scripts.ts';
 import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
+import type { TaskKind } from '../game/math/tasks.ts';
 
 export type HabitatId = 'meer' | 'weltraum' | 'savanne' | 'zauberland';
 
@@ -108,6 +109,8 @@ export interface Settings {
     /** minutes, 0 = no limit */
     timeLimit: number;
   };
+  /** Rechenmeer: the kinds of tasks that are asked (at least one) */
+  math: { kinds: TaskKind[] };
   firstRunDone: boolean;
 }
 
@@ -145,6 +148,7 @@ export const DEFAULTS: Settings = {
     goal: 'mittel',
     timeLimit: 0,
   },
+  math: { kinds: ['plus20', 'minus20'] },
   firstRunDone: false,
 };
 
