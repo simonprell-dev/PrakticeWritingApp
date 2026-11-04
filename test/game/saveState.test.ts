@@ -13,7 +13,8 @@ import { PaintScene, type PaintSave } from '../../src/scenes/paintScene.ts';
 import { restoredId } from '../../src/scenes/saved.ts';
 import type { SceneHost, Snapshot } from '../../src/scenes/scene.ts';
 import type { CardHit } from '../../src/vision/cards.ts';
-import type { RGBAImage } from '../../src/vision/types.ts';
+import type { RGBAImage, ScannedGlyph } from '../../src/vision/types.ts';
+import { ZauberScene } from '../../src/scenes/zauberland.ts';
 import { colourful, drawLook } from '../helpers/cardScene.ts';
 
 const step = (sim: { step(dt: number): void; drain(): unknown[] }, seconds: number) => {
@@ -199,5 +200,70 @@ describe('saved Mal-Aquarium', () => {
     expect(scan([hit('hai', card('hai'), t(1))])).toBe('1 kenne ich schon');
     // a clownfish with the thumbnail of the known carp is a new animal
     expect(scan([hit('clownfisch', card('clownfisch', fills), t(2))])).toBe('Ein neuer Clownfisch!');
+  });
+});
+
+describe('saved Zauberland', () => {
+  beforeEach(() => {
+    vi.stubGlobal('createImageBitmap', async (blob: Blob) => Object.assign(await loadImage(Buffer.from(await blob.arrayBuffer())), { close() {} }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  let gid = 1;
+  const zglyph = (score = 70): ScannedGlyph => {
+    const id = gid++;
+    const data = new Uint8ClampedArray(16 * 16 * 4).map((_, i) => (i % 4 === 3 ? 255 : (i * 7 + id * 13) & 255));
+    return {
+      id,
+      box: { x: 100, y: 100, w: 40, h: 40 },
+      regionId: 0,
+      dots: 0,
+      crop: { width: 16, height: 16, data },
+      score: { score, tier: 'schoen', parts: { L: 1, T: 1, S: 1, P: 1 }, char: 'a', scoredAs: 'a', tip: 'super' },
+      isNew: true,
+    } as ScannedGlyph;
+  };
+  const zhost = { settings: DEFAULTS, toast() {}, showCard() {}, progress() {} } as unknown as SceneHost;
+  const st = () => createCanvas(16, 16) as unknown as AnyCanvas;
+
+  it('a Zauberland game comes back with its castle, rooms and riders on the meadow', async () => {
+    const s = new ZauberScene(zhost, 1920, 3);
+    for (let i = 0; i < 3; i++) s.add('part', zglyph(), st());
+    const p1 = s.add('princess', zglyph(), st())!;
+    const p2 = s.add('princess', zglyph(), st())!;
+    const us = [0, 1, 2].map(() => s.add('fable', zglyph(), st())!);
+    // mid-action: one looks out of her window, one rides, a unicorn is up in the sky
+    p1.state = 'window';
+    s.rider.set(p2.id, us[0].id);
+    p2.state = 'riding';
+    us[1].state = 'herdFly';
+    us[1].y = 200;
+    const rooms = new Map([p1, p2].map((p) => [restoredId(p.glyph!.id), s.castle.roomOf(p.id)]));
+    const slots = s.castle.parts.map((p) => p.slot);
+
+    const saved = await s.saveState();
+    expect(saved!.summary).toBe('8 Wesen');
+    const again = new ZauberScene(zhost, 1600, 4);
+    await again.restoreState(JSON.parse(JSON.stringify(saved!.state)));
+    expect(again.castle.parts.map((p) => p.slot)).toEqual(slots);
+    expect(again.castle.parts.filter((p) => p.glyphId !== null).map((p) => p.glyphId! > 1e9)).toEqual([true, true, true]);
+    for (const c of again.creatures) {
+      if (again.kindOf(c) === 'princess') expect(again.castle.roomOf(c.id)).toBe(rooms.get(c.glyph!.id));
+      const B = again.bounds;
+      expect(c.x).toBeGreaterThanOrEqual(B.x0);
+      expect(c.x).toBeLessThanOrEqual(B.x1);
+      expect(c.y).toBeGreaterThanOrEqual(B.y0);
+      expect(c.y).toBeLessThanOrEqual(B.y1);
+      expect(c.state).toBe('idle');
+    }
+    expect(again.creatures.map((c) => again.kindOf(c))).toEqual(['princess', 'princess', 'fable', 'fable', 'fable']);
+    expect(again.herd.phase).toBe('idle');
+    expect(again.rider.size).toBe(0);
+  });
+
+  it('a castle alone is worth keeping', async () => {
+    const s = new ZauberScene(zhost, 1920, 5);
+    s.add('part', zglyph(), st());
+    expect(await s.saveState()).not.toBeNull();
   });
 });

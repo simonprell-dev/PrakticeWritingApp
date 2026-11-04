@@ -12,8 +12,9 @@ import { princessBust, princessSprite } from '../game/creatures/princess.ts';
 import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
 import { clamp, ease, hsl, lerp, TAU } from '../game/math.ts';
 import { hashBytes, mulberry32 } from '../game/rng.ts';
-import type { ScannedGlyph } from '../vision/types.ts';
-import { HabitatScene, type Creature, type HabitatDef } from './habitat.ts';
+import type { ScannedGlyph, Tier } from '../vision/types.ts';
+import { HabitatScene, type Creature, type HabitatDef, type HabitatSave } from './habitat.ts';
+import { loadGlyph, saveGlyph, type SavedGlyph, type SceneSave } from './saved.ts';
 import type { SceneHost, Snapshot } from './scene.ts';
 import { t, tk } from '../i18n/i18n.ts';
 
@@ -730,4 +731,87 @@ export class ZauberScene extends HabitatScene {
   count(): number {
     return super.count() + this.castle.parts.filter((p) => p.glyphId !== null).length;
   }
+
+  async saveState(): Promise<SceneSave | null> {
+    const living = this.creatures.filter((c) => !c.leaving && c.glyph);
+    const away = this.album.length + this.awayBefore;
+    const lettered = this.castle.parts.filter((p) => p.glyphId !== null);
+    if (!living.length && !away && !lettered.length) return null;
+    const n = this.count();
+    const summary = t(this.def.count[n === 1 ? 0 : 1], { n });
+    const creatures = await Promise.all(
+      living.map(async (c) => ({
+        glyph: await saveGlyph(c.glyph!),
+        x: Math.round(c.x),
+        y: Math.round(c.y),
+        facing: c.facing,
+        kind: this.zs.get(c.id)?.kind ?? 'fable',
+        room: this.castle.roomOf(c.id),
+      })),
+    );
+    const parts = await Promise.all(
+      this.castle.parts.map(async (p) => {
+        const pg = p.glyphId !== null ? this.partGlyphs.get(p.glyphId) : undefined;
+        return { slot: p.slot, q: p.q, tier: p.tier, glyph: pg ? await saveGlyph(pg.glyph) : null };
+      }),
+    );
+    const state: ZauberSave = {
+      creatures,
+      parts,
+      away,
+      practiceIndex: this.practiceIndex,
+      practiceDone: this.practiceDone,
+      goalReached: this.goalReached,
+      written: this.written,
+      wishesFreed: this.wishesFreed,
+    };
+    return { state, summary };
+  }
+
+  /** everybody comes back standing on the meadow (nobody inside, riding or flying); princesses keep their rooms */
+  async restoreState(raw: unknown): Promise<void> {
+    const s = raw as ZauberSave;
+    const castle = new Castle();
+    castle.parts = [];
+    for (const p of s.parts ?? []) {
+      let glyphId: number | null = null;
+      if (p.glyph) {
+        const { glyph, sticker } = await loadGlyph(p.glyph);
+        glyphId = glyph.id;
+        this.stickers.set(glyph.id, sticker);
+        this.partGlyphs.set(glyph.id, { glyph, sticker });
+      }
+      castle.add(p.slot, { q: p.q, tier: p.tier, glyphId });
+    }
+    if (!castle.built(0)) castle.parts = new Castle().parts;
+    this.castle = castle;
+    const loaded = await Promise.all(s.creatures.map((c) => loadGlyph(c.glyph)));
+    const princesses: { c: Creature; room: number | null }[] = [];
+    s.creatures.forEach((sc, i) => {
+      const c = this.add(sc.kind === 'princess' ? 'princess' : 'fable', loaded[i].glyph, loaded[i].sticker);
+      if (!c) return;
+      this.settle(c, sc);
+      if (this.zs.get(c.id)?.kind === 'princess') princesses.push({ c, room: sc.room });
+    });
+    // rooms only once everybody is back, so nobody takes another princess's room on the way
+    for (const { c } of princesses) castle.freeRoom(c.id);
+    const later: Creature[] = [];
+    for (const { c, room } of princesses) {
+      if (room !== null && castle.built(room) && SLOTS[room].kind === 'room' && !castle.owner.has(room)) castle.owner.set(room, c.id);
+      else later.push(c);
+    }
+    for (const c of later) castle.assignRoom(c.id);
+    this.pops = [];
+    this.awayBefore = s.away;
+    this.practiceIndex = s.practiceIndex;
+    this.practiceDone = s.practiceDone;
+    this.goalReached = s.goalReached;
+    this.written = s.written;
+    this.wishesFreed = s.wishesFreed;
+  }
+}
+
+export interface ZauberSave extends Omit<HabitatSave, 'creatures'> {
+  creatures: { glyph: SavedGlyph; x: number; y: number; facing: 1 | -1; kind: 'fable' | 'princess'; room: number | null }[];
+  parts: { slot: number; q: number; tier: Tier; glyph: SavedGlyph | null }[];
 }
