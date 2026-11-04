@@ -3,7 +3,7 @@ import type { Tier } from '../../vision/types.ts';
 import { clamp, lerp } from '../math.ts';
 import { mulberry32, pick, range, type Rand } from '../rng.ts';
 
-export type Archetype = 'fish' | 'alien' | 'animal' | 'fighter';
+export type Archetype = 'fish' | 'alien' | 'animal' | 'fighter' | 'fable';
 export type Pattern = 'none' | 'stripes' | 'dots' | 'scales' | 'spots';
 export type EyeStyle = 'cute' | 'googly' | 'sleepy';
 
@@ -57,6 +57,11 @@ export function makeGenome(score: number, tier: Tier, seed: number, archetype: A
   } else if (archetype === 'animal') {
     variant = Math.floor(r() * 5); // lion, elephant, giraffe, zebra, hippo
     hue = [38, 210, 44, 0, 285][variant] + range(r, -6, 6);
+  } else if (archetype === 'fable') {
+    // Zauberland: 0 unicorn (most), 1 pegasus, 2 lucky dragon; soft pastel colours
+    const v = r();
+    variant = v < 0.7 ? 0 : v < 0.85 ? 1 : 2;
+    hue = pick(r, [300, 330, 270, 200, 180, 45, 0, 150]) + range(r, -8, 8);
   } else {
     hue = teamHue ?? 0;
     variant = Math.floor(r() * 3);
@@ -79,7 +84,7 @@ export function makeGenome(score: number, tier: Tier, seed: number, archetype: A
     hue,
     hue2,
     sat: archetype === 'animal' && variant === 3 ? 0 : sat,
-    light: archetype === 'animal' && variant === 3 ? 0.9 : range(r, 0.56, 0.64),
+    light: archetype === 'animal' && variant === 3 ? 0.9 : range(r, 0.56, 0.64) + (archetype === 'fable' ? 0.14 : 0),
     wobble,
     crumple,
     asym,
