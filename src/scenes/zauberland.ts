@@ -148,6 +148,8 @@ export function rollKind(r: number, castle: Castle): ZKind {
 
 const FABLE_NAMES = [tk('Einhorn'), tk('Pegasus'), tk('Glücksdrache')];
 const POP_TIME = 0.6;
+/** seconds a herd member glides from where it stands onto the bow */
+const FLY_BLEND = 0.9;
 
 interface ZState {
   kind: 'fable' | 'princess';
@@ -180,6 +182,8 @@ export class ZauberScene extends HabitatScene {
   private cache = new CastleCache();
   private gateOpen = 0;
   private thirdAt: number | null = null;
+  /** where each herd member stood when the flight started (it glides onto the bow from there) */
+  private flyFrom = new Map<number, { x: number; y: number }>();
   private rand: () => number;
 
   constructor(host: SceneHost, worldW: number, seed = Date.now()) {
@@ -202,7 +206,7 @@ export class ZauberScene extends HabitatScene {
     return this.zs.get(c.id)?.kind;
   }
 
-  private roll(): ZKind {
+  protected roll(): ZKind {
     return rollKind(this.rand(), this.castle);
   }
 
@@ -220,6 +224,13 @@ export class ZauberScene extends HabitatScene {
     this.pending.delete(g.id);
     if (wish && kind === 'part') kind = 'fable';
     return this.add(kind, g, sticker);
+  }
+
+  protected hatchedAt(g: ScannedGlyph): { x: number; y: number; r: number } | null {
+    const part = this.castle.parts.find((p) => p.glyphId === g.id);
+    if (!part) return null;
+    const r = slotRect(this.layout, SLOTS[part.slot]);
+    return { x: r.x + r.w / 2, y: r.y + r.h / 2, r: r.h / 2 };
   }
 
   addCreature(g: ScannedGlyph, sticker: AnyCanvas): Creature {
@@ -328,13 +339,17 @@ export class ZauberScene extends HabitatScene {
     if (ready.length < MIN_HERD) this.thirdAt = null;
     else if (this.thirdAt === null) this.thirdAt = this.t;
     const was = this.herd.phase;
+    const before = new Map(this.creatures.map((c) => [c.id, { x: c.x, y: c.y }]));
     this.herd.update(
       dt,
       ready.map((c) => c.id),
       this.t,
       this.thirdAt,
     );
-    if (was !== 'fly' && this.herd.phase === 'fly') sfx.sparkle();
+    if (was !== 'fly' && this.herd.phase === 'fly') {
+      sfx.sparkle();
+      this.flyFrom = new Map(this.herd.members.map((id) => [id, before.get(id) ?? { x: 0, y: 0 }]));
+    }
     // after the herd moved on: flyers sit on the bow, riders on their mounts (no frame of lag)
     if (this.herd.phase === 'fly')
       this.herd.members.forEach((id, k) => {
@@ -388,7 +403,9 @@ export class ZauberScene extends HabitatScene {
     const door = { x: doorOf(this.layout).x, y: B.y0 };
     if (this.rider.has(c.id)) {
       const mount = this.byId(this.rider.get(c.id));
-      if (!mount || mount.leaving || z.wantLeave || c.stateT > z.dur) return this.dismount(c);
+      // never get down in the air: while the herd gathers and flies she stays on
+      const aloft = !!mount && this.herd.members.includes(mount.id) && (this.herd.phase === 'gather' || this.herd.phase === 'fly');
+      if (!mount || mount.leaving || (!aloft && (z.wantLeave || c.stateT > z.dur))) return this.dismount(c);
       c.state = 'riding';
       c.x = mount.x;
       c.y = mount.y;
@@ -576,7 +593,9 @@ export class ZauberScene extends HabitatScene {
       c.state = 'herdGather';
       const gx = h.gatherPoint.x + ((k % 4) - 1.5) * 80;
       const gy = h.gatherPoint.y + Math.floor(k / 4) * 40 - 20;
-      if (this.walk(c, gx, gy, 120, dt) < 25) {
+      // far ones hurry, so everybody is there before the herd takes off
+      const far = Math.hypot(gx - c.x, gy - c.y);
+      if (this.walk(c, gx, gy, 120 + far * 0.35, dt) < 25) {
         h.arrived(c.id);
         c.facing = h.gatherPoint.x < (this.bounds.x0 + this.bounds.x1) / 2 ? 1 : -1;
         c.lift = Math.abs(Math.sin(c.age * 5)) * 8;
@@ -584,8 +603,10 @@ export class ZauberScene extends HabitatScene {
     } else if (h.phase === 'fly' && h.arc) {
       c.state = 'herdFly';
       const p = arcPoint(h.arc, h.memberU(k));
-      c.x = p.x;
-      c.y = p.y;
+      const from = this.flyFrom.get(c.id);
+      const blend = from ? ease.inOutCubic(clamp(h.t / FLY_BLEND)) : 1;
+      c.x = from ? lerp(from.x, p.x, blend) : p.x;
+      c.y = from ? lerp(from.y, p.y, blend) : p.y;
       c.lift = 0;
       c.facing = h.arc.x1 >= h.arc.x0 ? 1 : -1;
       c.rot = -p.angle * 0.35 * c.facing;

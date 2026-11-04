@@ -142,7 +142,8 @@ describe('Zauberland scene', () => {
     const us = [0, 1, 2].map(() => add(s, 'fable')!);
     let flew = false;
     run(s, 90, () => {
-      if (s.herd.phase === 'fly' && s.herd.arc) {
+      // after the first 0.9 s, in which they glide from where they stood onto the bow
+      if (s.herd.phase === 'fly' && s.herd.arc && s.herd.t > 0.9) {
         flew = true;
         expect(s.herd.rainbow?.arc).toBe(s.herd.arc);
         us.forEach((u) => {
@@ -164,5 +165,65 @@ describe('Zauberland scene', () => {
     // the castle is full after 16 parts; the last letters hatch as fable creatures instead
     expect(s.creatures.filter((c) => !c.leaving).length).toBe(2);
     expect(s.castle.parts.filter((p) => p.glyphId !== null).length).toBe(16);
+  });
+});
+
+describe('Zauberland review fixes', () => {
+  it('a princess riding in the herd stays on her mount through the whole flight', () => {
+    const s = scene();
+    [0, 1, 2].forEach(() => add(s, 'fable'));
+    const p = add(s, 'princess')!;
+    for (let i = 0; i < 30 * 100 && s.herd.phase !== 'gather'; i++) s.update(1 / 30);
+    expect(s.herd.phase).toBe('gather');
+    const m = s.herd.members[0];
+    s.rider.set(p.id, m);
+    p.state = 'riding';
+    p.stateT = 0;
+    let flew = false;
+    for (let i = 0; i < 30 * 20 && s.herd.phase !== 'land'; i++) {
+      s.update(1 / 30);
+      if (s.herd.phase === 'fly') flew = true;
+      expect(s.rider.get(p.id)).toBe(m);
+    }
+    expect(flew).toBe(true);
+  });
+
+  it('the herd does not jump when the flight starts', () => {
+    const s = scene();
+    const us = [0, 1, 2, 3].map(() => add(s, 'fable')!);
+    for (let i = 0; i < 30 * 100 && s.herd.phase !== 'fly'; i++) {
+      const before = us.map((u) => [u.x, u.y]);
+      s.update(1 / 30);
+      if ((s.herd.phase as string) === 'fly') {
+        us.forEach((u, k) => expect(Math.hypot(u.x - before[k][0], u.y - before[k][1])).toBeLessThan(30));
+      }
+    }
+    expect(s.herd.phase).toBe('fly');
+    for (let i = 0; i < 30 * 2; i++) {
+      const before = us.map((u) => [u.x, u.y]);
+      s.update(1 / 30);
+      us.forEach((u, k) => expect(Math.hypot(u.x - before[k][0], u.y - before[k][1])).toBeLessThan(40));
+    }
+  });
+
+  it('a letter that becomes a castle part still shows its stars and rating', () => {
+    class PartsOnly extends ZauberScene {
+      protected roll(): ZKind {
+        return 'part';
+      }
+    }
+    const settings = structuredClone(DEFAULTS);
+    const host = { settings, toast() {}, showCard() {}, progress() {} } as unknown as SceneHost;
+    const s = new PartsOnly(host, 1920, 1);
+    const snap = { canvas: createCanvas(640, 480) as unknown as AnyCanvas, detW: 640, detH: 480 };
+    const g = glyph(80);
+    s.handleScan({ glyphs: [g], newSheet: false } as unknown as Parameters<ZauberScene['handleScan']>[0], snap);
+    let stars = false;
+    for (let i = 0; i < 30 * 6 && !stars; i++) {
+      s.update(1 / 30);
+      stars = s.particles.list.some((q) => q.kind === 'text' && q.text?.includes('★'));
+    }
+    expect(s.castle.parts.some((p) => p.glyphId === g.id)).toBe(true);
+    expect(stars).toBe(true);
   });
 });

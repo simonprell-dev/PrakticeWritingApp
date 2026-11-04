@@ -243,20 +243,26 @@ export class HabitatScene implements Scene {
         // only letters that really are the target count towards the practice goal
         if (target && g.score.scoredAs === target && !g.score.looksLike && g.score.tip !== 'spiegel') this.practiceDone++;
         sfx.hatch(g.score.score);
-        if (!c) {
-          // the letter became something that is not a creature (a castle part in the Zauberland)
+        // where the feedback appears: above the new creature, or (Zauberland) above the castle part it became
+        const at = c ? { x: c.x, y: c.y, r: c.sprite.radius } : this.hatchedAt(g);
+        if (!at) {
           this.host.progress();
           return;
         }
-        this.particles.burst('puff', c.x, c.y, 10, { color: 'rgba(255,255,255,0.8)', size: 26, speed: 160, max: 0.6 });
-        if (g.score.score >= 70) this.particles.burst('spark', c.x, c.y, 10, { color: '#fff6a8', size: 14, speed: 260, max: 0.9 });
+        /** a speech bubble on a creature; a floating text where there is none */
+        const say = (text: string, good: boolean) => {
+          if (c) c.bubble = { text, t: 0, good };
+          else this.particles.add({ kind: 'text', x: at.x, y: at.y - at.r - 110, vy: -30, max: 3, size: 28, color: good ? '#ffffff' : '#fff1c4', text });
+        };
+        this.particles.burst('puff', at.x, at.y, 10, { color: 'rgba(255,255,255,0.8)', size: 26, speed: 160, max: 0.6 });
+        if (g.score.score >= 70) this.particles.burst('spark', at.x, at.y, 10, { color: '#fff6a8', size: 14, speed: 260, max: 0.9 });
         const stars = '★'.repeat(starCount(g.score.score)) + '☆'.repeat(5 - starCount(g.score.score));
-        this.particles.add({ kind: 'text', x: c.x, y: c.y - c.sprite.radius - 30, vy: -40, max: 1.8, size: 34, color: '#ffd84a', text: stars });
+        this.particles.add({ kind: 'text', x: at.x, y: at.y - at.r - 30, vy: -40, max: 1.8, size: 34, color: '#ffd84a', text: stars });
         if (g === best || fresh.length === 1) {
           this.particles.add({
             kind: 'text',
-            x: c.x,
-            y: c.y - c.sprite.radius - 70,
+            x: at.x,
+            y: at.y - at.r - 70,
             vy: -40,
             max: 1.8,
             size: 30,
@@ -266,13 +272,17 @@ export class HabitatScene implements Scene {
         }
         if (g === best && fresh.length > 1) {
           sfx.fanfare();
-          c.bubble = { text: t('Ich bin am schönsten!'), t: 0, good: true };
+          say(t('Ich bin am schönsten!'), true);
         }
         if (target && g === worst) {
           const tipText = g.score.tip === 'anderes' && g.score.looksLike ? t('Ich sehe aus wie {c}!', { c: withArticle(g.score.looksLike) }) : t(TIP_TEXT[g.score.tip]);
-          c.bubble = { text: tipText, t: 0, good: g.score.tip === 'super' };
+          say(tipText, g.score.tip === 'super');
         } else if (fresh.length === 1) {
-          c.bubble = { text: t(TIP_TEXT[g.score.tip]), t: 0, good: g.score.score >= 70 };
+          say(t(TIP_TEXT[g.score.tip]), g.score.score >= 70);
+        }
+        if (!c) {
+          this.host.progress();
+          return;
         }
         if (g === wishGlyph) this.popWish(c);
         this.host.progress();
@@ -290,6 +300,11 @@ export class HabitatScene implements Scene {
     const B = this.bounds;
     const fx = g.box.x / Math.max(1, snap.detW);
     return { x: lerp(B.x0 + 80, B.x1 - 80, fx), y: lerp(B.y0 + 40, B.y1 - 40, Math.random()) };
+  }
+
+  /** where the stars and tips of a letter that hatched no creature appear (null: nowhere) */
+  protected hatchedAt(_g: ScannedGlyph): { x: number; y: number; r: number } | null {
+    return null;
   }
 
   /** a letter has arrived: the creature that hatches from it, or null when it became something else */
