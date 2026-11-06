@@ -2,6 +2,7 @@
 import { Engine } from '../recog/engine.ts';
 import { TIER_LABEL } from '../recog/score.ts';
 import type { RGBAImage, ScanResult, VisionOptions } from '../vision/types.ts';
+import { setupMarkLab } from './markLab.ts';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const engine = new Engine();
@@ -191,6 +192,8 @@ $('files').addEventListener('change', async (e) => {
   }
   (list.querySelector('img') as HTMLImageElement | null)?.click();
 });
+
+setupMarkLab(engine, opts, ready);
 
 $('cam').addEventListener('click', async () => {
   const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1920 }, height: { ideal: 1080 } } });

@@ -74,6 +74,77 @@
         color: #776c90;
         font-size: 12px;
       }
+      #marks {
+        margin: 8px 16px;
+        padding: 10px;
+        border: 1px solid #8885;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      #marks .bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin: 6px 0;
+      }
+      #mark-view-box {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+        line-height: 0;
+      }
+      #mark-video {
+        max-width: min(100%, 720px);
+        background: #222;
+        min-width: 320px;
+        min-height: 180px;
+      }
+      #mark-frame {
+        position: absolute;
+        outline: 2px solid #e8772e;
+        pointer-events: none;
+      }
+      #mark-table table {
+        border-collapse: collapse;
+        margin-top: 6px;
+      }
+      #mark-table td,
+      #mark-table th {
+        padding: 2px 8px;
+        text-align: left;
+      }
+      #mark-table tr.ok td {
+        color: #1b7f3b;
+      }
+      #mark-table tr.bad td {
+        color: #b3261e;
+      }
+      #mark-sheets {
+        display: none;
+      }
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 0;
+        }
+        body > *:not(#mark-sheets) {
+          display: none !important;
+        }
+        body {
+          margin: 0;
+          background: #fff;
+        }
+        #mark-sheets {
+          display: block;
+        }
+        #mark-sheets svg {
+          display: block;
+          width: 210mm;
+          height: 296.5mm;
+          break-after: page;
+        }
+      }
     </style>
   </head>
   <body>
@@ -91,10 +162,31 @@
       <span id="status"></span>
     </header>
     <p style="margin:6px 16px;font-size:12px"><a href="/impressum">Impressum</a> · <a href="/datenschutz">Datenschutz</a> · <a href="/lizenzen">Lizenzen</a> – Fotos werden nur in diesem Browser ausgewertet.</p>
+    <section id="marks">
+      <strong>Testblatt für die Vordrucke</strong>
+      <div class="bar">
+        <button id="mark-print">Testblatt drucken</button>
+        <button id="mark-cam">Kamera an</button>
+        <select id="mark-cams"><option value="">Kamera wählen</option></select>
+      </div>
+      <div id="mark-view-box"><video id="mark-video" muted playsinline></video><div id="mark-frame"></div></div>
+      <p class="muted">Das Feld so halten, dass es den orangen Rahmen ausfüllt, ohne die Beschriftung darüber.</p>
+      <div class="bar">
+        <label>Feld <select id="mark-field"></select></label>
+        <label>Quelle <select id="mark-source"><option value="druck">Ausdruck</option><option value="kopie">Kopie</option></select></label>
+        <label>Abstand <select id="mark-view"><option value="nah">nah</option><option value="ganz">ganzes Blatt im Bild</option></select></label>
+        <button id="mark-series">10 Aufnahmen</button>
+        <button id="mark-copy">Ergebnis kopieren</button>
+        <button id="mark-clear">Messungen löschen</button>
+      </div>
+      <div id="mark-info"></div>
+      <div id="mark-table"></div>
+    </section>
     <main>
       <div id="list"></div>
       <div id="out"><p class="muted">Bilder laden (Fotos der Dokumentenkamera) oder die Kamera starten. Alles bleibt im Browser.</p></div>
     </main>
+    <div id="mark-sheets"></div>
     <script type="module" src="/src/lab/lab.ts"></script>
   </body>
 </html>
