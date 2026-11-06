@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pxPerMm, summarize, type Shot } from '../../src/lab/markSeries.ts';
+import { glyphsInside, pxPerMm, summarize, type Shot } from '../../src/lab/markSeries.ts';
 import { TEST_FIELDS } from '../../src/lab/markTestSheet.ts';
 
 const shot = (readable: boolean, over: Partial<Shot> = {}): Shot => ({
@@ -9,13 +9,16 @@ const shot = (readable: boolean, over: Partial<Shot> = {}): Shot => ({
   probe: { pitchPx: 54, hitRate: 1, falseRate: 0, contrast: 0.1, readable },
   glyphs: 0,
   pxPerMm: 18,
+  series: 1,
+  camera: 'Testkamera',
+  size: '1920 × 1080',
   ...over,
 });
 const series = (passed: number, total = 10) => Array.from({ length: total }, (_, i) => shot(i < passed));
 
 describe('summarize', () => {
   it('9 of 10 is enough', () => {
-    expect(summarize(series(9))).toEqual([{ field: 'weiss-blass-016', source: 'druck', view: 'nah', shots: 10, passed: 9, ok: true }]);
+    expect(summarize(series(9))).toEqual([{ series: 1, field: 'weiss-blass-016', source: 'druck', view: 'nah', camera: 'Testkamera', shots: 10, passed: 9, ok: true }]);
   });
 
   it('8 of 10 is not', () => {
@@ -30,10 +33,18 @@ describe('summarize', () => {
     expect(summarize([shot(true, { glyphs: 1 })])[0].passed).toBe(0);
   });
 
-  it('print and copy, near and far count apart', () => {
-    const r = summarize([shot(true), shot(true, { source: 'kopie' }), shot(true, { view: 'ganz' })]);
-    expect(r.length).toBe(3);
-    expect(r.every((x) => x.shots === 1)).toBe(true);
+  it('every series is judged on its own', () => {
+    const bad = series(0).map((s) => ({ ...s, series: 1 }));
+    const good = series(10).map((s) => ({ ...s, series: 2 }));
+    expect(summarize([...bad, ...good]).map((r) => r.ok)).toEqual([false, true]);
+  });
+});
+
+describe('glyphsInside', () => {
+  it('counts what lies in the frame, by its centre', () => {
+    const at = (x: number, y: number) => ({ box: { x, y, w: 10, h: 10 } });
+    const frame = { x: 100, y: 100, w: 50, h: 50 };
+    expect(glyphsInside([at(110, 110), at(96, 110), at(92, 110), at(200, 200)], frame)).toBe(2);
   });
 });
 

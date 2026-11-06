@@ -89,6 +89,8 @@
         margin: 6px 0;
       }
       #mark-view-box {
+        touch-action: none;
+        cursor: crosshair;
         position: relative;
         display: inline-block;
         max-width: 100%;
@@ -170,7 +172,7 @@
         <select id="mark-cams"><option value="">Kamera wählen</option></select>
       </div>
       <div id="mark-view-box"><video id="mark-video" muted playsinline></video><div id="mark-frame"></div></div>
-      <p class="muted">Das Feld so halten, dass es den orangen Rahmen ausfüllt, ohne die Beschriftung darüber.</p>
+      <p class="muted">Das Blatt ruhig hinlegen und den orangen Rahmen im Kamerabild genau um das Feld ziehen, ohne die Beschriftung darüber.</p>
       <div class="bar">
         <label>Feld <select id="mark-field"></select></label>
         <label>Quelle <select id="mark-source"><option value="druck">Ausdruck</option><option value="kopie">Kopie</option></select></label>

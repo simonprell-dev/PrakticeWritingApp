@@ -53,7 +53,7 @@ function page({ w = 600, h = 300, paper = 255, noise = 3, dots, lines }: Paint):
 
 describe('probeDots', () => {
   it('finds a clear lattice', () => {
-    const p = probeDots(page({ dots: { pitch: 24, r: 3, ink: 217 } }));
+    const p = probeDots(page({ dots: { pitch: 24, r: 3, ink: 217 } }), { pitchPx: 24 });
     expect(p.readable).toBe(true);
     expect(Math.abs(p.pitchPx - 24)).toBeLessThanOrEqual(1);
     expect(p.hitRate).toBeGreaterThanOrEqual(0.9);
@@ -62,41 +62,61 @@ describe('probeDots', () => {
   });
 
   it('finds a tilted lattice', () => {
-    expect(probeDots(page({ dots: { pitch: 24, r: 3, ink: 217, angle: 0.105 } })).readable).toBe(true);
+    expect(probeDots(page({ dots: { pitch: 24, r: 3, ink: 217, angle: 0.105 } }), { pitchPx: 24 }).readable).toBe(true);
   });
 
   it('finds big dots and tiny dots', () => {
-    expect(probeDots(page({ dots: { pitch: 54, r: 6, ink: 217 } })).readable).toBe(true);
-    expect(probeDots(page({ dots: { pitch: 15, r: 1.2, ink: 180 } })).readable).toBe(true);
+    expect(probeDots(page({ dots: { pitch: 54, r: 6, ink: 217 } }), { pitchPx: 54 }).readable).toBe(true);
+    expect(probeDots(page({ dots: { pitch: 15, r: 1.2, ink: 180 } }), { pitchPx: 15 }).readable).toBe(true);
+  });
+
+  it('a distance a little off the expected one is fine', () => {
+    expect(probeDots(page({ dots: { pitch: 24, r: 3, ink: 217 } }), { pitchPx: 28 }).readable).toBe(true);
   });
 
   it('empty paper is not readable', () => {
-    const p = probeDots(page({ noise: 0 }));
+    const p = probeDots(page({ noise: 0 }), { pitchPx: 24 });
     expect(p.readable).toBe(false);
     expect(p.pitchPx).toBe(0);
   });
 
   it('noise is not readable', () => {
-    expect(probeDots(page({ noise: 6 })).readable).toBe(false);
+    expect(probeDots(page({ noise: 6 }), { pitchPx: 24 }).readable).toBe(false);
   });
 
   it('dots too faint for the noise', () => {
-    expect(probeDots(page({ noise: 6, dots: { pitch: 24, r: 3, ink: 250 } })).readable).toBe(false);
+    expect(probeDots(page({ noise: 6, dots: { pitch: 24, r: 3, ink: 250 } }), { pitchPx: 24 }).readable).toBe(false);
+  });
+
+  it('a lattice of another spacing is not the printed one', () => {
+    expect(probeDots(page({ dots: { pitch: 48, r: 3, ink: 217 } }), { pitchPx: 24 }).readable).toBe(false);
+    expect(probeDots(page({ dots: { pitch: 9, r: 1.5, ink: 217 } }), { pitchPx: 24 }).readable).toBe(false);
+  });
+
+  it('a small patch of dots on an empty picture is not readable', () => {
+    const img = page({ dots: { pitch: 24, r: 3, ink: 217 } });
+    for (let y = 0; y < img.height; y++)
+      for (let x = 0; x < img.width; x++) if (x > 110 || y > 90) img.data.fill(255, (y * img.width + x) * 4, (y * img.width + x) * 4 + 3);
+    expect(probeDots(img, { pitchPx: 24 }).readable).toBe(false);
   });
 
   it('ruled lines are no dots', () => {
-    expect(probeDots(page({ lines: { every: 24, ink: 200 } })).readable).toBe(false);
+    expect(probeDots(page({ lines: { every: 24, ink: 200 } }), { pitchPx: 24 }).readable).toBe(false);
   });
 
   it('skewed ruled lines are no dots', () => {
-    expect(probeDots(page({ lines: { every: 24, ink: 200, skew: 0.03 } })).readable).toBe(false);
+    expect(probeDots(page({ lines: { every: 24, ink: 200, skew: 0.03 } }), { pitchPx: 24 }).readable).toBe(false);
   });
 
   it('dots between ruled lines', () => {
-    expect(probeDots(page({ dots: { pitch: 24, r: 3, ink: 217 }, lines: { every: 24, at: 150, ink: 200 } })).readable).toBe(true);
+    expect(probeDots(page({ dots: { pitch: 24, r: 3, ink: 217 }, lines: { every: 24, at: 150, ink: 200 } }), { pitchPx: 24 }).readable).toBe(true);
+  });
+
+  it('dots right beside skewed ruled lines', () => {
+    expect(probeDots(page({ dots: { pitch: 24, r: 3, ink: 190 }, lines: { every: 72, at: 158, ink: 170, skew: 0.02 } }), { pitchPx: 24 }).readable).toBe(true);
   });
 
   it('a tiny picture does not crash', () => {
-    expect(probeDots(page({ w: 3, h: 2 })).readable).toBe(false);
+    expect(probeDots(page({ w: 3, h: 2 }), { pitchPx: 24 }).readable).toBe(false);
   });
 });

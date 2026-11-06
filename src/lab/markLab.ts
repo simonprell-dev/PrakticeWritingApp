@@ -1,15 +1,20 @@
-// Lab section for the test sheet: print it, hold a field into the frame, take a series of 10 pictures.
+// Lab section for the test sheet: print it, draw the frame around a field, take a series of 10 pictures.
+// The dots are measured in the camera's full picture. The recognition gets the whole frame at its own size,
+// as in the game, because that is what decides whether printed marks count as writing.
 import type { Engine } from '../recog/engine.ts';
+import { DETECT_SIZE } from '../vision/constants.ts';
 import { probeDots } from '../vision/markProbe.ts';
-import type { RGBAImage, VisionOptions } from '../vision/types.ts';
-import { pxPerMm, SERIES, summarize, type Shot } from './markSeries.ts';
-import { markTestSvg, TEST_FIELDS } from './markTestSheet.ts';
+import type { Box, RGBAImage, VisionOptions } from '../vision/types.ts';
+import { glyphsInside, markPitchMm, pxPerMm, SERIES, summarize, type Shot } from './markSeries.ts';
+import { FIELD_INSET, markTestSvg, TEST_FIELDS } from './markTestSheet.ts';
 
-/** share of the picture's width the frame takes; a field is 58 × 20 mm */
-const FRAME_W = { nah: 0.6, ganz: 0.12 };
+/** the frame before it is drawn by hand, as a share of the picture's width */
+const START_W = { nah: 0.6, ganz: 0.12 };
 const FIELD_ASPECT = 58 / 20;
 const PAUSE_MS = 300;
-const STORE = 'krakelkrone.markshots';
+/** a shorter drag is a click, px on screen */
+const MIN_DRAG = 12;
+const STORE = 'krakelkrone.markshots.2';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -33,49 +38,71 @@ function saveShots(shots: Shot[]): void {
 export function setupMarkLab(engine: Engine, opts: () => VisionOptions, ready: Promise<void>): void {
   const video = $<HTMLVideoElement>('mark-video');
   const frame = $('mark-frame');
+  const area = $('mark-view-box');
   const field = $<HTMLSelectElement>('mark-field');
   const source = $<HTMLSelectElement>('mark-source');
   const view = $<HTMLSelectElement>('mark-view');
   const cams = $<HTMLSelectElement>('mark-cams');
   const info = $('mark-info');
   const table = $('mark-table');
+  const controls: (HTMLSelectElement | HTMLButtonElement)[] = [field, source, view, cams, $<HTMLButtonElement>('mark-series'), $<HTMLButtonElement>('mark-cam'), $<HTMLButtonElement>('mark-clear')];
   let shots = loadShots();
   let running = false;
+  /** the frame drawn by hand, as shares of the picture; null: the starting frame of the view */
+  let drawn: Box | null = null;
 
   for (const f of TEST_FIELDS) field.append(new Option(f.id, f.id));
 
-  /** the frame in video px */
-  function frameBox() {
+  /** the whole field in video px */
+  function fieldBox(): Box {
     const vw = video.videoWidth;
     const vh = video.videoHeight;
-    const w = Math.round(vw * FRAME_W[view.value as Shot['view']]);
-    const h = Math.round(w / FIELD_ASPECT);
-    return { x: Math.round((vw - w) / 2), y: Math.round((vh - h) / 2), w, h };
+    if (drawn) return { x: drawn.x * vw, y: drawn.y * vh, w: drawn.w * vw, h: drawn.h * vh };
+    const w = vw * START_W[view.value as Shot['view']];
+    const h = w / FIELD_ASPECT;
+    return { x: (vw - w) / 2, y: (vh - h) / 2, w, h };
   }
 
   function placeFrame(): void {
     if (!video.videoWidth) return;
-    const b = frameBox();
+    const b = fieldBox();
     frame.style.left = `${(100 * b.x) / video.videoWidth}%`;
     frame.style.top = `${(100 * b.y) / video.videoHeight}%`;
     frame.style.width = `${(100 * b.w) / video.videoWidth}%`;
     frame.style.height = `${(100 * b.h) / video.videoHeight}%`;
   }
 
-  function grabFrame(): RGBAImage {
-    const b = frameBox();
+  /** the whole camera picture, at `scale` */
+  function picture(scale: number): RGBAImage {
     const c = document.createElement('canvas');
-    c.width = b.w;
-    c.height = b.h;
+    c.width = Math.max(1, Math.round(video.videoWidth * scale));
+    c.height = Math.max(1, Math.round(video.videoHeight * scale));
     const ctx = c.getContext('2d', { willReadFrequently: true })!;
-    ctx.drawImage(video, b.x, b.y, b.w, b.h, 0, 0, b.w, b.h);
-    const id = ctx.getImageData(0, 0, b.w, b.h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(video, 0, 0, c.width, c.height);
+    const id = ctx.getImageData(0, 0, c.width, c.height);
     return { width: id.width, height: id.height, data: id.data };
+  }
+
+  /** the inner part of the field, so a sheet that moves a little keeps the neighbours out */
+  function innerPart(full: RGBAImage, b: Box): RGBAImage {
+    const x = Math.max(0, Math.round(b.x + b.w * FIELD_INSET));
+    const y = Math.max(0, Math.round(b.y + b.h * FIELD_INSET));
+    const w = Math.min(full.width - x, Math.round(b.w * (1 - 2 * FIELD_INSET)));
+    const h = Math.min(full.height - y, Math.round(b.h * (1 - 2 * FIELD_INSET)));
+    const data = new Uint8ClampedArray(w * h * 4);
+    for (let r = 0; r < h; r++) data.set(full.data.subarray(((y + r) * full.width + x) * 4, ((y + r) * full.width + x + w) * 4), r * w * 4);
+    return { width: w, height: h, data };
   }
 
   function render(): void {
     const rows = summarize(shots)
-      .map((r) => `<tr class="${r.ok ? 'ok' : r.shots >= SERIES ? 'bad' : ''}"><td>${r.field}</td><td>${r.source}</td><td>${r.view}</td><td>${r.passed} von ${r.shots}</td><td>${r.ok ? 'bestanden' : r.shots >= SERIES ? 'durchgefallen' : 'zu wenig Bilder'}</td></tr>`)
+      .reverse()
+      .map((r) => {
+        const done = r.shots >= SERIES;
+        return `<tr class="${r.ok ? 'ok' : done ? 'bad' : ''}"><td>${r.field}</td><td>${r.source}</td><td>${r.view}</td><td>${r.passed} von ${r.shots}</td><td>${r.ok ? 'bestanden' : done ? 'durchgefallen' : 'zu wenig Bilder'}</td></tr>`;
+      })
       .join('');
     table.innerHTML = rows ? `<table><tr><th>Feld</th><th>Quelle</th><th>Abstand</th><th>Gut</th><th>Ergebnis</th></tr>${rows}</table>` : '';
   }
@@ -89,38 +116,74 @@ export function setupMarkLab(engine: Engine, opts: () => VisionOptions, ready: P
     await video.play();
     if (cams.options.length <= 1) {
       const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
-      cams.replaceChildren(...list.map((d, i) => new Option(d.label || `Kamera ${i + 1}`, d.deviceId)));
+      if (list.length) cams.replaceChildren(...list.map((d, i) => new Option(d.label || `Kamera ${i + 1}`, d.deviceId)));
       const now = stream.getVideoTracks()[0]?.getSettings().deviceId;
       if (now) cams.value = now;
     }
   }
 
-  async function series(): Promise<void> {
-    if (running || !video.videoWidth) return;
-    running = true;
-    try {
-      await takeSeries();
-    } catch (e) {
-      info.textContent = `Messung abgebrochen: ${e}`;
-    }
-    running = false;
-  }
-
   async function takeSeries(): Promise<void> {
     await ready;
+    // everything of the series is fixed here; the controls are off until it ends
     const f = TEST_FIELDS.find((x) => x.id === field.value)!;
+    const base = {
+      series: Date.now(),
+      field: f.id,
+      source: source.value as Shot['source'],
+      view: view.value as Shot['view'],
+      camera: cams.selectedOptions[0]?.text ?? '',
+      size: `${video.videoWidth} × ${video.videoHeight}`,
+    };
+    const b = fieldBox();
+    const pitchPx = (b.w / f.box.w) * markPitchMm(f);
+    const scale = Math.min(1, DETECT_SIZE / Math.max(video.videoWidth, video.videoHeight));
+    const small = { x: b.x * scale, y: b.y * scale, w: b.w * scale, h: b.h * scale };
     for (let k = 0; k < SERIES; k++) {
-      const img = grabFrame();
-      const probe = probeDots(img);
+      const probe = probeDots(innerPart(picture(1), b), { pitchPx });
       engine.reset();
-      const glyphs = engine.scan({ width: img.width, height: img.height, data: new Uint8ClampedArray(img.data) }, opts()).glyphs.length;
-      shots.push({ field: f.id, source: source.value as Shot['source'], view: view.value as Shot['view'], probe, glyphs, pxPerMm: pxPerMm(f, probe.pitchPx) });
-      info.textContent = `Bild ${k + 1} von ${SERIES}: ${probe.readable ? 'lesbar' : 'nicht lesbar'}, Treffer ${Math.round(100 * probe.hitRate)} %, Kontrast ${(100 * probe.contrast).toFixed(1)} %, ${pxPerMm(f, probe.pitchPx).toFixed(1)} px/mm, ${glyphs} Zeichen`;
+      const glyphs = glyphsInside(engine.scan(picture(scale), opts()).glyphs, small);
+      const mm = pxPerMm(f, probe.pitchPx || pitchPx);
+      shots.push({ ...base, probe, glyphs, pxPerMm: mm });
+      info.textContent = `Bild ${k + 1} von ${SERIES}: ${probe.readable ? 'lesbar' : 'nicht lesbar'}, Treffer ${Math.round(100 * probe.hitRate)} %, Kontrast ${(100 * probe.contrast).toFixed(1)} %, ${mm.toFixed(1)} px/mm, ${glyphs} Zeichen`;
       saveShots(shots);
       render();
       await new Promise((r) => setTimeout(r, PAUSE_MS));
     }
   }
+
+  async function series(): Promise<void> {
+    if (running || video.videoWidth < 100) return;
+    running = true;
+    controls.forEach((c) => (c.disabled = true));
+    try {
+      await takeSeries();
+    } catch (e) {
+      info.textContent = `Messung abgebrochen: ${e}`;
+    }
+    controls.forEach((c) => (c.disabled = false));
+    running = false;
+  }
+
+  // the frame is drawn around the field on the live picture
+  let from: { x: number; y: number } | null = null;
+  const at = (e: PointerEvent) => {
+    const r = video.getBoundingClientRect();
+    return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
+  };
+  area.addEventListener('pointerdown', (e) => {
+    if (running || !video.videoWidth) return;
+    from = at(e);
+    area.setPointerCapture(e.pointerId);
+  });
+  area.addEventListener('pointermove', (e) => {
+    if (!from) return;
+    const p = at(e);
+    const r = video.getBoundingClientRect();
+    if (Math.abs(p.x - from.x) * r.width < MIN_DRAG || Math.abs(p.y - from.y) * r.height < MIN_DRAG) return;
+    drawn = { x: Math.min(from.x, p.x), y: Math.min(from.y, p.y), w: Math.abs(p.x - from.x), h: Math.abs(p.y - from.y) };
+    placeFrame();
+  });
+  area.addEventListener('pointerup', () => (from = null));
 
   $('mark-print').addEventListener('click', () => {
     $('mark-sheets').innerHTML = markTestSvg(1) + markTestSvg(2);
@@ -128,7 +191,10 @@ export function setupMarkLab(engine: Engine, opts: () => VisionOptions, ready: P
   });
   $('mark-cam').addEventListener('click', () => void open().catch((e) => (info.textContent = `Kamera geht nicht: ${e}`)));
   cams.addEventListener('change', () => void open(cams.value).catch((e) => (info.textContent = `Kamera geht nicht: ${e}`)));
-  view.addEventListener('change', placeFrame);
+  view.addEventListener('change', () => {
+    drawn = null;
+    placeFrame();
+  });
   // the first frames of a camera can be tiny; the real size comes with this event
   video.addEventListener('resize', () => {
     placeFrame();

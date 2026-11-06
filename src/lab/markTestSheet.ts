@@ -28,6 +28,8 @@ const RADII: [string, number][] = [
   ['022', 0.22],
   ['030', 0.3],
 ];
+/** the measured part of a field keeps this share away from each edge, so the sheet need not lie exactly */
+export const FIELD_INSET = 0.1;
 const FIELD_W = 58;
 const FIELD_H = 20;
 const COLS = [15, 76, 137];
