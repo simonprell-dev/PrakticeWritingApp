@@ -1,3 +1,4 @@
+import { RECHENMEER } from '../app/features.ts';
 import { clearSaves } from '../app/saves.ts';
 import { resetSettings, type Settings } from '../app/settings.ts';
 import { TASK_KINDS, type TaskKind } from '../game/math/tasks.ts';
@@ -187,9 +188,13 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       ),
       h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Blendet im Mal-Aquarium einen QR-Code und die Webadresse ein, damit Besucher das Spiel zu Hause wiederfinden.')),
     ),
-    h('h3', null, t('Rechenmeer')),
-    h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Welche Aufgaben im Rechenmeer drankommen (Klasse 1/2). Mindestens eine bleibt an.')),
-    h('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px' }, ...mathToggles()),
+    ...(RECHENMEER
+      ? [
+          h('h3', null, t('Rechenmeer')),
+          h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Welche Aufgaben im Rechenmeer drankommen (Klasse 1/2). Mindestens eine bleibt an.')),
+          h('div', { class: 'row', style: 'flex-wrap:wrap;gap:8px' }, ...mathToggles()),
+        ]
+      : []),
     h('h3', null, t('Spielstände')),
     h(
       'div',

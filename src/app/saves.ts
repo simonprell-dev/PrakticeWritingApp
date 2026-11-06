@@ -1,6 +1,7 @@
 // Saved games. The last game of every mode is kept automatically (to continue it later), and games can be
 // saved under a name, deleted, downloaded as a file and loaded from a file. Everything stays in this
 // browser (IndexedDB) unless a file is downloaded.
+import { RECHENMEER } from './features.ts';
 import { t, tk } from '../i18n/i18n.ts';
 
 export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'malen' | 'duell' | 'riesenburg' | 'tuerme';
@@ -92,11 +93,17 @@ function metaOf(g: SaveGame): SaveMeta {
   return { id: g.id, name: g.name, mode: g.mode, savedAt: g.savedAt, auto: g.auto, summary: g.summary, thumb: g.thumb };
 }
 
+/** a game that is offered at the moment (see features.ts) */
+export const modeAvailable = (m: GameMode) => RECHENMEER || m !== 'rechenmeer';
+
+/** the saved games of the games that are offered */
+export const visibleSaves = (list: SaveMeta[]) => list.filter((m) => modeAvailable(m.mode));
+
 /** all saved games, newest first (without the games themselves) */
 export async function listSaves(): Promise<SaveMeta[]> {
   const d = await db();
   const all = d ? await result(d.transaction('meta').objectStore('meta').getAll() as IDBRequest<SaveMeta[]>) : [...fallback.values()].map(metaOf);
-  return all.sort((a, b) => b.savedAt - a.savedAt);
+  return visibleSaves(all).sort((a, b) => b.savedAt - a.savedAt);
 }
 
 export async function getMeta(id: string): Promise<SaveMeta | null> {
@@ -176,7 +183,7 @@ export async function readSaveFile(f: File): Promise<SaveGame> {
   } catch {
     g = {};
   }
-  if (g.format !== FORMAT || !g.mode || !(g.mode in MODES) || g.state === undefined) throw new Error(t('Das ist keine Spielstand-Datei von Krakel & Krone.'));
+  if (g.format !== FORMAT || !g.mode || !(g.mode in MODES) || !modeAvailable(g.mode) || g.state === undefined) throw new Error(t('Das ist keine Spielstand-Datei von Krakel & Krone.'));
   if (g.version !== 1) throw new Error(t('Dieser Spielstand ist von einer neueren Version. Bitte die Seite neu laden.'));
   return { ...(g as SaveGame), id: newSaveId(), auto: false, name: String(g.name || t(MODES[g.mode].title)).slice(0, 60) };
 }
