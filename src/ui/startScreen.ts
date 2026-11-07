@@ -138,7 +138,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         'div',
         { class: 'tiles' },
         scriptTile(s.script, () => openScriptPicker(s.script, d.setScript)),
-        ...offeredWorlds(new Date(), (id) => !!SEASON_DEFS[id as SeasonId]).flatMap(({ id, until }) => {
+        ...offeredWorlds(new Date(), (id) => id === 'advent' || !!SEASON_DEFS[id as SeasonId]).flatMap(({ id, until }) => {
           const one = worldTile(id, until);
           // the Rechenmeer is outside the plan; while it is switched on in the code it follows the Zauberland
           return id === 'zauberland' && RECHENMEER ? [one, tile('rechenmeer', t('🐬 Rechenmeer'), t('Rechnen füllt das Meer'), () => d.startHabitat('rechenmeer'))] : [one];

@@ -24,6 +24,7 @@ import { blockWidth, drawBlock } from '../game/tower/towerArt.ts';
 import { tierOf } from '../recog/score.ts';
 import type { FrontId, SeasonId } from '../app/worlds.ts';
 import { SEASON_DEFS } from '../scenes/seasons/index.ts';
+import { advent } from '../scenes/advent.ts';
 import type { TileKit } from '../scenes/seasons/kit.ts';
 
 export function letterSticker(ch: string, color = '#2b2b7a', size = 90): AnyCanvas {
@@ -66,7 +67,7 @@ export function tilePreview(kind: TileKind, canvas: HTMLCanvasElement): void {
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
-  const season = SEASON_DEFS[kind as SeasonId];
+  const season = kind === 'advent' ? advent : SEASON_DEFS[kind as SeasonId];
   if (season?.tile) {
     season.tile(ctx, W, H, KIT);
     return;
