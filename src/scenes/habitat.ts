@@ -12,6 +12,7 @@ import { Particles } from '../game/particles.ts';
 import { hashBytes } from '../game/rng.ts';
 import { SpawnFx } from '../game/spawnFx.ts';
 import { WORLD_H } from '../game/stage.ts';
+import { speak } from '../game/voice/gameVoice.ts';
 import { withArticle } from '../recog/classes.ts';
 import { strokeStyle, surprisePool } from '../recog/scripts.ts';
 import { TIER_LABEL, TIP_TEXT } from '../recog/score.ts';
@@ -55,7 +56,8 @@ export interface Creature {
   /** jump height (px) */
   lift: number;
   special: number;
-  bubble?: { text: string; t: number; good: boolean; image?: AnyCanvas };
+  /** a speech bubble; `said` once it was read aloud */
+  bubble?: { text: string; t: number; good: boolean; image?: AnyCanvas; said?: boolean };
 }
 
 /** the skin of an animal coloured in on a card */
@@ -166,6 +168,7 @@ export class HabitatScene implements Scene {
   constructor(def: HabitatDef, host: SceneHost, worldW: number) {
     this.def = def;
     this.host = host;
+    this.fx.voiced = def.id !== 'advent';
     this.resize(worldW);
     def.init?.(this);
   }
@@ -229,7 +232,10 @@ export class HabitatScene implements Scene {
     if (wish && wishGlyph) wish.claimed = true;
     else if (wish) {
       const near = fresh.find((g) => g.score.scoredAs === wish.char);
-      if (near) wish.hint = { text: near.score.tip === 'spiegel' ? t('Andersrum!') : t('Fast! Nochmal!'), t: 0 };
+      if (near) {
+        wish.hint = { text: near.score.tip === 'spiegel' ? t('Andersrum!') : t('Fast! Nochmal!'), t: 0 };
+        this.readAloud(wish.hint.text);
+      }
     }
     this.fx.start(
       snap,
@@ -256,7 +262,10 @@ export class HabitatScene implements Scene {
         /** a speech bubble on a creature; a floating text where there is none */
         const say = (text: string, good: boolean) => {
           if (c) c.bubble = { text, t: 0, good };
-          else this.particles.add({ kind: 'text', x: at.x, y: at.y - at.r - 110, vy: -30, max: 3, size: 28, color: good ? '#ffffff' : '#fff1c4', text });
+          else {
+            this.particles.add({ kind: 'text', x: at.x, y: at.y - at.r - 110, vy: -30, max: 3, size: 28, color: good ? '#ffffff' : '#fff1c4', text });
+            this.readAloud(text);
+          }
         };
         this.particles.burst('puff', at.x, at.y, 10, { color: 'rgba(255,255,255,0.8)', size: 26, speed: 160, max: 0.6 });
         if (g.score.score >= 70) this.particles.burst('spark', at.x, at.y, 10, { color: '#fff6a8', size: 14, speed: 260, max: 0.9 });
@@ -273,6 +282,7 @@ export class HabitatScene implements Scene {
             color: '#ffffff',
             text: t('{tier}!', { tier: t(TIER_LABEL[g.score.tier]) }),
           });
+          this.readAloud(t(TIER_LABEL[g.score.tier]));
         }
         if (g === best && fresh.length > 1) {
           sfx.fanfare();
@@ -398,6 +408,11 @@ export class HabitatScene implements Scene {
         this.particles.add({ kind: 'spark', x: c.x + Math.cos(a) * r, y: c.y + Math.sin(a) * r, size: 8 + Math.random() * 8, max: 0.8, color: '#fff7b8' });
       }
       if (c.bubble) {
+        // every new speech bubble is read aloud once, as it appears
+        if (!c.bubble.said) {
+          c.bubble.said = true;
+          this.readAloud(c.bubble.text);
+        }
         c.bubble.t += dt;
         if (c.bubble.t > 4) c.bubble = undefined;
       }
@@ -529,6 +544,7 @@ export class HabitatScene implements Scene {
     if (!glyph) return;
     this.demo = { glyph, t: 0, dur: 0.7 + writeDuration(glyph) + 1.4 + 0.6 };
     sfx.sparkle();
+    this.readAloud(t('So schreibt man {c}:', { c: withArticle(glyph.char) }));
   }
 
   private drawDemo(ctx: CanvasRenderingContext2D): void {
@@ -572,6 +588,11 @@ export class HabitatScene implements Scene {
   // ---------------------------------------------------------------- surprise letters
 
   /** surprise letters the recognition should know about (only while a bubble waits) */
+  /** reads a shown text aloud when it is a line of the game (the advent calendar speaks on its own) */
+  protected readAloud(text: string): void {
+    if (this.def.id !== 'advent') speak(text);
+  }
+
   bonusLetters(): string[] {
     return this.wish && this.wish.pop < 0 ? [this.wish.char] : [];
   }
@@ -653,6 +674,7 @@ export class HabitatScene implements Scene {
     this.particles.burst('drop', x, y, 18, { color: 'rgba(210,240,255,0.95)', size: 7, speed: 340, gravity: 600, max: 0.7 });
     this.particles.burst('confetti', x, y, 28, { colors: ['#ff6f91', '#ffd84a', '#7cdcff', '#8dff6b'], size: 13, speed: 320, max: 1.4, gravity: 420 });
     this.particles.add({ kind: 'text', x, y: y - WISH_R - 40, vy: -40, max: 2, size: 46, color: '#ffd84a', text: t('Befreit!') });
+    this.readAloud(t('Befreit!'));
     c.bubble = { text: t('Juhu, du hast mich befreit!'), t: 0, good: true };
   }
 

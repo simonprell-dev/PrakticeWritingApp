@@ -38,8 +38,9 @@ for (const k of source as string[]) {
 /** what may be spoken: the normalized German text (or template) and who speaks it */
 const SPOKEN = new Map<string, Voice>();
 for (const r of lines as Row[]) {
-  // letters are recorded for gaps; on their own they are not shown as a text
-  if (r.speaker === 'buchstaben') continue;
+  // letters are recorded for gaps; on their own they are not shown as a text. Error messages carry a
+  // technical text in their gap: they are not read to children.
+  if (r.speaker === 'buchstaben' || /\{error\}/.test(r.partOf ?? '')) continue;
   const key = normalizeVoiceText(r.partOf ?? r.text);
   if (!SPOKEN.has(key)) SPOKEN.set(key, r.speaker as Voice);
 }
@@ -91,21 +92,49 @@ export function pickLine(current: Spoken | null, next: Spoken): boolean {
   return RANK[next.voice] >= RANK[current.voice];
 }
 
+/** what happens with a new line: said now, said when the current one is done (a speaker of the same rank
+ * does not cut off a sentence; only the newest one waits), or dropped */
+export function arrange(current: Spoken | null, next: Spoken): 'say' | 'wait' | 'drop' {
+  if (!current) return 'say';
+  if (!pickLine(current, next)) return 'drop';
+  return RANK[next.voice] > RANK[current.voice] ? 'say' : 'wait';
+}
+
 const speaker = new Speaker();
 let current: Spoken | null = null;
+/** what is said once the current lines are done */
+let waiting: Spoken[] = [];
+let turn = 0;
 
-/** says a shown text if it is a line of the game; the voice hint is used when the script does not know it */
-export function speak(shown: string): void {
-  const line = lineOf(shown);
-  if (!line || !pickLine(current, line)) return;
-  current = line;
-  void speaker.run([line]).then(() => {
-    if (current === line) current = null;
-  });
+function play(found: Spoken[]): void {
+  const mine = ++turn;
+  current = found[0];
+  waiting = [];
+  void speaker
+    .run(found, (i) => {
+      if (mine === turn) current = found[i];
+    })
+    .then(() => {
+      if (mine !== turn) return;
+      current = null;
+      const next = waiting;
+      if (next.length) play(next);
+    });
+}
+
+/** says shown texts (one after the other) if they are lines of the game; others are left out */
+export function speak(...shown: string[]): void {
+  const found = shown.map(lineOf).filter((l): l is Spoken => !!l);
+  if (!found.length) return;
+  const how = arrange(current, found[0]);
+  if (how === 'say') play(found);
+  else if (how === 'wait' && !(waiting[0]?.key === found[0].key && waiting[0].text === found[0].text)) waiting = found;
 }
 
 /** ends what is being said (leaving a game) */
 export function hush(): void {
+  turn++;
   current = null;
+  waiting = [];
   speaker.stop();
 }

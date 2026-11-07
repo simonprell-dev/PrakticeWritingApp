@@ -11,7 +11,8 @@ import { clamp, ease, hsl, lerp, TAU } from '../game/math.ts';
 import { WORLD_H } from '../game/stage.ts';
 import { t } from '../i18n/i18n.ts';
 import type { ScanResult, TeamId } from '../vision/types.ts';
-import { COUNTDOWN_SECONDS, drawBanner, drawCountdown, type Banner } from './cinema.ts';
+import { speak } from '../game/voice/gameVoice.ts';
+import { announce, COUNTDOWN_SECONDS, drawBanner, drawCountdown, type Banner } from './cinema.ts';
 import { DuelScene, type DuelSceneSave } from './duelScene.ts';
 import type { SceneSave } from './saved.ts';
 import type { SceneHost, Snapshot } from './scene.ts';
@@ -143,6 +144,7 @@ export class SiegeScene extends DuelScene {
 
   private say(text: string, dur = 2.4): void {
     this.speech = { text, t: 0, dur };
+    speak(text);
   }
 
   private setMood(m: GiantMood, seconds = 0): void {
@@ -190,12 +192,12 @@ export class SiegeScene extends DuelScene {
         this.say(t('Hohoho! An meiner Riesenburg kommt keiner vorbei!'), 2.4);
       });
       this.at(2, 3.3, () => {
-        this.banner = {
+        this.banner = announce({
           title: t('Klasse gegen Riesenburg'),
           sub: t('{name}: Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!', { name: this.className }),
           t: 0,
           dur: 2.1,
-        };
+        });
       });
       this.at(3, 5.0, () => {
         this.countdown = 0;
@@ -218,12 +220,12 @@ export class SiegeScene extends DuelScene {
       });
       this.at(2, 1.7, () => {
         const left = n - k - 1;
-        this.banner = {
+        this.banner = announce({
           title: t('Mauer {n} geschafft!', { n: k + 1 }),
           sub: left === 1 ? t('Noch eine Mauer bis zum Riesen!') : t('Noch {n} Mauern bis zum Riesen!', { n: left }),
           t: 0,
           dur: 2.2,
-        };
+        });
         sfx.fanfare();
         this.confetti(50);
       });
@@ -262,7 +264,7 @@ export class SiegeScene extends DuelScene {
       });
       this.at(3, 3.0, () => this.confetti(90));
       this.at(4, 3.4, () => {
-        this.banner = { title: t('Die Riesenburg ist erobert!'), sub: t('{name} hat gewonnen!', { name: this.className }), t: 0, dur: 4.2 };
+        this.banner = announce({ title: t('Die Riesenburg ist erobert!'), sub: t('{name} hat gewonnen!', { name: this.className }), t: 0, dur: 4.2 });
       });
       this.at(5, 4.4, () => this.confetti(70));
       this.at(6, 5.6, () => this.confetti(70));
@@ -274,12 +276,12 @@ export class SiegeScene extends DuelScene {
       });
       this.at(1, 1.6, () => {
         const w = this.wallsDown;
-        this.banner = {
+        this.banner = announce({
           title: t('Die Zeit ist um!'),
           sub: w ? t('Ihr habt {w} von {n} Mauern geschafft – super gekämpft!', { w, n }) : t('Beim nächsten Mal schafft ihr die erste Mauer!'),
           t: 0,
           dur: 4,
-        };
+        });
         this.confetti(40);
       });
     }
@@ -430,12 +432,12 @@ export class SiegeScene extends DuelScene {
     this.giantPop = 1;
     this.burst = null;
     this.cam = this.home();
-    this.banner = {
+    this.banner = announce({
       title: t('Weiter geht’s!'),
       sub: t('{name} gegen Riese Rumpel – Mauer {n} von {total}', { name: this.className, n: this.sim.stage + 1, total: this.walls.length }),
       t: 0,
       dur: 2.6,
-    };
+    });
     this.setMood('laugh', 1.8);
     this.say(t('Ihr schon wieder? Hohoho! Meine Burg steht noch!'), 2.4);
   }

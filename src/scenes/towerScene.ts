@@ -31,7 +31,8 @@ import { TowerSim, type Alien, type TowerBlock, type TowerEvent, type TowerSave 
 import { t, tk } from '../i18n/i18n.ts';
 import { starsOf } from '../recog/score.ts';
 import { PLAYER_IDS, type ScanResult, type ScannedGlyph } from '../vision/types.ts';
-import { COUNTDOWN_SECONDS, drawBanner, drawCountdown, type Banner } from './cinema.ts';
+import { speak } from '../game/voice/gameVoice.ts';
+import { announce, COUNTDOWN_SECONDS, drawBanner, drawCountdown, type Banner } from './cinema.ts';
 import { hexHue, teamColor } from './duelScene.ts';
 import { loadGlyph, restoredId, saveGlyph, type SavedGlyph, type SceneSave } from './saved.ts';
 import type { Scene, SceneHost, Snapshot } from './scene.ts';
@@ -83,6 +84,8 @@ interface AlienView {
   /** cues of the current gag that already fired */
   gagKey: string;
   fired: Set<number>;
+  /** the gag line last shown (read aloud when it changes) */
+  said: string;
   tilt: number;
   blink: number;
   pose: GagPose;
@@ -167,7 +170,7 @@ export class TowerScene implements Scene {
     this.countdown = -1;
     this.portalOpen = 1;
     this.seen = SIGHTS.filter((s) => s.at <= this.sunk()).length;
-    this.banner = { title: t('Weiter geht’s!'), sub: t('Die Türme stehen noch – baut weiter!'), t: 0, dur: 2.6 };
+    this.banner = announce({ title: t('Weiter geht’s!'), sub: t('Die Türme stehen noch – baut weiter!'), t: 0, dur: 2.6 });
     const zork = this.sim.aliens[0];
     if (zork) this.talk(zork, t('Da seid ihr ja wieder!'), 2.4);
   }
@@ -270,7 +273,7 @@ export class TowerScene implements Scene {
         if (a) this.talk(a, t('Hallo! Ich bin Zork. Ich baue eure Türme!'), 2.6);
       });
       this.at(3, 2.0, () => {
-        this.banner = { title: t('Türme bauen!'), sub: t('Je schöner der Buchstabe, desto höher der Baustein. Wer ist zuerst oben?'), t: 0, dur: 2.2 };
+        this.banner = announce({ title: t('Türme bauen!'), sub: t('Je schöner der Buchstabe, desto höher der Baustein. Wer ist zuerst oben?'), t: 0, dur: 2.2 });
       });
       this.at(4, 3.4, () => {
         this.countdown = 0;
@@ -288,7 +291,7 @@ export class TowerScene implements Scene {
       });
       this.at(1, 0.6, () => {
         const reason = this.sim.over?.reason;
-        this.banner =
+        this.banner = announce(
           w === null || w === undefined
             ? { title: t('Unentschieden!'), sub: t('Die Zeit ist um – alle Türme sind gleich toll!'), t: 0, dur: 4.6 }
             : {
@@ -299,7 +302,8 @@ export class TowerScene implements Scene {
                     : t('Zuerst über der Ziellinie – {n} m hoch!', { n: this.sim.towers[w].metres }),
                 t: 0,
                 dur: 4.6,
-              };
+              },
+        );
       });
       this.at(2, 1.2, () => sfx.win());
       this.at(3, 1.0, () => this.confetti(80));
@@ -397,7 +401,7 @@ export class TowerScene implements Scene {
   private view(a: Alien): AlienView {
     let v = this.views.get(a.id);
     if (!v) {
-      v = { flash: 0, talk: null, gagKey: '', fired: new Set(), tilt: 0, blink: 2 + Math.random() * 3, pose: { face: 'happy' } };
+      v = { flash: 0, talk: null, gagKey: '', fired: new Set(), said: '', tilt: 0, blink: 2 + Math.random() * 3, pose: { face: 'happy' } };
       this.views.set(a.id, v);
     }
     return v;
@@ -405,6 +409,7 @@ export class TowerScene implements Scene {
 
   private talk(a: Alien, text: string, dur = 2): void {
     this.view(a).talk = { text, t: 0, dur };
+    speak(text);
   }
 
   private name(a: Alien): string {
@@ -466,6 +471,12 @@ export class TowerScene implements Scene {
       v.blink -= dt;
       if (v.blink < -0.13) v.blink = 2 + Math.random() * 3;
       v.pose = this.poseOf(a);
+      // a gag line is read once as it appears, unless the alien is saying something of its own
+      const said = v.pose.say ?? '';
+      if (said !== v.said) {
+        v.said = said;
+        if (said && !v.talk) speak(said);
+      }
       const job = a.job;
       const g = job?.gag;
       if (job && g && job.gagT >= 0) {
@@ -558,6 +569,7 @@ export class TowerScene implements Scene {
         sfx.pfff();
         this.particles.burst('puff', e.block.x, e.block.y, 14, { color: 'rgba(200,200,215,0.8)', size: 26, speed: 90, max: 1 });
         this.particles.add({ kind: 'text', x: e.block.x, y: e.block.y - 50, vy: -30, max: 1.8, size: 40, color: '#f2f2ff', text: t('Pfff?') });
+        speak(t('Pfff?'));
         break;
       case 'poof':
         this.particles.burst('spark', e.block.x, e.block.y, 10, { color: '#ffffff', size: 10, speed: 200, max: 0.5 });

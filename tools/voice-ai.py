@@ -1,4 +1,5 @@
-"""Generates the spoken stories of the advent calendar with Piper, offline on this machine.
+"""Generates the spoken lines of the game (stories, hints, Riese Rumpel, Zork, the creatures) with Piper,
+offline on this machine.
 
 The lines come from voice/lines.json (npm run voice), the translations from src/i18n/locales/. For every
 language there is one Piper voice (tools/.piper/voices/chosen.json); Flocke and the figures speak with the
@@ -15,6 +16,7 @@ Run:
 Only lines whose text, voice or settings changed are made again (manifest.json per language).
 """
 import hashlib
+import re
 import json
 import sys
 from pathlib import Path
@@ -26,10 +28,22 @@ from piper import PiperVoice, SynthesisConfig
 ROOT = Path(__file__).resolve().parent.parent
 VOICES = ROOT / 'tools' / '.piper' / 'voices'
 OUT = ROOT / 'public' / 'voice' / 'ai'
-# which lines get a generated voice: the stories behind the doors
-WHERE = 'Adventskalender'
-# pitch factor and speed per speaker; the narrator a little slower for young listeners
-STYLE = {'erzaehler': (1.0, 1.08), 'flocke': (1.2, 0.95), 'wesen': (1.3, 0.95)}
+# pitch factor and speed per speaker; the narrator a little slower for young listeners, the giant deep
+STYLE = {
+    'erzaehler': (1.0, 1.08),
+    'flocke': (1.2, 0.95),
+    'wesen': (1.3, 0.95),
+    'riese': (0.8, 1.0),
+    'zork': (1.35, 0.9),
+    'blase': (1.15, 1.0),
+    'ausruf': (1.12, 0.95),
+}
+EMOJI = re.compile('[🌀-🫿☀-➿️]')
+
+
+def normalize(s: str) -> str:
+    """as the recording script and src/game/voice/gameVoice.ts do: no emoji, single spaces"""
+    return ' '.join(EMOJI.sub('', s).split())
 BITRATE = 40
 VERSION = 1
 
@@ -54,7 +68,8 @@ def mp3(pcm: np.ndarray, rate: int) -> bytes:
 def main() -> None:
     chosen = json.loads((VOICES / 'chosen.json').read_text(encoding='utf-8'))
     langs = sys.argv[1:] or list(chosen)
-    lines = [l for l in json.loads((ROOT / 'voice' / 'lines.json').read_text(encoding='utf-8')) if l['where'].startswith(WHERE)]
+    # a text with a gap is read whole by the browser; letters are only recorded by people
+    lines = [l for l in json.loads((ROOT / 'voice' / 'lines.json').read_text(encoding='utf-8')) if not l.get('partOf') and l['speaker'] != 'buchstaben']
     for lang in langs:
         try:
             make(lang, chosen[lang], lines)
@@ -63,7 +78,8 @@ def main() -> None:
 
 
 def make(lang: str, key: str, lines: list) -> None:
-    catalog = {} if lang == 'de' else json.loads((ROOT / 'src' / 'i18n' / 'locales' / f'{lang}.json').read_text(encoding='utf-8'))
+    raw = {} if lang == 'de' else json.loads((ROOT / 'src' / 'i18n' / 'locales' / f'{lang}.json').read_text(encoding='utf-8'))
+    catalog = {normalize(k): normalize(v) for k, v in raw.items()}
     voice = PiperVoice.load(VOICES / f'{key}.onnx')
     rate = voice.config.sample_rate
     folder = OUT / lang
@@ -82,7 +98,12 @@ def make(lang: str, key: str, lines: list) -> None:
         if manifest.get(line['id']) == stamp and target.exists():
             kept += 1
             continue
-        pcm = np.concatenate([np.frombuffer(c.audio_int16_bytes, dtype=np.int16) for c in voice.synthesize(text, SynthesisConfig(length_scale=length))])
+        chunks = [np.frombuffer(c.audio_int16_bytes, dtype=np.int16) for c in voice.synthesize(text, SynthesisConfig(length_scale=length))]
+        if not chunks:
+            # nothing to say for this voice (only a sound word or signs): the browser reads it
+            missing += 1
+            continue
+        pcm = np.concatenate(chunks)
         target.write_bytes(mp3(pitched(pcm, factor), rate))
         manifest[line['id']] = stamp
         made += 1

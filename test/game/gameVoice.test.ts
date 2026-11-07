@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lineOf, normalizeVoiceText, pickLine, type Spoken } from '../../src/game/voice/gameVoice.ts';
+import { arrange, lineOf, normalizeVoiceText, pickLine, type Spoken } from '../../src/game/voice/gameVoice.ts';
 
 describe('which line a shown text is', () => {
   it('knows a line of Riese Rumpel', () => {
@@ -13,6 +13,10 @@ describe('which line a shown text is', () => {
 
   it('knows a line with a gap, filled', () => {
     expect(lineOf('Sieg für Team Blau!')).toMatchObject({ voice: 'erzaehler', gap: true });
+  });
+
+  it('an error message is not read to the children', () => {
+    expect(lineOf('Das hat nicht geklappt: TypeError: x is undefined')).toBeNull();
   });
 
   it('a text that is not spoken is nothing', () => {
@@ -45,5 +49,17 @@ describe('what is said when several lines come at once', () => {
 
   it('the same line again right away is not said twice', () => {
     expect(pickLine(now('erzaehler', 'a'), now('erzaehler', 'a'))).toBe(false);
+  });
+
+  it('a speaker of the same rank waits for the sentence to end instead of cutting it off', () => {
+    expect(arrange(now('riese'), now('erzaehler', 'y'))).toBe('wait');
+    expect(arrange(now('wesen'), now('ausruf', 'y'))).toBe('wait');
+  });
+
+  it('a more important speaker cuts in, a less important one is dropped, nothing playing: said now', () => {
+    expect(arrange(now('wesen'), now('zork', 'y'))).toBe('say');
+    expect(arrange(now('erzaehler'), now('wesen', 'y'))).toBe('drop');
+    expect(arrange(now('zork', 'a'), now('zork', 'a'))).toBe('drop');
+    expect(arrange(null, now('wesen'))).toBe('say');
   });
 });
