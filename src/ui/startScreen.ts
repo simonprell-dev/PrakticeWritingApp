@@ -16,6 +16,7 @@ import { openScriptPicker, scriptTile } from './scriptPicker.ts';
 import { languageButton } from './languagePicker.ts';
 import type { ScriptId } from '../recog/scripts.ts';
 import { t } from '../i18n/i18n.ts';
+import { wordsOffered } from './woerterLobby.ts';
 
 export interface StartDeps {
   settings: Settings;
@@ -31,6 +32,8 @@ export interface StartDeps {
   openDuel: () => void;
   openSiege: () => void;
   openTowers: () => void;
+  /** the Wörter-Zoo: its setup (help, known letters) first */
+  openWords: () => void;
   /** the game played last (to continue it), if there is one */
   lastGame: () => Promise<SaveMeta | null>;
   resume: (id: string) => void;
@@ -107,6 +110,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
       weltraum: () => tile('weltraum', t('👽 Weltraum'), t('Aliens zwischen den Planeten'), () => d.startHabitat('weltraum'), until),
       savanne: () => tile('savanne', t('🦒 Savanne'), t('Tiere in der Steppe'), () => d.startHabitat('savanne'), until),
       zauberland: () => tile('zauberland', t('🦄 Zauberland'), t('Einhörner, Prinzessinnen und eine Burg'), () => d.startHabitat('zauberland'), until),
+      woerterzoo: () => tile('woerterzoo', t('🦁 Wörter-Zoo'), t('Bilder benennen – Wörter schreiben'), d.openWords, until),
       duell: () => tile('duell', t('⚔️ Team-Duell'), t('Zwei Teams, Zettel, Blasen-Burgen'), d.openDuel, until),
       riesenburg: () => tile('riesenburg', t('🏰 Riesenburg'), t('Die ganze Klasse gegen den Riesen'), d.openSiege, until),
       tuerme: () => tile('tuerme', t('🏗️ Türme bauen'), t('Bis zu 8 Teams, Aliens helfen'), d.openTowers, until),
@@ -139,6 +143,8 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         { class: 'tiles' },
         scriptTile(s.script, () => openScriptPicker(s.script, d.setScript)),
         ...offeredWorlds(new Date(), (id) => id === 'advent' || !!SEASON_DEFS[id as SeasonId]).flatMap(({ id, until }) => {
+          // the words are German: the Wörter-Zoo only on a German page with a Latin script
+          if (id === 'woerterzoo' && !wordsOffered(s.script)) return [];
           const one = worldTile(id, until);
           // the Rechenmeer is outside the plan; while it is switched on in the code it follows the Zauberland
           return id === 'zauberland' && RECHENMEER ? [one, tile('rechenmeer', t('🐬 Rechenmeer'), t('Rechnen füllt das Meer'), () => d.startHabitat('rechenmeer'))] : [one];

@@ -25,6 +25,7 @@ import { tierOf } from '../recog/score.ts';
 import type { FrontId, SeasonId } from '../app/worlds.ts';
 import { SEASON_DEFS } from '../scenes/seasons/index.ts';
 import { advent } from '../scenes/advent.ts';
+import { woerterzoo } from '../scenes/woerterzoo.ts';
 import type { TileKit } from '../scenes/seasons/kit.ts';
 
 export function letterSticker(ch: string, color = '#2b2b7a', size = 90): AnyCanvas {
@@ -54,7 +55,7 @@ function genome(score: number, seed: number, a: Archetype, hue?: number, variant
   return g;
 }
 
-export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'duell' | 'riesenburg' | 'tuerme' | 'malen' | FrontId;
+export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'woerterzoo' | 'rechenmeer' | 'duell' | 'riesenburg' | 'tuerme' | 'malen' | FrontId;
 
 const KIT: TileKit = { draw, genome: (score, seed, variant) => genome(score, seed, 'season', undefined, variant), sticker: (ch) => letterSticker(ch) };
 
@@ -67,7 +68,7 @@ export function tilePreview(kind: TileKind, canvas: HTMLCanvasElement): void {
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
-  const season = kind === 'advent' ? advent : SEASON_DEFS[kind as SeasonId];
+  const season = kind === 'advent' ? advent : kind === 'woerterzoo' ? woerterzoo : SEASON_DEFS[kind as SeasonId];
   if (season?.tile) {
     season.tile(ctx, W, H, KIT);
     return;

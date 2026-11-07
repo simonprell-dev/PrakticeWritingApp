@@ -19,6 +19,7 @@ import { savanna } from '../scenes/savanna.ts';
 import { zauberland, ZauberScene } from '../scenes/zauberland.ts';
 import { SEASON_DEFS } from '../scenes/seasons/index.ts';
 import { advent, AdventScene } from '../scenes/advent.ts';
+import { woerterzoo, WoerterZooScene } from '../scenes/woerterzoo.ts';
 import { currentPlan, loadPlan } from './worldPlan.ts';
 import { rechenmeer, RechenScene, rechenVisionPatch } from '../scenes/rechenmeer.ts';
 import type { Scene, SceneHost, Snapshot } from '../scenes/scene.ts';
@@ -40,6 +41,7 @@ import { openTargetPicker } from '../ui/targetPicker.ts';
 import { toast as showToast } from '../ui/toast.ts';
 import { hush, speak } from '../game/voice/gameVoice.ts';
 import { openSiegeLobby } from '../ui/siegeLobby.ts';
+import { openWoerterLobby } from '../ui/woerterLobby.ts';
 import { openViewfinder } from '../ui/viewfinder.ts';
 import { openTowerLobby } from '../ui/towerLobby.ts';
 import { confetti, openSiegeResult, openTowerResult, openVictory } from '../ui/victoryScreen.ts';
@@ -48,10 +50,10 @@ import { DETECT_SIZE } from '../vision/constants.ts';
 import type { PlayerId, ScanResult, VisionOptions } from '../vision/types.ts';
 import { packTyped, unpackTyped } from './imageCodec.ts';
 import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSaves, loadSave, MODES, newSaveId, putSave, readSaveFile, type GameMode, type SaveGame } from './saves.ts';
-import { firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
+import { cleanWoerter, firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
 import { t } from '../i18n/i18n.ts';
 
-const HABITATS: Partial<Record<HabitatId, HabitatDef>> = { meer: aquarium, weltraum: space, savanne: savanna, zauberland, rechenmeer, ...SEASON_DEFS, advent };
+const HABITATS: Partial<Record<HabitatId, HabitatDef>> = { meer: aquarium, weltraum: space, savanne: savanna, zauberland, woerterzoo, rechenmeer, ...SEASON_DEFS, advent };
 const isHabitat = (m: string): m is HabitatId => Object.hasOwn(HABITATS, m);
 /** the paper setting as the recognition sees it: Lineatur 1 and 2 have the same four-line shape */
 const LINEATUR = { auto: 'auto', L1: 'school4', L2: 'school4', L3: 'school2', liniert: 'plain', blanko: 'none' } as const;
@@ -416,6 +418,15 @@ export class App {
             () => this.cameraSetup(),
           ),
         ),
+      openWords: () =>
+        this.choose('woerterzoo', () =>
+          openWoerterLobby(
+            this.settings,
+            () => this.save(),
+            () => this.startHabitat('woerterzoo'),
+            () => this.cameraSetup(),
+          ),
+        ),
       openTowers: () =>
         this.choose('tuerme', () =>
           openTowerLobby({
@@ -470,6 +481,7 @@ export class App {
   /** settings a game depends on (they come back with the game) */
   private configFor(mode: GameMode): Record<string, unknown> {
     const s = this.settings;
+    if (mode === 'woerterzoo') return { woerter: structuredClone(s.woerter) };
     if (isHabitat(mode)) return { practice: structuredClone(s.practice) };
     if (mode === 'duell') return { duel: structuredClone(s.duel) };
     if (mode === 'riesenburg') return { siege: structuredClone(s.siege) };
@@ -580,6 +592,7 @@ export class App {
     if (c.duel) this.settings.duel = c.duel;
     if (c.siege) this.settings.siege = c.siege;
     if (c.tower) this.settings.tower = c.tower;
+    if (c.woerter) this.settings.woerter = cleanWoerter(c.woerter);
     this.save();
     const m = g.mode;
     // the new scene waits (frozen) until the saved game is inside
@@ -694,8 +707,8 @@ export class App {
     this.settings.game.habitat = id;
     this.save();
     const def = HABITATS[id]!;
-    // the Rechenmeer and the advent calendar ask their own tasks: no practice letters there
-    const practice = this.settings.practice.mode === 'ueben' && id !== 'rechenmeer' && id !== 'advent';
+    // the Rechenmeer, the advent calendar and the Wörter-Zoo ask their own tasks: no practice letters there
+    const practice = this.settings.practice.mode === 'ueben' && id !== 'rechenmeer' && id !== 'advent' && id !== 'woerterzoo';
     const scene =
       id === 'zauberland'
         ? new ZauberScene(this.host(), this.stage.worldW)
@@ -703,7 +716,9 @@ export class App {
           ? new RechenScene(this.host(), this.stage.worldW)
           : id === 'advent'
             ? new AdventScene(this.host(), this.stage.worldW)
-            : new HabitatScene(def, this.host(), this.stage.worldW);
+            : id === 'woerterzoo'
+              ? new WoerterZooScene(this.host(), this.stage.worldW)
+              : new HabitatScene(def, this.host(), this.stage.worldW);
     this.scene = scene;
     hintsAloud = id !== 'advent';
     this.hud = new Hud(this.ui, {
@@ -734,7 +749,9 @@ export class App {
         ? t('Rechne die Aufgabe, schreib das Ergebnis und drücke „Fertig!“')
         : id === 'advent'
           ? t('Schreib auf, was sich Flocke wünscht, und drücke „Fertig!“')
-          : t('Schreib Buchstaben oder Zahlen und drücke „Fertig!“');
+          : id === 'woerterzoo'
+            ? t('Schreib das Wort zum Bild und drücke „Fertig!“')
+            : t('Schreib Buchstaben oder Zahlen und drücke „Fertig!“');
     if (!resuming) toast(practice ? this.practiceIntro(scene) : intro, 'info', 5000);
   }
 

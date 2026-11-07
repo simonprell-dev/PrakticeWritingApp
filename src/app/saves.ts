@@ -6,7 +6,7 @@ import { isWorldId, SEASON_INFO, type FrontId } from './worlds.ts';
 import { worldActive } from './worldPlan.ts';
 import { t, tk } from '../i18n/i18n.ts';
 
-export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'malen' | 'duell' | 'riesenburg' | 'tuerme' | FrontId;
+export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'woerterzoo' | 'rechenmeer' | 'malen' | 'duell' | 'riesenburg' | 'tuerme' | FrontId;
 
 /** title: German, translated where it is shown (t(MODES[m].title)) */
 export const MODES: Record<GameMode, { icon: string; title: string }> = {
@@ -14,6 +14,7 @@ export const MODES: Record<GameMode, { icon: string; title: string }> = {
   weltraum: { icon: '👽', title: tk('Weltraum') },
   savanne: { icon: '🦒', title: tk('Savanne') },
   zauberland: { icon: '🦄', title: tk('Zauberland') },
+  woerterzoo: { icon: '🦁', title: tk('Wörter-Zoo') },
   rechenmeer: { icon: '🐬', title: tk('Rechenmeer') },
   ...SEASON_INFO,
   malen: { icon: '🎨', title: tk('Mal-Aquarium') },

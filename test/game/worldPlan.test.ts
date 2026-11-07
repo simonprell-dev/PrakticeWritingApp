@@ -100,7 +100,7 @@ describe('offered worlds', () => {
     const list = offeredWorlds(new Date(2026, 10, 7), built);
     expect(list.slice(0, 2).map((w) => w.id)).toEqual(['herbst', 'martin']);
     expect(list[1].until?.toDateString()).toBe(new Date(2026, 10, 13).toDateString());
-    expect(list.slice(2).map((w) => w.id)).toEqual(['meer', 'weltraum', 'savanne', 'zauberland', 'duell', 'riesenburg', 'tuerme', 'malen']);
+    expect(list.slice(2).map((w) => w.id)).toEqual(['meer', 'weltraum', 'savanne', 'zauberland', 'woerterzoo', 'duell', 'riesenburg', 'tuerme', 'malen']);
     expect(list[2].until).toBeNull();
   });
 

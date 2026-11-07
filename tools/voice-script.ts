@@ -9,6 +9,7 @@ import { PRACTICE_SETS, withArticle } from '../src/recog/classes.ts';
 import { voiceId } from '../src/game/voiceId.ts';
 import { ALIEN_NAMES } from '../src/scenes/towerScene.ts';
 import { STORIES } from '../src/game/advent/story.ts';
+import { WORDS } from '../src/game/words/words.ts';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 
@@ -281,8 +282,13 @@ const RULES: Rule[] = [
     where: (l) => place(l, 'Foto'),
   },
   {
+    file: 'src/scenes/woerterzoo.ts',
+    pick: (l) => (!speechLike(l.text) ? null : l.text === 'Richtig!' && l.call === 'speak' ? 'ausruf' : l.call === 'speak' || l.call === 'toast' || /Was ist das|merk dir/.test(l.text) ? 'erzaehler' : null),
+    where: (l) => place(l, 'Wörter-Zoo'),
+  },
+  {
     file: 'src/app/app.ts',
-    pick: (l) => (!speechLike(l.text) ? null : l.call === 'toast' || l.returned ? 'erzaehler' : l.call === 'h' && (l.callFirst === 'h2' || l.callFirst === 'p') && l.near === 'letterDone' ? 'erzaehler' : null),
+    pick: (l) => (!speechLike(l.text) ? null : l.call === 'toast' || l.returned || /Wort zum Bild/.test(l.text) ? 'erzaehler' : l.call === 'h' && (l.callFirst === 'h2' || l.callFirst === 'p') && l.near === 'letterDone' ? 'erzaehler' : null),
     where: (l) => place(l, 'Hinweis'),
   },
 ];
@@ -329,6 +335,13 @@ function collect(): VoiceLine[] {
     add(st.figure, 'wesen');
     add(st.flocke, 'flocke');
   });
+  // the Wörter-Zoo: what each picture says when it comes alive, and its word slowly in syllables
+  for (const w of WORDS) {
+    const where = `Wörter-Zoo, Bild „${w.word}“`;
+    if (!seen.has(w.say)) seen.set(w.say, { id: voiceId(w.say), text: w.say, speaker: 'wesen', where });
+    const syl = w.syllables.join(' – ');
+    if (!seen.has(syl)) seen.set(syl, { id: voiceId(syl), text: syl, speaker: 'erzaehler', where: `${where} – das Wort in Silben (Hilfe „Nur Bild“)` });
+  }
   // the gaps: letters and numbers spoken on their own
   for (const set of PRACTICE_SETS) {
     for (const ch of set.chars) {
