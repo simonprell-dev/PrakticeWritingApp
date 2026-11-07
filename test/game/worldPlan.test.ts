@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { visibleSaves, type SaveMeta } from '../../src/app/saves.ts';
 import { currentPlan, loadPlan, offeredWorlds, resetPlan, worldActive } from '../../src/app/worldPlan.ts';
 import { DEFAULT_PLAN, type WorldPlan } from '../../src/app/worlds.ts';
@@ -116,5 +116,28 @@ describe('offered worlds', () => {
     const list = offeredWorlds(new Date(2026, 6, 1), built);
     expect(list.map((w) => w.id)).not.toContain('duell');
     expect(list.find((w) => w.id === 'halloween')).toEqual({ id: 'halloween', until: null });
+  });
+});
+
+describe('a slow server', () => {
+  it('a plan that comes after 10 s is still kept', async () => {
+    vi.useFakeTimers();
+    try {
+      const slow = (() => new Promise((r) => setTimeout(() => r(new Response(JSON.stringify({ plan: halloweenOff() }), { status: 200 })), 10_000))) as unknown as typeof fetch;
+      const p = loadPlan(slow);
+      await vi.advanceTimersByTimeAsync(10_500);
+      expect((await p).worlds.halloween.mode).toBe('off');
+      expect(currentPlan().worlds.halloween.mode).toBe('off');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('the badge', () => {
+  it('a plan over the whole year has no last day', () => {
+    store.set(KEY, JSON.stringify({ ...DEFAULT_PLAN, worlds: { ...DEFAULT_PLAN.worlds, halloween: { mode: 'plan', from: '01-01', to: '12-31' } } }));
+    resetPlan();
+    expect(offeredWorlds(new Date(2026, 6, 1), () => true).find((w) => w.id === 'halloween')).toEqual({ id: 'halloween', until: null });
   });
 });

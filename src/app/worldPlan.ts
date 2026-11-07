@@ -1,10 +1,10 @@
 // The yearly plan of the worlds as the app knows it: fetched from the server at start, kept in the browser for
 // the next start (and for no internet), the defaults of src/app/worlds.ts until either exists.
-import { activeUntil, DEFAULT_PLAN, isActive, normalizePlan, SEASON_IDS, SEASONAL, WORLD_IDS, type WorldId, type WorldPlan } from './worlds.ts';
+import { activeUntil, DEFAULT_PLAN, isActive, normalizePlan, rangeIn, SEASON_IDS, SEASONAL, WORLD_IDS, type WorldId, type WorldPlan } from './worlds.ts';
 
 const KEY = 'krakelkrone.worlds';
-/** the start screen does not wait longer for the server */
-const WAIT_MS = 2500;
+/** nothing waits for the plan (the start screen is drawn with the known one), so a slow network gets time */
+const WAIT_MS = 30_000;
 
 let plan: WorldPlan | null = null;
 
@@ -65,9 +65,16 @@ export function worldActive(id: WorldId, now = new Date()): boolean {
   return isActive(currentPlan().worlds[id], now);
 }
 
-/** the last day of a world's running time, null when it is always on or not planned now */
+/** a time this long is the whole year: it has no last day to tell */
+const WHOLE_YEAR_DAYS = 364;
+
+/** the last day of a world's running time, null when it is always on, planned the whole year or not planned now */
 export function worldUntil(id: WorldId, now = new Date()): Date | null {
-  return activeUntil(currentPlan().worlds[id], now);
+  const e = currentPlan().worlds[id];
+  const until = activeUntil(e, now);
+  if (!until) return null;
+  const r = rangeIn(e, now.getFullYear());
+  return Math.round((r.to.getTime() - r.from.getTime()) / 86_400_000) >= WHOLE_YEAR_DAYS ? null : until;
 }
 
 /**

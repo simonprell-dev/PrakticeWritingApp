@@ -186,7 +186,10 @@ export async function readSaveFile(f: File): Promise<SaveGame> {
   } catch {
     g = {};
   }
-  if (g.format !== FORMAT || !g.mode || !(g.mode in MODES) || !modeAvailable(g.mode) || g.state === undefined) throw new Error(t('Das ist keine Spielstand-Datei von Krakel & Krone.'));
+  if (g.format !== FORMAT || typeof g.mode !== 'string' || !Object.hasOwn(MODES, g.mode) || (g.mode === 'rechenmeer' && !RECHENMEER) || g.state === undefined)
+    throw new Error(t('Das ist keine Spielstand-Datei von Krakel & Krone.'));
+  // a seasonal world out of its time: the file is fine, the world comes back
+  if (!modeAvailable(g.mode)) throw new Error(t('Diese Welt gibt es gerade nicht. Der Spielstand lässt sich wieder laden, wenn ihre Jahreszeit kommt.'));
   if (g.version !== 1) throw new Error(t('Dieser Spielstand ist von einer neueren Version. Bitte die Seite neu laden.'));
   return { ...(g as SaveGame), id: newSaveId(), auto: false, name: String(g.name || t(MODES[g.mode].title)).slice(0, 60) };
 }

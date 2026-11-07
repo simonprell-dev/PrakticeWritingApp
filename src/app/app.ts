@@ -50,7 +50,7 @@ import { firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId,
 import { t } from '../i18n/i18n.ts';
 
 const HABITATS: Partial<Record<HabitatId, HabitatDef>> = { meer: aquarium, weltraum: space, savanne: savanna, zauberland, rechenmeer, ...SEASON_DEFS };
-const isHabitat = (m: string): m is HabitatId => m in HABITATS;
+const isHabitat = (m: string): m is HabitatId => Object.hasOwn(HABITATS, m);
 /** the paper setting as the recognition sees it: Lineatur 1 and 2 have the same four-line shape */
 const LINEATUR = { auto: 'auto', L1: 'school4', L2: 'school4', L3: 'school2', liniert: 'plain', blanko: 'none' } as const;
 const DEBUG = new URLSearchParams(location.search).has('debug');
@@ -154,6 +154,14 @@ export class App {
     void loadPlan().then((p) => {
       if (JSON.stringify(p) !== known && this.mode.kind === 'start') this.showStart();
     });
+    // a new day may bring or take a seasonal world: a start screen left open follows at midnight
+    let day = new Date().toDateString();
+    setInterval(() => {
+      const today = new Date().toDateString();
+      if (today === day) return;
+      day = today;
+      if (this.mode.kind === 'start') this.showStart();
+    }, 60_000);
   }
 
   private async boot(): Promise<void> {

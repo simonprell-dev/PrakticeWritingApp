@@ -116,11 +116,20 @@ export function createApi(env = process.env) {
     if (!db.ready) throw new HttpError(503, 'Datenbank noch nicht bereit');
     return db;
   };
-  /** the yearly plan of the worlds, read once from the database; undefined until then */
-  let worlds;
-  const loadWorlds = async () => {
-    if (worlds === undefined && db?.ready) worlds = await db.getSetting('worlds');
-    return worlds ?? null;
+  /**
+   * The yearly plan of the worlds, read once from the database (null: none saved). A database that is set up but
+   * not ready answers 503, so nobody takes the defaults for the saved plan. The read is kept as a promise, so a
+   * plan saved while it runs is not overwritten by the older value.
+   */
+  let worlds = null;
+  const loadWorlds = () => {
+    if (!db) return Promise.resolve(null);
+    if (!db.ready) throw new HttpError(503, 'Datenbank noch nicht bereit');
+    worlds ??= db.getSetting('worlds').catch((e) => {
+      worlds = null;
+      throw e;
+    });
+    return worlds;
   };
 
   const isAdmin = (req) => verifyToken(secret, readCookie(req.headers.cookie, COOKIE));
@@ -173,12 +182,16 @@ export function createApi(env = process.env) {
         const status = MESSAGE_STATUS.includes(st) ? st : null;
         return send(res, 200, await needDb().messages(page, 20, status));
       }
+      if (path === '/api/admin/worlds' && method === 'GET') {
+        needDb();
+        return send(res, 200, { plan: await loadWorlds() });
+      }
       if (path === '/api/admin/worlds' && method === 'POST') {
         const d = needDb();
         const v = validateWorlds(await jsonBody(req, MAX_WORLDS_BODY));
         if (!v.ok) throw new HttpError(400, `Ungültiger Plan (${v.error})`);
         await d.setSetting('worlds', v.value);
-        worlds = v.value;
+        worlds = Promise.resolve(v.value);
         return send(res, 200, { ok: true });
       }
       const m = /^\/api\/admin\/messages\/(\d{1,18})$/.exec(path);

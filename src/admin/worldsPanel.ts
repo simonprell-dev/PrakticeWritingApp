@@ -2,7 +2,7 @@
 // dragged: at its ends to change the first or last day, in the middle to move it. Saves the whole plan.
 import { h } from '../ui/dom.ts';
 import { isActive, normalizePlan, rangeIn, SEASON_INFO, SEASONAL, WORLD_IDS, type SeasonId, type WorldEntry, type WorldId, type WorldMode, type WorldPlan } from '../app/worlds.ts';
-import { dayOfYear, dragEaster, dragRange, mmdd, YEAR, type DragKind } from './timeline.ts';
+import { dayOfYear, dragDays, dragEaster, easterYear, YEAR, type DragKind } from './timeline.ts';
 
 const NAMES: Record<Exclude<WorldId, SeasonId>, string> = {
   meer: '🐠 Meer',
@@ -40,7 +40,7 @@ const dayOf = (d: Date) => dayOfYear(`${String(d.getMonth() + 1).padStart(2, '0'
 /** first and last day of an entry on this year's timeline */
 function span(e: WorldEntry, now: Date): { from: number; to: number } {
   if (e.easter) {
-    const r = rangeIn(e, now.getFullYear());
+    const r = rangeIn(e, easterYear(e.easter, now));
     return { from: dayOf(r.from), to: dayOf(r.to) };
   }
   return { from: dayOfYear(e.from!), to: dayOfYear(e.to!) };
@@ -49,8 +49,8 @@ function span(e: WorldEntry, now: Date): { from: number; to: number } {
 function describe(e: WorldEntry, now: Date): string {
   if (e.mode === 'on') return 'immer an';
   if (e.mode === 'off') return 'aus';
-  const r = rangeIn(e, now.getFullYear());
-  const easter = e.easter ? ` (Ostern ${e.easter.before} Tage vorher bis ${e.easter.after} danach)` : '';
+  const r = rangeIn(e, e.easter ? easterYear(e.easter, now) : now.getFullYear());
+  const easter = e.easter ? ` (Ostern ${r.to.getFullYear()}: ${e.easter.before} Tage vorher bis ${e.easter.after} danach)` : '';
   return `${short(r.from)} – ${short(r.to)}${easter}${isActive(e, now) ? ' · jetzt aktiv' : ''}`;
 }
 
@@ -110,12 +110,7 @@ export function worldsPanel(d: WorldsDeps): HTMLElement {
       if (!drag) return;
       const delta = Math.round(((ev.clientX - drag.x) / drag.width) * YEAR);
       const s = drag.start;
-      if (s.easter) draft!.worlds[id] = { ...s, easter: dragEaster(s.easter, drag.kind, delta) };
-      else {
-        const r = dragRange({ from: dayOfYear(s.from!), to: dayOfYear(s.to!) }, drag.kind, delta);
-        // a day that was not dragged keeps its exact date (the 29th of February)
-        draft!.worlds[id] = { ...s, from: drag.kind === 'end' ? s.from : mmdd(r.from), to: drag.kind === 'start' ? s.to : mmdd(r.to) };
-      }
+      draft!.worlds[id] = s.easter ? { ...s, easter: dragEaster(s.easter, drag.kind, delta) } : { ...s, ...dragDays({ from: s.from!, to: s.to! }, drag.kind, delta) };
       paint();
       mark();
     });
@@ -172,8 +167,9 @@ export function worldsPanel(d: WorldsDeps): HTMLElement {
     render();
   });
 
+  // through the admin route: a database that is not ready answers 503 instead of a plan that looks saved
   void d
-    .api<{ plan: unknown }>('/api/worlds')
+    .api<{ plan: unknown }>('/api/admin/worlds')
     .then(({ plan }) => {
       saved = normalizePlan(plan);
       draft = structuredClone(saved);

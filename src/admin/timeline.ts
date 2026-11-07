@@ -1,6 +1,6 @@
 // Arithmetic of the yearly timeline in the admin area: a day is 0..364 of a common year (the 29th of February
 // counts as the 28th), a time runs from `from` to `to` and may run over New Year.
-import { EASTER_MAX } from '../app/worlds.ts';
+import { EASTER_MAX, rangeIn } from '../app/worlds.ts';
 
 export const YEAR = 365;
 const MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -34,9 +34,26 @@ export function dragRange(r: { from: number; to: number }, kind: DragKind, delta
   return { from: r.from, to: wrap(r.from + n) };
 }
 
-/** the days around Easter Sunday after dragging */
+/** a time of "MM-DD" days after dragging; a day that ends up where it was keeps its exact date (the 29th of February) */
+export function dragDays(s: { from: string; to: string }, kind: DragKind, delta: number): { from: string; to: string } {
+  const r = dragRange({ from: dayOfYear(s.from), to: dayOfYear(s.to) }, kind, delta);
+  return { from: r.from === dayOfYear(s.from) ? s.from : mmdd(r.from), to: r.to === dayOfYear(s.to) ? s.to : mmdd(r.to) };
+}
+
+/** the days around Easter Sunday after dragging; moving keeps the length, also at the limits */
 export function dragEaster(e: { before: number; after: number }, kind: DragKind, delta: number): { before: number; after: number } {
+  if (kind === 'move') {
+    const d = clamp(delta, -Math.min(EASTER_MAX - e.before, e.after), Math.min(e.before, EASTER_MAX - e.after));
+    return { before: e.before - d, after: e.after + d };
+  }
   const before = kind === 'end' ? e.before : clamp(e.before - delta, 0, EASTER_MAX);
   const after = kind === 'start' ? e.after : clamp(e.after + delta, 0, EASTER_MAX);
   return { before, after };
+}
+
+/** the year of the Easter time to show: this year's until it is over, then next year's */
+export function easterYear(e: { before: number; after: number }, now: Date): number {
+  const y = now.getFullYear();
+  const today = new Date(y, now.getMonth(), now.getDate());
+  return today > rangeIn({ mode: 'plan', easter: e }, y).to ? y + 1 : y;
 }

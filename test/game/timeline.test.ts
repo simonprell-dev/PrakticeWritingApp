@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayOfYear, dragEaster, dragRange, mmdd } from '../../src/admin/timeline.ts';
+import { dayOfYear, dragDays, dragEaster, dragRange, easterYear, mmdd } from '../../src/admin/timeline.ts';
 
 describe('admin timeline', () => {
   it('turns days into dates and back', () => {
@@ -37,5 +37,31 @@ describe('admin timeline', () => {
     expect(dragEaster({ before: 2, after: 1 }, 'start', 10)).toEqual({ before: 0, after: 1 });
     expect(dragEaster({ before: 58, after: 1 }, 'start', -10)).toEqual({ before: 60, after: 1 });
     expect(dragEaster({ before: 1, after: 59 }, 'move', 5)).toEqual({ before: 0, after: 60 });
+  });
+});
+
+describe('dragging keeps exact dates', () => {
+  it('a drag of no day changes nothing, not even the 29th of February', () => {
+    for (const kind of ['start', 'end', 'move'] as const) expect(dragDays({ from: '12-01', to: '02-29' }, kind, 0)).toEqual({ from: '12-01', to: '02-29' });
+  });
+
+  it('moving there and back keeps the 29th of February', () => {
+    expect(dragDays({ from: '12-01', to: '02-29' }, 'move', 0)).toEqual({ from: '12-01', to: '02-29' });
+    expect(dragDays({ from: '12-01', to: '02-29' }, 'move', 3)).toEqual({ from: '12-04', to: '03-03' });
+    expect(dragDays({ from: '12-01', to: '02-29' }, 'start', 3)).toEqual({ from: '12-04', to: '02-29' });
+  });
+});
+
+describe('Easter in the admin', () => {
+  it('moving keeps the length at the limits', () => {
+    expect(dragEaster({ before: 14, after: 1 }, 'move', 20)).toEqual({ before: 0, after: 15 });
+    expect(dragEaster({ before: 55, after: 1 }, 'move', -20)).toEqual({ before: 56, after: 0 });
+  });
+
+  it('shows the next Easter once this one is over', () => {
+    expect(easterYear({ before: 14, after: 1 }, new Date(2026, 10, 7))).toBe(2027);
+    expect(easterYear({ before: 14, after: 1 }, new Date(2026, 1, 1))).toBe(2026);
+    expect(easterYear({ before: 14, after: 1 }, new Date(2026, 3, 6))).toBe(2026);
+    expect(easterYear({ before: 14, after: 1 }, new Date(2026, 3, 7))).toBe(2027);
   });
 });

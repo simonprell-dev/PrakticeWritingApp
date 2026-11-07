@@ -60,3 +60,29 @@ describe('GET /api/worlds', () => {
     expect(JSON.parse(body)).toEqual({ plan: null });
   });
 });
+
+async function get(env: Record<string, string>, path: string) {
+  const { createApi } = await import('../../server/api.js');
+  const api = createApi(env as unknown as NodeJS.ProcessEnv);
+  let status = 0;
+  let body = '';
+  const res = {
+    headersSent: false,
+    writeHead(s: number) {
+      status = s;
+      return { end: (d?: Buffer) => (body = d ? d.toString() : '') };
+    },
+  };
+  const req = { method: 'GET', headers: {}, socket: { remoteAddress: '127.0.0.1' } };
+  await api.handle(req as never, res as never, new URL(`http://x${path}`));
+  await api.close();
+  return { status, body };
+}
+
+describe('GET /api/worlds with a database that is not ready', () => {
+  it('says so instead of answering no plan', async () => {
+    // nothing listens on port 9: the database never becomes ready
+    const r = await get({ DATABASE_URL: 'postgres://x:y@127.0.0.1:9/x', ADMIN_PASSWORD: 'pw', GEOIP: 'off' }, '/api/worlds');
+    expect(r.status).toBe(503);
+  });
+});

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { FORMAT, MODES, modeAvailable, readSaveFile, visibleSaves, type GameMode, type SaveMeta } from '../../src/app/saves.ts';
 import { SEASONAL, type WorldId } from '../../src/app/worlds.ts';
 
@@ -22,5 +22,23 @@ describe('hidden game modes', () => {
   it('a save file of another mode still loads', async () => {
     const f = { text: async () => JSON.stringify({ format: FORMAT, version: 1, mode: 'meer', state: {} }) } as File;
     await expect(readSaveFile(f)).resolves.toMatchObject({ mode: 'meer' });
+  });
+});
+
+describe('save files of other times', () => {
+  const file = (mode: string) => ({ text: async () => JSON.stringify({ format: FORMAT, version: 1, mode, state: {} }) }) as File;
+
+  it('a file of a world out of its time says the world comes back', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 11, 10));
+    try {
+      await expect(readSaveFile(file('halloween'))).rejects.toThrow(/Jahreszeit/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a mode that is a name of every object is no mode', async () => {
+    await expect(readSaveFile(file('toString'))).rejects.toThrow(/keine Spielstand-Datei/);
   });
 });
