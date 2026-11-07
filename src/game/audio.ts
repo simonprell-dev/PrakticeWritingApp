@@ -26,6 +26,11 @@ export function unlockAudio(): void {
   ctx();
 }
 
+/** the volume speech plays at: 0 while the sound is off */
+export function soundVolume(): number {
+  return enabled ? volume : 0;
+}
+
 export function setSound(on: boolean, vol = volume): void {
   enabled = on;
   volume = vol;

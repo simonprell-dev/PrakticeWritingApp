@@ -21,3 +21,6 @@ tools/.browsers/
 
 # IP-to-country list for the page view counter (downloaded by the server)
 .geoip/
+
+# offline speech (Piper) and its voices, see tools/voice-ai.py
+tools/.piper/
