@@ -2,5 +2,6 @@
 // only when it is built and its time has come (src/app/worlds.ts).
 import type { SeasonId } from '../../app/worlds.ts';
 import type { HabitatDef } from '../habitat.ts';
+import { winter } from './winter.ts';
 
-export const SEASON_DEFS: Partial<Record<SeasonId, HabitatDef>> = {};
+export const SEASON_DEFS: Partial<Record<SeasonId, HabitatDef>> = { winter };
