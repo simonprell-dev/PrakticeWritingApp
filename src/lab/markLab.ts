@@ -5,6 +5,7 @@ import type { Engine } from '../recog/engine.ts';
 import { DETECT_SIZE } from '../vision/constants.ts';
 import { probeDots } from '../vision/markProbe.ts';
 import type { Box, RGBAImage, VisionOptions } from '../vision/types.ts';
+import { exposureKnob, overexposedShare, type ExposureCaps, type ExposureKnob } from './markExposure.ts';
 import { glyphsInside, markPitchMm, pxPerMm, SERIES, summarize, type Shot } from './markSeries.ts';
 import { FIELD_INSET, markTestSvg, TEST_FIELDS } from './markTestSheet.ts';
 
@@ -14,6 +15,8 @@ const FIELD_ASPECT = 58 / 20;
 const PAUSE_MS = 300;
 /** a shorter drag is a click, px on screen */
 const MIN_DRAG = 12;
+/** how often the blown out share is shown, ms */
+const CLIP_EVERY_MS = 500;
 const STORE = 'krakelkrone.markshots.2';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -45,11 +48,15 @@ export function setupMarkLab(engine: Engine, opts: () => VisionOptions, ready: P
   const cams = $<HTMLSelectElement>('mark-cams');
   const info = $('mark-info');
   const table = $('mark-table');
-  const controls: (HTMLSelectElement | HTMLButtonElement)[] = [field, source, view, cams, $<HTMLButtonElement>('mark-series'), $<HTMLButtonElement>('mark-cam'), $<HTMLButtonElement>('mark-clear')];
+  const exposure = $<HTMLInputElement>('mark-exposure');
+  const exposureNote = $('mark-exposure-note');
+  const clip = $('mark-clip');
+  const controls: (HTMLSelectElement | HTMLButtonElement | HTMLInputElement)[] = [exposure, field, source, view, cams, $<HTMLButtonElement>('mark-series'), $<HTMLButtonElement>('mark-cam'), $<HTMLButtonElement>('mark-clear')];
   let shots = loadShots();
   let running = false;
   /** the frame drawn by hand, as shares of the picture; null: the starting frame of the view */
   let drawn: Box | null = null;
+  let knob: ExposureKnob | null = null;
 
   for (const f of TEST_FIELDS) field.append(new Option(f.id, f.id));
 
@@ -96,6 +103,19 @@ export function setupMarkLab(engine: Engine, opts: () => VisionOptions, ready: P
     return { width: w, height: h, data };
   }
 
+  /** offers what this camera lets the browser change */
+  function setupExposure(track: MediaStreamTrack | undefined): void {
+    knob = exposureKnob((track?.getCapabilities?.() ?? {}) as ExposureCaps);
+    exposure.hidden = !knob;
+    exposureNote.textContent = knob ? '' : 'Diese Kamera lässt sich vom Browser aus nicht regeln.';
+    if (!knob) return;
+    exposure.min = String(knob.min);
+    exposure.max = String(knob.max);
+    exposure.step = String(knob.step ?? 'any');
+    const now = (track?.getSettings() as unknown as Record<string, unknown>)[knob.key];
+    exposure.value = String(typeof now === 'number' ? now : knob.max);
+  }
+
   function render(): void {
     const rows = summarize(shots)
       .reverse()
@@ -114,6 +134,7 @@ export function setupMarkLab(engine: Engine, opts: () => VisionOptions, ready: P
     });
     video.srcObject = stream;
     await video.play();
+    setupExposure(stream.getVideoTracks()[0]);
     if (cams.options.length <= 1) {
       const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
       if (list.length) cams.replaceChildren(...list.map((d, i) => new Option(d.label || `Kamera ${i + 1}`, d.deviceId)));
@@ -139,11 +160,13 @@ export function setupMarkLab(engine: Engine, opts: () => VisionOptions, ready: P
     const scale = Math.min(1, DETECT_SIZE / Math.max(video.videoWidth, video.videoHeight));
     const small = { x: b.x * scale, y: b.y * scale, w: b.w * scale, h: b.h * scale };
     for (let k = 0; k < SERIES; k++) {
-      const probe = probeDots(innerPart(picture(1), b), { pitchPx });
+      const inner = innerPart(picture(1), b);
+      const probe = probeDots(inner, { pitchPx });
+      const clipped = overexposedShare(inner);
       engine.reset();
       const glyphs = glyphsInside(engine.scan(picture(scale), opts()).glyphs, small);
       const mm = pxPerMm(f, probe.pitchPx || pitchPx);
-      shots.push({ ...base, probe, glyphs, pxPerMm: mm });
+      shots.push({ ...base, probe, glyphs, pxPerMm: mm, clipped });
       info.textContent = `Bild ${k + 1} von ${SERIES}: ${probe.readable ? 'lesbar' : 'nicht lesbar'}, Treffer ${Math.round(100 * probe.hitRate)} %, Kontrast ${(100 * probe.contrast).toFixed(1)} %, ${mm.toFixed(1)} px/mm, ${glyphs} Zeichen`;
       saveShots(shots);
       render();
@@ -184,6 +207,17 @@ export function setupMarkLab(engine: Engine, opts: () => VisionOptions, ready: P
     placeFrame();
   });
   area.addEventListener('pointerup', () => (from = null));
+
+  exposure.addEventListener('input', () => {
+    if (!knob) return;
+    const track = (video.srcObject as MediaStream | null)?.getVideoTracks()[0];
+    const set = { ...(knob.manual ? { exposureMode: 'manual' } : {}), [knob.key]: Number(exposure.value) };
+    void track?.applyConstraints({ advanced: [set as MediaTrackConstraintSet] }).catch((e) => (info.textContent = `Belichtung geht nicht: ${e}`));
+  });
+  setInterval(() => {
+    if (running || video.videoWidth < 100) return;
+    clip.textContent = `Überstrahlt im Rahmen: ${Math.round(100 * overexposedShare(innerPart(picture(1), fieldBox())))} %`;
+  }, CLIP_EVERY_MS);
 
   $('mark-print').addEventListener('click', () => {
     $('mark-sheets').innerHTML = markTestSvg(1) + markTestSvg(2);
