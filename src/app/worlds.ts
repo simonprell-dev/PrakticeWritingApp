@@ -38,7 +38,7 @@ export const SEASON_INFO: Record<SeasonId, { icon: string; title: string; hint: 
   fruehling: { icon: '🌷', title: tk('Frühling'), hint: tk('Blumen, Bienen und Vögel auf der Wiese') },
   ostern: { icon: '🐣', title: tk('Ostern'), hint: tk('Osterhasen, Küken und bunte Eier') },
   strand: { icon: '🏖️', title: tk('Strand & Sonne'), hint: tk('Krebse, Möwen und Sandburgen') },
-  herbst: { icon: '🍂', title: tk('Herbst'), hint: tk('Igel, Eichhörnchen und Drachen im Wind') },
+  herbst: { icon: '🍂', title: tk('Herbst'), hint: tk('Igel, Eichhörnchen, Füchse und Drachen') },
   halloween: { icon: '🎃', title: tk('Halloween'), hint: tk('Gespenster, Kürbisse und kleine Hexen') },
   martin: { icon: '🏮', title: tk('Sankt Martin'), hint: tk('Ein Laternenzug durchs Dorf') },
   weihnachten: { icon: '🎄', title: tk('Weihnachten'), hint: tk('Wichtel, Rentiere und Geschenke') },
