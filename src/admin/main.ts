@@ -3,6 +3,7 @@ import './admin.css';
 import { clear, h } from '../ui/dom.ts';
 import { LAND, MAP_H, MAP_W } from '../ui/worldMapData.ts';
 import { COUNTRY_PATHS } from './countryMapData.ts';
+import { worldsPanel } from './worldsPanel.ts';
 
 interface DayRow {
   day: string;
@@ -391,7 +392,7 @@ async function showDashboard(): Promise<void> {
         'Abmelden',
       ),
     ),
-    h('main', null, h('div', { id: 'admin-error', class: 'error' }), stats, inbox),
+    h('main', null, h('div', { id: 'admin-error', class: 'error' }), stats, worldsPanel({ api, fail }), inbox),
   );
   refresh();
 }

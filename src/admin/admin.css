@@ -242,3 +242,102 @@ th.num {
   color: #fff;
   border-color: var(--accent);
 }
+
+/* Welten: yearly timeline */
+.worlds h3 {
+  margin: 18px 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--soft);
+}
+.world-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) 140px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.world-months {
+  border-bottom: none;
+  padding: 0;
+}
+.world-name {
+  font-weight: 600;
+}
+.world-when {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--soft);
+}
+.world-month-row {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  font-size: 11px;
+  color: var(--soft);
+}
+.world-month-row span {
+  border-left: 1px solid var(--line);
+  padding-left: 3px;
+}
+.world-track {
+  position: relative;
+  height: 28px;
+  background: #f0edf6;
+  border-radius: 6px;
+  touch-action: none;
+  user-select: none;
+}
+.world-bar {
+  position: absolute;
+  top: 3px;
+  height: 22px;
+  border-radius: 5px;
+  cursor: grab;
+}
+.world-bar.off {
+  opacity: 0.22;
+}
+.world-bar.always {
+  opacity: 0.45;
+}
+.world-bar .grip {
+  position: absolute;
+  top: 0;
+  width: 9px;
+  height: 100%;
+  cursor: ew-resize;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 4px;
+}
+.world-bar .grip.start {
+  left: 0;
+}
+.world-bar .grip.end {
+  right: 0;
+}
+.world-today {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: #d33;
+  pointer-events: none;
+}
+.world-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}
+@media (max-width: 700px) {
+  .world-row {
+    grid-template-columns: 1fr 120px;
+  }
+  .world-row .world-track,
+  .world-row .world-month-row {
+    grid-column: 1 / -1;
+  }
+}
