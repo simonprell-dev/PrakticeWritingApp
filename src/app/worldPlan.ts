@@ -1,6 +1,6 @@
 // The yearly plan of the worlds as the app knows it: fetched from the server at start, kept in the browser for
 // the next start (and for no internet), the defaults of src/app/worlds.ts until either exists.
-import { activeUntil, DEFAULT_PLAN, isActive, normalizePlan, rangeIn, SEASON_IDS, SEASONAL, WORLD_IDS, type WorldId, type WorldPlan } from './worlds.ts';
+import { activeUntil, DEFAULT_PLAN, isActive, normalizePlan, rangeIn, FRONT_IDS, SEASONAL, WORLD_IDS, type WorldId, type WorldPlan } from './worlds.ts';
 
 const KEY = 'krakelkrone.worlds';
 /** nothing waits for the plan (the start screen is drawn with the known one), so a slow network gets time */
@@ -84,5 +84,5 @@ export function worldUntil(id: WorldId, now = new Date()): Date | null {
 export function offeredWorlds(now: Date, built: (id: WorldId) => boolean): { id: WorldId; until: Date | null }[] {
   const on = (id: WorldId) => worldActive(id, now) && (!SEASONAL.has(id) || built(id));
   const pick = (ids: WorldId[]) => ids.filter(on).map((id) => ({ id, until: worldUntil(id, now) }));
-  return [...pick(SEASON_IDS), ...pick(WORLD_IDS.filter((id) => !SEASONAL.has(id)))];
+  return [...pick(FRONT_IDS), ...pick(WORLD_IDS.filter((id) => !SEASONAL.has(id)))];
 }

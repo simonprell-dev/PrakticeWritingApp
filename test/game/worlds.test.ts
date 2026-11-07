@@ -54,7 +54,7 @@ describe('world plan', () => {
 
   it('every seasonal world is planned', () => {
     for (const id of WORLD_IDS) if (SEASONAL.has(id)) expect(DEFAULT_PLAN.worlds[id].mode).toBe('plan');
-    expect(SEASONAL.size).toBe(9);
+    expect(SEASONAL.size).toBe(10);
   });
 
   it('tells the last day of the running time', () => {

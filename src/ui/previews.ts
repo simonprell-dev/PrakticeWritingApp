@@ -22,7 +22,7 @@ import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
 import { TAU } from '../game/math.ts';
 import { blockWidth, drawBlock } from '../game/tower/towerArt.ts';
 import { tierOf } from '../recog/score.ts';
-import type { SeasonId } from '../app/worlds.ts';
+import type { FrontId, SeasonId } from '../app/worlds.ts';
 import { SEASON_DEFS } from '../scenes/seasons/index.ts';
 import type { TileKit } from '../scenes/seasons/kit.ts';
 
@@ -53,7 +53,7 @@ function genome(score: number, seed: number, a: Archetype, hue?: number, variant
   return g;
 }
 
-export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'duell' | 'riesenburg' | 'tuerme' | 'malen' | SeasonId;
+export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'duell' | 'riesenburg' | 'tuerme' | 'malen' | FrontId;
 
 const KIT: TileKit = { draw, genome: (score, seed, variant) => genome(score, seed, 'season', undefined, variant), sticker: (ch) => letterSticker(ch) };
 

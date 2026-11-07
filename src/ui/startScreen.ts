@@ -1,6 +1,6 @@
 import { RECHENMEER } from '../app/features.ts';
 import { offeredWorlds } from '../app/worldPlan.ts';
-import { SEASON_INFO, SEASONAL, type SeasonId, type WorldId } from '../app/worlds.ts';
+import { SEASON_INFO, SEASONAL, type FrontId, type SeasonId, type WorldId } from '../app/worlds.ts';
 import { SEASON_DEFS } from '../scenes/seasons/index.ts';
 import type { SaveMeta } from '../app/saves.ts';
 import type { CameraMode, HabitatId, Settings } from '../app/settings.ts';
@@ -99,10 +99,10 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
   };
   const worldTile = (id: WorldId, until: Date | null) => {
     if (SEASONAL.has(id)) {
-      const s = SEASON_INFO[id as SeasonId];
-      return tile(id as SeasonId, `${s.icon} ${t(s.title)}`, t(s.hint), () => d.startHabitat(id as SeasonId), until);
+      const s = SEASON_INFO[id as FrontId];
+      return tile(id as FrontId, `${s.icon} ${t(s.title)}`, t(s.hint), () => d.startHabitat(id as FrontId), until);
     }
-    const fixed: Record<Exclude<WorldId, SeasonId>, () => HTMLElement> = {
+    const fixed: Record<Exclude<WorldId, FrontId>, () => HTMLElement> = {
       meer: () => tile('meer', t('🐠 Meer'), t('Fische im Ozean'), () => d.startHabitat('meer'), until),
       weltraum: () => tile('weltraum', t('👽 Weltraum'), t('Aliens zwischen den Planeten'), () => d.startHabitat('weltraum'), until),
       savanne: () => tile('savanne', t('🦒 Savanne'), t('Tiere in der Steppe'), () => d.startHabitat('savanne'), until),
@@ -112,7 +112,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
       tuerme: () => tile('tuerme', t('🏗️ Türme bauen'), t('Bis zu 8 Teams, Aliens helfen'), d.openTowers, until),
       malen: () => tile('malen', t('🎨 Mal-Aquarium'), t('Meerestiere ausmalen – sie schwimmen los'), d.openPaint, until),
     };
-    return fixed[id as Exclude<WorldId, SeasonId>]();
+    return fixed[id as Exclude<WorldId, FrontId>]();
   };
   const cam = d.camera();
   const short = cam.label.length > 32 ? cam.label.slice(0, 30) + '…' : cam.label;

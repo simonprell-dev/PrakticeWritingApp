@@ -2,12 +2,12 @@
 import type { Quad } from '../camera/perspective.ts';
 import { detectLocale } from '../i18n/detect.ts';
 import { t, tk } from '../i18n/i18n.ts';
-import type { SeasonId } from './worlds.ts';
+import type { FrontId } from './worlds.ts';
 import { isScriptId, scriptOf, type ScriptId } from '../recog/scripts.ts';
 import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
 import { TASK_KINDS, type TaskKind } from '../game/math/tasks.ts';
 
-export type HabitatId = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | SeasonId;
+export type HabitatId = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | FrontId;
 
 /**
  * fest: a document camera or webcam looks at the paper all the time (projector in class);

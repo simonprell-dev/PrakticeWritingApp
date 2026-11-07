@@ -1,10 +1,10 @@
 // Admin section "Welten": per game a switch (by plan / always on / off) and a yearly timeline whose bar is
 // dragged: at its ends to change the first or last day, in the middle to move it. Saves the whole plan.
 import { h } from '../ui/dom.ts';
-import { isActive, normalizePlan, rangeIn, SEASON_INFO, SEASONAL, WORLD_IDS, type SeasonId, type WorldEntry, type WorldId, type WorldMode, type WorldPlan } from '../app/worlds.ts';
+import { isActive, normalizePlan, rangeIn, SEASON_INFO, SEASONAL, WORLD_IDS, type FrontId, type WorldEntry, type WorldId, type WorldMode, type WorldPlan } from '../app/worlds.ts';
 import { dayOfYear, dragDays, dragEaster, easterYear, YEAR, type DragKind } from './timeline.ts';
 
-const NAMES: Record<Exclude<WorldId, SeasonId>, string> = {
+const NAMES: Record<Exclude<WorldId, FrontId>, string> = {
   meer: '🐠 Meer',
   weltraum: '👽 Weltraum',
   savanne: '🦒 Savanne',
@@ -24,6 +24,7 @@ const COLORS: Partial<Record<WorldId, string>> = {
   halloween: '#8e5bb5',
   martin: '#e69138',
   weihnachten: '#cc4125',
+  advent: '#e06666',
 };
 const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const MODES: [WorldMode, string][] = [
@@ -32,7 +33,7 @@ const MODES: [WorldMode, string][] = [
   ['off', 'aus'],
 ];
 
-const nameOf = (id: WorldId) => (SEASONAL.has(id) ? `${SEASON_INFO[id as SeasonId].icon} ${SEASON_INFO[id as SeasonId].title}` : NAMES[id as Exclude<WorldId, SeasonId>]);
+const nameOf = (id: WorldId) => (SEASONAL.has(id) ? `${SEASON_INFO[id as FrontId].icon} ${SEASON_INFO[id as FrontId].title}` : NAMES[id as Exclude<WorldId, FrontId>]);
 const short = (d: Date) => `${d.getDate()}.${d.getMonth() + 1}.`;
 /** day of the year 0..364 of a date (the 29th of February counts as the 28th) */
 const dayOf = (d: Date) => dayOfYear(`${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);

@@ -72,7 +72,7 @@ export const MESSAGE_STATUS = ['new', 'read', 'done'];
 /** the games the yearly plan knows; the same list as WORLD_IDS in src/app/worlds.ts (a test checks it) */
 export const WORLD_IDS = [
   'meer', 'weltraum', 'savanne', 'zauberland', 'duell', 'riesenburg', 'tuerme', 'malen',
-  'neujahr', 'winter', 'fruehling', 'ostern', 'strand', 'herbst', 'halloween', 'martin', 'weihnachten',
+  'neujahr', 'winter', 'fruehling', 'ostern', 'strand', 'herbst', 'halloween', 'martin', 'weihnachten', 'advent',
 ];
 /** the plan is small; this leaves room */
 export const MAX_WORLDS_BODY = 8 * 1024;

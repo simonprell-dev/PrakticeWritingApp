@@ -20,19 +20,25 @@ export type WorldId =
   | 'herbst'
   | 'halloween'
   | 'martin'
-  | 'weihnachten';
+  | 'weihnachten'
+  | 'advent';
 
 export type SeasonId = 'neujahr' | 'winter' | 'fruehling' | 'ostern' | 'strand' | 'herbst' | 'halloween' | 'martin' | 'weihnachten';
 
 export const SEASON_IDS: SeasonId[] = ['neujahr', 'winter', 'fruehling', 'ostern', 'strand', 'herbst', 'halloween', 'martin', 'weihnachten'];
 
 /** the games of the start screen in its order, then the seasonal worlds through the year */
-export const WORLD_IDS: WorldId[] = ['meer', 'weltraum', 'savanne', 'zauberland', 'duell', 'riesenburg', 'tuerme', 'malen', ...SEASON_IDS];
+/** what stands in front on the start screen in its time: the advent calendar and the seasonal worlds */
+export type FrontId = SeasonId | 'advent';
+export const FRONT_IDS: FrontId[] = ['advent', ...SEASON_IDS];
 
-export const SEASONAL: Set<WorldId> = new Set(SEASON_IDS);
+export const WORLD_IDS: WorldId[] = ['meer', 'weltraum', 'savanne', 'zauberland', 'duell', 'riesenburg', 'tuerme', 'malen', ...SEASON_IDS, 'advent'];
+
+export const SEASONAL: Set<WorldId> = new Set(FRONT_IDS);
 
 /** start tile of a seasonal world (tk-marked, translated where shown) */
-export const SEASON_INFO: Record<SeasonId, { icon: string; title: string; hint: string }> = {
+export const SEASON_INFO: Record<FrontId, { icon: string; title: string; hint: string }> = {
+  advent: { icon: '🎁', title: tk('Adventskalender'), hint: tk('Jeden Tag ein Türchen öffnen') },
   neujahr: { icon: '🎆', title: tk('Neujahr'), hint: tk('Raketen blühen am Himmel auf') },
   winter: { icon: '⛄', title: tk('Winter'), hint: tk('Schneemänner, Pinguine und Eisbären') },
   fruehling: { icon: '🌷', title: tk('Frühling'), hint: tk('Blumen, Bienen und Vögel auf der Wiese') },
@@ -87,6 +93,7 @@ export const DEFAULT_PLAN: WorldPlan = {
     halloween: whole('10-15', '11-02'),
     martin: whole('11-01', '11-13'),
     weihnachten: whole('12-01', '12-26'),
+    advent: whole('12-01', '12-24'),
   },
 };
 

@@ -2,11 +2,11 @@
 // saved under a name, deleted, downloaded as a file and loaded from a file. Everything stays in this
 // browser (IndexedDB) unless a file is downloaded.
 import { RECHENMEER } from './features.ts';
-import { isWorldId, SEASON_INFO, type SeasonId } from './worlds.ts';
+import { isWorldId, SEASON_INFO, type FrontId } from './worlds.ts';
 import { worldActive } from './worldPlan.ts';
 import { t, tk } from '../i18n/i18n.ts';
 
-export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'malen' | 'duell' | 'riesenburg' | 'tuerme' | SeasonId;
+export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'malen' | 'duell' | 'riesenburg' | 'tuerme' | FrontId;
 
 /** title: German, translated where it is shown (t(MODES[m].title)) */
 export const MODES: Record<GameMode, { icon: string; title: string }> = {
