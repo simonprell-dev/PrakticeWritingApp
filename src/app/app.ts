@@ -37,7 +37,8 @@ import { Hud } from '../ui/hud.ts';
 import { openSettings } from '../ui/settingsPanel.ts';
 import { renderStart } from '../ui/startScreen.ts';
 import { openTargetPicker } from '../ui/targetPicker.ts';
-import { toast } from '../ui/toast.ts';
+import { toast as showToast } from '../ui/toast.ts';
+import { hush, speak } from '../game/voice/gameVoice.ts';
 import { openSiegeLobby } from '../ui/siegeLobby.ts';
 import { openViewfinder } from '../ui/viewfinder.ts';
 import { openTowerLobby } from '../ui/towerLobby.ts';
@@ -73,6 +74,15 @@ async function cameraAllowed(): Promise<boolean> {
 /** keep the running game every so often, and soon after something new happened */
 const AUTOSAVE_EVERY = 30_000;
 const AUTOSAVE_AFTER = 2_500;
+
+/** hints are read aloud when they are lines of the game; not in the advent calendar, which speaks on its own */
+let hintsAloud = true;
+
+/** a hint at the top of the screen, read aloud */
+function toast(text: string, kind?: 'info' | 'good' | 'warn', ms?: number): void {
+  showToast(text, kind, ms);
+  if (hintsAloud) speak(text);
+}
 
 export class App {
   settings: Settings = loadSettings();
@@ -695,6 +705,7 @@ export class App {
             ? new AdventScene(this.host(), this.stage.worldW)
             : new HabitatScene(def, this.host(), this.stage.worldW);
     this.scene = scene;
+    hintsAloud = id !== 'advent';
     this.hud = new Hud(this.ui, {
       title:
         ({ meer: t('🐠 Meer'), weltraum: t('👽 Weltraum'), savanne: t('🦒 Savanne'), zauberland: t('🦄 Zauberland'), rechenmeer: t('🐬 Rechenmeer') } as Partial<Record<HabitatId, string>>)[id] ??
@@ -857,6 +868,8 @@ export class App {
     this.probe.stop();
     this.scene?.destroy();
     this.scene = null;
+    hush();
+    hintsAloud = true;
     this.hud?.destroy();
     this.hud = null;
     void this.wakeLock?.release().catch(() => undefined);
@@ -910,13 +923,15 @@ export class App {
       return;
     }
     const all = p.targets.length > 1;
+    const title = h('h2', null, all ? t('Super! Alle {n} Buchstaben geschafft!', { n: p.targets.length }) : t('Super! {n}× {c} geschafft!', { n: p.count, c: withArticle(done) }));
+    const ask = h('p', { style: 'font-size:1.2rem' }, all ? t('Nochmal von vorn oder neue Buchstaben aussuchen?') : t('Willst du weiter üben oder einen neuen Buchstaben?'));
     const content = h(
       'div',
       { style: 'text-align:center;max-width:620px' },
       h('div', { style: 'font-size:4rem' }, '🎉'),
-      h('h2', null, all ? t('Super! Alle {n} Buchstaben geschafft!', { n: p.targets.length }) : t('Super! {n}× {c} geschafft!', { n: p.count, c: withArticle(done) })),
+      title,
       all ? h('p', { class: 'practice-done' }, ...p.targets.map((c) => h('span', null, c))) : null,
-      h('p', { style: 'font-size:1.2rem' }, all ? t('Nochmal von vorn oder neue Buchstaben aussuchen?') : t('Willst du weiter üben oder einen neuen Buchstaben?')),
+      ask,
       h(
         'div',
         { class: 'actions', style: 'justify-content:center' },
@@ -934,6 +949,7 @@ export class App {
         }, 'btn primary'),
       ),
     );
+    speak(title.textContent ?? '', ask.textContent ?? '');
     const m = modal(content, () => this.updateProgress());
   }
 

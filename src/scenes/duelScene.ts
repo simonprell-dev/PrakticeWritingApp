@@ -15,6 +15,7 @@ import { SpawnFx } from '../game/spawnFx.ts';
 import { WORLD_H } from '../game/stage.ts';
 import { t } from '../i18n/i18n.ts';
 import { PEN_PRESETS, SLIP_PRESETS } from '../vision/color.ts';
+import { speak } from '../game/voice/gameVoice.ts';
 import type { ScanResult, ScannedGlyph, TeamId } from '../vision/types.ts';
 import { loadGlyph, restoredId, saveGlyph, type SavedGlyph, type SceneSave } from './saved.ts';
 import type { Scene, SceneHost, Snapshot } from './scene.ts';
@@ -376,6 +377,7 @@ export class DuelScene implements Scene {
         const x = this.sim.gateX(e.team);
         this.particles.burst('puff', x, 620, 14, { color: 'rgba(160,160,170,0.7)', size: 30, speed: 90, max: 1.1 });
         this.particles.add({ kind: 'text', x, y: 540, vy: -30, max: 1.8, size: 40, color: '#e9e9f2', text: t('Pfff?') });
+        speak(t('Pfff?'));
       }
     }
     // the pile settles: bubbles above a popped one slide down
@@ -445,7 +447,10 @@ export class DuelScene implements Scene {
     sfx.plopp(f.radius / 30);
     this.particles.add({ kind: 'ring', x: f.x, y, size: f.radius * 1.4, max: 0.35, color: 'rgba(255,255,255,0.95)' });
     this.particles.burst('drop', f.x, y, 10, { color: 'rgba(210,240,255,0.95)', size: 5, speed: 260, gravity: 600, max: 0.55 });
-    if (exhausted) this.particles.add({ kind: 'text', x: f.x, y: y - f.radius - 20, vy: -40, max: 1.2, size: 30, color: '#ffffff', text: t('Puh!') });
+    if (exhausted) {
+      this.particles.add({ kind: 'text', x: f.x, y: y - f.radius - 20, vy: -40, max: 1.2, size: 30, color: '#ffffff', text: t('Puh!') });
+      speak(t('Puh!'));
+    }
     const info = this.glyphs.get(f.glyphId);
     if (info) this.falling.push({ sticker: info.sticker, x: f.x, y: y - f.radius * 0.2, vx: (Math.random() - 0.5) * 60, vy: -120, rot: 0, vr: (Math.random() - 0.5) * 6, t: 0 });
     this.views.delete(f.id);

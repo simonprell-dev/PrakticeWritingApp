@@ -1,5 +1,6 @@
 // Shared cutscene overlays: the big banner and the "3, 2, 1, Los!" countdown.
 import { clamp, ease } from '../game/math.ts';
+import { speak } from '../game/voice/gameVoice.ts';
 import { t } from '../i18n/i18n.ts';
 
 export interface Banner {
@@ -8,6 +9,12 @@ export interface Banner {
   /** seconds since it appeared, and how long it stays */
   t: number;
   dur: number;
+}
+
+/** a banner as it appears: its title and line are read aloud (once, when it is set) */
+export function announce(b: Banner): Banner {
+  speak(b.title, b.sub);
+  return b;
 }
 
 /** Big white banner with two spinning stars; `time` turns the stars. */

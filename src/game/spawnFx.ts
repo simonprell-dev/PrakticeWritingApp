@@ -9,6 +9,7 @@ import { sfx } from './audio.ts';
 import type { AnyCanvas } from './canvas.ts';
 import { clamp, ease, lerp, TAU } from './math.ts';
 import type { Particles } from './particles.ts';
+import { speak } from './voice/gameVoice.ts';
 
 interface Flight {
   glyph?: ScannedGlyph;
@@ -55,6 +56,8 @@ export class SpawnFx {
   private worldW = 1920;
   /** y of the polaroid (scenes with something important at the top move it down) */
   top = 120;
+  /** the labels are read aloud (not in the advent calendar, which speaks on its own) */
+  voiced = true;
 
   constructor(particles: Particles) {
     this.particles = particles;
@@ -76,6 +79,7 @@ export class SpawnFx {
     this.worldW = worldW;
     this.flashT = 0;
     this.polaroid = { snap, ...this.layout(snap, worldW), t: 0, resultAt: -1, closing: -1, label: t('Ich schaue'), boxes: [] };
+    if (this.voiced) speak(this.polaroid.label);
   }
 
   /** The recognition failed: let the polaroid go away. */
@@ -138,6 +142,8 @@ export class SpawnFx {
     p.snap = snap;
     p.resultAt = p.t;
     p.label = label;
+    // the parts of a label ("Neue Farben! · 2 kenne ich schon") are lines of their own
+    if (this.voiced) speak(...label.split(' · '));
     const sc = p.w / snap.detW;
     const stagger = clamp(2.4 / Math.max(1, items.filter((i) => i.isNew).length), 0.06, 0.18);
     let k = 0;

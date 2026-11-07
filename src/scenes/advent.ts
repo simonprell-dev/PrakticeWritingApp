@@ -605,7 +605,7 @@ export class AdventScene extends HabitatScene {
     const lines = wrapped[tl.shown];
     ctx.globalAlpha = alpha * clamp(tl.shownT / 0.35);
     ctx.font = font;
-    ctx.fillStyle = { erzaehler: '#ffffff', wesen: '#fff1b8', flocke: '#ffd9ec' }[tl.lines[tl.shown].voice];
+    ctx.fillStyle = ({ wesen: '#fff1b8', flocke: '#ffd9ec' } as Partial<Record<string, string>>)[tl.lines[tl.shown].voice] ?? '#ffffff';
     // a short sentence sits in the middle of the room the box keeps for the longest one
     const rows = Math.max(1, ...wrapped.map((l) => l.length));
     const y0 = y + pad + 34 + ((rows - lines.length) * lh) / 2;

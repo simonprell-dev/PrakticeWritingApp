@@ -264,7 +264,9 @@ export class RechenScene extends HabitatScene {
     const n = starCount(g.score.score);
     this.particles.add({ kind: 'text', x: at.x, y: at.y - at.r - 30, vy: -40, max: 1.8, size: 34, color: '#ffd84a', text: '★'.repeat(n) + '☆'.repeat(5 - n) });
     this.particles.add({ kind: 'text', x: at.x, y: at.y - at.r - 70, vy: -40, max: 1.8, size: 30, color: '#ffffff', text: t('{tier}!', { tier: t(TIER_LABEL[g.score.tier]) }) });
+    this.readAloud(t(TIER_LABEL[g.score.tier]));
     const tip = this.lastTip ?? 'super';
+    this.readAloud(t(TIP_TEXT[tip]));
     this.particles.add({ kind: 'text', x: at.x, y: at.y - at.r - 110, vy: -30, max: 3, size: 28, color: tip === 'super' ? '#ffffff' : '#fff1c4', text: t(TIP_TEXT[tip]) });
     this.say(praise, true);
   }
@@ -272,6 +274,7 @@ export class RechenScene extends HabitatScene {
   /** a message at the board */
   private say(text: string, good: boolean): void {
     this.note = { text, t: 0, good };
+    this.readAloud(text);
   }
 
   // ---------------------------------------------------------------- the sea

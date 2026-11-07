@@ -6,13 +6,17 @@ import { soundVolume } from '../audio.ts';
 import { language, t } from '../../i18n/i18n.ts';
 import { voiceId } from '../voiceId.ts';
 
-/** narrator, Flocke the elf, and the creatures */
-export type Voice = 'erzaehler' | 'flocke' | 'wesen';
+/** the speakers of the game (the roles of voice/SPRECHERTEXT.md) */
+export type Voice = 'erzaehler' | 'flocke' | 'wesen' | 'riese' | 'zork' | 'blase' | 'ausruf' | 'buchstaben';
 
 export interface Line {
-  /** the German text (translation key) */
+  /** the German text (translation key, also the file name) */
   key: string;
   voice: Voice;
+  /** the text as shown, read by the browser when there is no file */
+  text?: string;
+  /** a text with a filled gap (a name, a number): no file fits, the browser reads it whole */
+  gap?: boolean;
 }
 
 export interface SpeakerDeps {
@@ -38,6 +42,11 @@ export function voiceSources(key: string, lang: string): string[] {
 const TTS: Record<Voice, { pitch: number; rate: number }> = {
   erzaehler: { pitch: 1, rate: 0.92 },
   flocke: { pitch: 1.5, rate: 1 },
+  riese: { pitch: 0.55, rate: 0.85 },
+  zork: { pitch: 1.7, rate: 1.12 },
+  blase: { pitch: 1.3, rate: 0.95 },
+  ausruf: { pitch: 1.2, rate: 1 },
+  buchstaben: { pitch: 1, rate: 0.85 },
   wesen: { pitch: 1.35, rate: 1.02 },
 };
 
@@ -136,11 +145,11 @@ export class Speaker {
 
   private async say(line: Line, volume: number): Promise<void> {
     const lang = this.deps.lang();
-    for (const url of voiceSources(line.key, lang)) {
+    for (const url of line.gap ? [] : voiceSources(line.key, lang)) {
       if (this.missing.has(url)) continue;
       if (await this.deps.play(url, volume)) return;
       this.missing.add(url);
     }
-    await this.deps.tts(this.deps.translate(line.key), lang, line.voice, volume);
+    await this.deps.tts(line.text ?? this.deps.translate(line.key), lang, line.voice, volume);
   }
 }
