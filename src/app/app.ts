@@ -18,6 +18,7 @@ import { PaintScene } from '../scenes/paintScene.ts';
 import { savanna } from '../scenes/savanna.ts';
 import { zauberland, ZauberScene } from '../scenes/zauberland.ts';
 import { SEASON_DEFS } from '../scenes/seasons/index.ts';
+import { currentPlan, loadPlan } from './worldPlan.ts';
 import { rechenmeer, RechenScene, rechenVisionPatch } from '../scenes/rechenmeer.ts';
 import type { Scene, SceneHost, Snapshot } from '../scenes/scene.ts';
 import { space } from '../scenes/space.ts';
@@ -148,6 +149,11 @@ export class App {
     });
     this.showStart();
     void this.boot();
+    // the yearly plan of the worlds: a changed one redraws the start screen
+    const known = JSON.stringify(currentPlan());
+    void loadPlan().then((p) => {
+      if (JSON.stringify(p) !== known && this.mode.kind === 'start') this.showStart();
+    });
   }
 
   private async boot(): Promise<void> {

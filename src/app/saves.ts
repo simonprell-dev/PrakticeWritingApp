@@ -2,7 +2,8 @@
 // saved under a name, deleted, downloaded as a file and loaded from a file. Everything stays in this
 // browser (IndexedDB) unless a file is downloaded.
 import { RECHENMEER } from './features.ts';
-import { SEASON_INFO, type SeasonId } from './worlds.ts';
+import { isWorldId, SEASON_INFO, type SeasonId } from './worlds.ts';
+import { worldActive } from './worldPlan.ts';
 import { t, tk } from '../i18n/i18n.ts';
 
 export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'malen' | 'duell' | 'riesenburg' | 'tuerme' | SeasonId;
@@ -95,11 +96,11 @@ function metaOf(g: SaveGame): SaveMeta {
   return { id: g.id, name: g.name, mode: g.mode, savedAt: g.savedAt, auto: g.auto, summary: g.summary, thumb: g.thumb };
 }
 
-/** a game that is offered at the moment (see features.ts) */
-export const modeAvailable = (m: GameMode) => RECHENMEER || m !== 'rechenmeer';
+/** a game that is offered at the moment: not switched off in the code (features.ts) and in its time (worlds.ts) */
+export const modeAvailable = (m: GameMode, now = new Date()) => (m === 'rechenmeer' ? RECHENMEER : !isWorldId(m) || worldActive(m, now));
 
-/** the saved games of the games that are offered */
-export const visibleSaves = (list: SaveMeta[]) => list.filter((m) => modeAvailable(m.mode));
+/** the saved games of the games that are offered; the others stay stored and come back with their game */
+export const visibleSaves = (list: SaveMeta[], now = new Date()) => list.filter((m) => modeAvailable(m.mode, now));
 
 /** all saved games, newest first (without the games themselves) */
 export async function listSaves(): Promise<SaveMeta[]> {

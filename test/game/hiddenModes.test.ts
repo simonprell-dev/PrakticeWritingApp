@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FORMAT, MODES, modeAvailable, readSaveFile, visibleSaves, type GameMode, type SaveMeta } from '../../src/app/saves.ts';
+import { SEASONAL, type WorldId } from '../../src/app/worlds.ts';
 
 const meta = (mode: GameMode, savedAt: number) => ({ id: mode, name: mode, mode, savedAt, auto: true, summary: '' }) as SaveMeta;
 
@@ -10,7 +11,7 @@ describe('hidden game modes', () => {
 
   it('the Rechenmeer is off, every other mode stays', () => {
     expect(modeAvailable('rechenmeer')).toBe(false);
-    for (const m of Object.keys(MODES) as GameMode[]) if (m !== 'rechenmeer') expect(modeAvailable(m)).toBe(true);
+    for (const m of Object.keys(MODES) as GameMode[]) if (m !== 'rechenmeer' && !SEASONAL.has(m as WorldId)) expect(modeAvailable(m)).toBe(true);
   });
 
   it('a Rechenmeer save file is refused like a foreign file', async () => {

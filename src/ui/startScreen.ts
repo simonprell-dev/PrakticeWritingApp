@@ -1,4 +1,7 @@
 import { RECHENMEER } from '../app/features.ts';
+import { offeredWorlds } from '../app/worldPlan.ts';
+import { SEASON_INFO, SEASONAL, type SeasonId, type WorldId } from '../app/worlds.ts';
+import { SEASON_DEFS } from '../scenes/seasons/index.ts';
 import type { SaveMeta } from '../app/saves.ts';
 import type { CameraMode, HabitatId, Settings } from '../app/settings.ts';
 import { openContact } from './contact.ts';
@@ -84,13 +87,32 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
   );
   renderTarget();
 
-  const tile = (id: TileKind, label: string, hint: string, onClick: () => void) => {
+  const tile = (id: TileKind, label: string, hint: string, onClick: () => void, until: Date | null = null) => {
     const cv = h('canvas', { width: 480, height: 360 });
-    const b = button([cv, h('div', { class: 'label' }, label), h('div', { class: 'hint' }, hint)], onClick, 'tile', label);
+    // a seasonal world tells when it goes again
+    const badge = until ? [h('div', { class: 'until' }, t('nur bis {date}', { date: `${until.getDate()}.${until.getMonth() + 1}.` }))] : [];
+    const b = button([cv, ...badge, h('div', { class: 'label' }, label), h('div', { class: 'hint' }, hint)], onClick, `tile${until ? ' seasonal' : ''}`, label);
     const draw = () => tilePreview(id, cv);
     if (document.fonts?.ready) void document.fonts.ready.then(draw);
     else draw();
     return b;
+  };
+  const worldTile = (id: WorldId, until: Date | null) => {
+    if (SEASONAL.has(id)) {
+      const s = SEASON_INFO[id as SeasonId];
+      return tile(id as SeasonId, `${s.icon} ${t(s.title)}`, t(s.hint), () => d.startHabitat(id as SeasonId), until);
+    }
+    const fixed: Record<Exclude<WorldId, SeasonId>, () => HTMLElement> = {
+      meer: () => tile('meer', t('🐠 Meer'), t('Fische im Ozean'), () => d.startHabitat('meer'), until),
+      weltraum: () => tile('weltraum', t('👽 Weltraum'), t('Aliens zwischen den Planeten'), () => d.startHabitat('weltraum'), until),
+      savanne: () => tile('savanne', t('🦒 Savanne'), t('Tiere in der Steppe'), () => d.startHabitat('savanne'), until),
+      zauberland: () => tile('zauberland', t('🦄 Zauberland'), t('Einhörner, Prinzessinnen und eine Burg'), () => d.startHabitat('zauberland'), until),
+      duell: () => tile('duell', t('⚔️ Team-Duell'), t('Zwei Teams, Zettel, Blasen-Burgen'), d.openDuel, until),
+      riesenburg: () => tile('riesenburg', t('🏰 Riesenburg'), t('Die ganze Klasse gegen den Riesen'), d.openSiege, until),
+      tuerme: () => tile('tuerme', t('🏗️ Türme bauen'), t('Bis zu 8 Teams, Aliens helfen'), d.openTowers, until),
+      malen: () => tile('malen', t('🎨 Mal-Aquarium'), t('Meerestiere ausmalen – sie schwimmen los'), d.openPaint, until),
+    };
+    return fixed[id as Exclude<WorldId, SeasonId>]();
   };
   const cam = d.camera();
   const short = cam.label.length > 32 ? cam.label.slice(0, 30) + '…' : cam.label;
@@ -116,15 +138,11 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         'div',
         { class: 'tiles' },
         scriptTile(s.script, () => openScriptPicker(s.script, d.setScript)),
-        tile('meer', t('🐠 Meer'), t('Fische im Ozean'), () => d.startHabitat('meer')),
-        tile('weltraum', t('👽 Weltraum'), t('Aliens zwischen den Planeten'), () => d.startHabitat('weltraum')),
-        tile('savanne', t('🦒 Savanne'), t('Tiere in der Steppe'), () => d.startHabitat('savanne')),
-        tile('zauberland', t('🦄 Zauberland'), t('Einhörner, Prinzessinnen und eine Burg'), () => d.startHabitat('zauberland')),
-        ...(RECHENMEER ? [tile('rechenmeer', t('🐬 Rechenmeer'), t('Rechnen füllt das Meer'), () => d.startHabitat('rechenmeer'))] : []),
-        tile('duell', t('⚔️ Team-Duell'), t('Zwei Teams, Zettel, Blasen-Burgen'), d.openDuel),
-        tile('riesenburg', t('🏰 Riesenburg'), t('Die ganze Klasse gegen den Riesen'), d.openSiege),
-        tile('tuerme', t('🏗️ Türme bauen'), t('Bis zu 8 Teams, Aliens helfen'), d.openTowers),
-        tile('malen', t('🎨 Mal-Aquarium'), t('Meerestiere ausmalen – sie schwimmen los'), d.openPaint),
+        ...offeredWorlds(new Date(), (id) => !!SEASON_DEFS[id as SeasonId]).flatMap(({ id, until }) => {
+          const one = worldTile(id, until);
+          // the Rechenmeer is outside the plan; while it is switched on in the code it follows the Zauberland
+          return id === 'zauberland' && RECHENMEER ? [one, tile('rechenmeer', t('🐬 Rechenmeer'), t('Rechnen füllt das Meer'), () => d.startHabitat('rechenmeer'))] : [one];
+        }),
       ),
       howtoSection({ mode: s.camera.mode, choose: d.setCameraMode }),
       h(
