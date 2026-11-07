@@ -3,7 +3,8 @@
 import type { SeasonId } from '../../app/worlds.ts';
 import type { HabitatDef } from '../habitat.ts';
 import { neujahr } from './neujahr.ts';
+import { ostern } from './ostern.ts';
 import { weihnachten } from './weihnachten.ts';
 import { winter } from './winter.ts';
 
-export const SEASON_DEFS: Partial<Record<SeasonId, HabitatDef>> = { neujahr, winter, weihnachten };
+export const SEASON_DEFS: Partial<Record<SeasonId, HabitatDef>> = { neujahr, winter, ostern, weihnachten };
