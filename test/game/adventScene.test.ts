@@ -3,8 +3,11 @@ import { createCanvas, Path2D, type Canvas } from '@napi-rs/canvas';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULTS } from '../../src/app/settings.ts';
 import { loadAdvent } from '../../src/game/advent/advent.ts';
+import { STORIES } from '../../src/game/advent/story.ts';
+import { SILENT_LINE, Telling } from '../../src/game/advent/telling.ts';
 import { setCanvasFactory, type AnyCanvas } from '../../src/game/canvas.ts';
 import { makeGenome } from '../../src/game/creatures/genome.ts';
+import type { Line } from '../../src/game/voice/speaker.ts';
 import { tierOf } from '../../src/recog/score.ts';
 import { advent, AdventScene, SURPRISES } from '../../src/scenes/advent.ts';
 import type { SceneHost } from '../../src/scenes/scene.ts';
@@ -39,10 +42,29 @@ function glyph(char: string, score = 80): ScannedGlyph {
 }
 const sticker = () => createCanvas(20, 24) as unknown as AnyCanvas;
 
-function scene(now = new Date(2026, 11, 5, 9)): AdventScene {
+/** a speaker that only writes down what it is asked to read (silent: the sound is off, no line is read) */
+function fakeSpeaker(silent = false) {
+  const runs: Line[][] = [];
+  let stops = 0;
+  return {
+    runs,
+    get stops() {
+      return stops;
+    },
+    async run(lines: Line[], onLine?: (i: number) => void) {
+      runs.push(lines);
+      if (!silent) lines.forEach((_, i) => onLine?.(i));
+    },
+    stop() {
+      stops++;
+    },
+  };
+}
+
+function scene(now = new Date(2026, 11, 5, 9), speaker = fakeSpeaker()): AdventScene {
   const settings = structuredClone(DEFAULTS);
   const host = { settings, toast() {}, showCard() {}, progress() {} } as unknown as SceneHost;
-  return new AdventScene(host, 1920, now);
+  return new AdventScene(host, 1920, now, speaker);
 }
 
 function run(s: AdventScene, seconds: number) {
@@ -118,6 +140,75 @@ describe('advent calendar scene', () => {
     s.render(ctx);
     expect(s.open[24]).toBeDefined();
     expect(s.day).toBeNull();
+  });
+
+  it('opening a door reads its story: title, narration, the figure, then Flocke', () => {
+    const sp = fakeSpeaker();
+    const s = scene(undefined, sp);
+    for (let k = 0; k < 3; k++) s.feed(glyph('S'), sticker());
+    // the door opens right away; the story may take longer
+    expect(s.open[1]).toBeDefined();
+    expect(sp.runs).toHaveLength(1);
+    const st = STORIES[0];
+    expect(sp.runs[0]).toEqual([
+      { key: st.title, voice: 'erzaehler' },
+      ...st.narration.map((key) => ({ key, voice: 'erzaehler' })),
+      { key: st.figure, voice: 'wesen' },
+      { key: st.flocke, voice: 'flocke' },
+    ]);
+  });
+
+  it('tapping an open door or its figure reads the story again', async () => {
+    const sp = fakeSpeaker();
+    const s = scene(undefined, sp);
+    for (let k = 0; k < 3; k++) s.feed(glyph('S'), sticker());
+    await Promise.resolve();
+    run(s, 40);
+    expect(sp.runs).toHaveLength(1);
+    const d = s.doorAt(1);
+    s.tap(d.x + d.w / 2, d.y + d.h / 2);
+    expect(sp.runs).toHaveLength(2);
+    expect(sp.runs[1][0]).toEqual({ key: STORIES[0].title, voice: 'erzaehler' });
+    await Promise.resolve();
+    run(s, 40);
+    const c = s.creatures[0];
+    s.tap(c.x, c.y);
+    expect(sp.runs).toHaveLength(3);
+    expect(sp.runs[2]).toEqual(sp.runs[0]);
+  });
+
+  it('without sound the subtitles run on their own, and Flocke says her line', () => {
+    const sp = fakeSpeaker(true);
+    const s = scene(undefined, sp);
+    for (let k = 0; k < 3; k++) s.feed(glyph('S'), sticker());
+    const n = sp.runs[0].length;
+    run(s, SILENT_LINE * (n - 0.5));
+    expect(s.flocke).toBe(STORIES[0].flocke);
+    run(s, SILENT_LINE + 1);
+    expect(s.flocke).toBe(SURPRISES[0].joke);
+  });
+
+  it('subtitles follow a speaker that really reads, and wait for it', () => {
+    const tl = new Telling(1);
+    tl.heardLine(0);
+    tl.update(5);
+    expect(tl.shown).toBe(0);
+    tl.heardLine(1);
+    tl.update(0.1);
+    expect(tl.shown).toBe(1);
+    tl.update(10);
+    expect(tl.shown).toBe(1);
+    tl.end();
+    for (let i = 0; i < 300; i++) tl.update(0.1);
+    expect(tl.shown).toBe(tl.lines.length - 1);
+    expect(tl.done).toBe(true);
+  });
+
+  it('destroy stops the reading', () => {
+    const sp = fakeSpeaker();
+    const s = scene(undefined, sp);
+    s.destroy();
+    expect(sp.stops).toBe(1);
   });
 
   it('paints its background and its start tile', () => {

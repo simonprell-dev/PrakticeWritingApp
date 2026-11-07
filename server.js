@@ -23,6 +23,9 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
+  // spoken lines (public/voice/): recordings and voices made with Piper
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
   '.bin': 'application/octet-stream',
   '.txt': 'text/plain; charset=utf-8',
 };

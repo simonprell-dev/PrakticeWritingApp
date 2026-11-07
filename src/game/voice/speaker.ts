@@ -102,14 +102,16 @@ export class Speaker {
     this.deps = deps;
   }
 
-  /** reads the lines one after the other; a later run or stop() ends it */
-  async run(lines: Line[]): Promise<void> {
+  /** reads the lines one after the other; a later run or stop() ends it. onLine hears the index of each line
+   * right before it is read (for subtitles); with the sound off nothing is read and onLine is not called. */
+  async run(lines: Line[], onLine?: (index: number) => void): Promise<void> {
     if (this.turn) this.deps.halt();
     const mine = ++this.turn;
-    for (const line of lines) {
+    for (const [i, line] of lines.entries()) {
       if (mine !== this.turn) return;
       const volume = this.deps.volume();
       if (volume <= 0) return;
+      onLine?.(i);
       await this.say(line, volume);
     }
   }

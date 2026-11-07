@@ -63,6 +63,41 @@ describe('speaker', () => {
     expect(log).toEqual(['tts de erzaehler [de] Eins.', 'tts de wesen [de] Zwei!']);
   });
 
+  it('tells which line comes next, right before it is read', async () => {
+    const { deps, log } = fake(new Set());
+    await new Speaker(deps).run(
+      [
+        { key: 'Eins.', voice: 'erzaehler' },
+        { key: 'Zwei!', voice: 'wesen' },
+      ],
+      (i) => log.push(`line ${i}`),
+    );
+    expect(log).toEqual(['line 0', 'tts de erzaehler [de] Eins.', 'line 1', 'tts de wesen [de] Zwei!']);
+  });
+
+  it('with the sound off no line is announced', async () => {
+    const seen: number[] = [];
+    const { deps } = fake(new Set(), { volume: 0 });
+    await new Speaker(deps).run([{ key: 'Eins.', voice: 'erzaehler' }], (i) => seen.push(i));
+    expect(seen).toEqual([]);
+  });
+
+  it('a stopped run announces no further line', async () => {
+    const seen: number[] = [];
+    const { deps } = fake(new Set());
+    const s = new Speaker(deps);
+    const p = s.run(
+      [
+        { key: 'Eins.', voice: 'erzaehler' },
+        { key: 'Zwei.', voice: 'erzaehler' },
+      ],
+      (i) => seen.push(i),
+    );
+    s.stop();
+    await p;
+    expect(seen).toEqual([0]);
+  });
+
   it('a missing file is not asked for twice', async () => {
     const asked: string[] = [];
     const { deps } = fake(new Set());

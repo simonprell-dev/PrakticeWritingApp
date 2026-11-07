@@ -6,6 +6,7 @@ import { adventToday, counts, currentDay, isDone, loadAdvent, needed, saveAdvent
 import {
 
   chimneyTop,
+  houseK,
   doorPath,
   doorRect,
   drawDoorFace,
@@ -20,6 +21,7 @@ import {
   type Rect,
 } from '../game/advent/house.ts';
 import { drawFig, GAGS, genomeOf, RIGHTWARD, spriteOf, SURPRISES, type Act, type Stage, type Who } from '../game/advent/surprises.ts';
+import { Telling } from '../game/advent/telling.ts';
 import { sfx } from '../game/audio.ts';
 import { makeCanvas, type AnyCanvas, type Ctx } from '../game/canvas.ts';
 import type { Genome } from '../game/creatures/genome.ts';
@@ -28,6 +30,7 @@ import { weihnachtenSprite } from '../game/creatures/seasons/weihnachten.ts';
 import type { Sprite } from '../game/creatures/sprite.ts';
 import { clamp, ease, hsl, lerp, TAU } from '../game/math.ts';
 import { mulberry32 } from '../game/rng.ts';
+import { Speaker } from '../game/voice/speaker.ts';
 import { scriptOf } from '../recog/scripts.ts';
 import type { ScannedGlyph, Tier } from '../vision/types.ts';
 import { HabitatScene, type Creature, type HabitatDef } from './habitat.ts';
@@ -307,9 +310,14 @@ export class AdventScene extends HabitatScene {
   private landed = new Set<number>();
   private extras = new Map<Who, Sprite>();
   private stage: Stage;
+  private readonly speaker: Pick<Speaker, 'run' | 'stop'>;
+  /** the story being read (kept a moment after the end, to fade out) */
+  private telling: Telling | null = null;
+  private tellingOut = 0;
 
-  constructor(host: SceneHost, worldW: number, now = new Date()) {
+  constructor(host: SceneHost, worldW: number, now = new Date(), speaker: Pick<Speaker, 'run' | 'stop'> = new Speaker()) {
     super(advent, host, worldW);
+    this.speaker = speaker;
     this.year = now.getFullYear();
     this.today = adventToday(now);
     this.open = loadAdvent(this.year);
@@ -476,6 +484,138 @@ export class AdventScene extends HabitatScene {
     this.particles.add({ kind: 'ring', x: r.x + r.w / 2, y: r.y + r.h / 2, size: Math.max(r.w, r.h) * 1.6, max: 0.5, color: 'rgba(255,240,160,0.95)' });
     this.particles.burst('confetti', r.x + r.w / 2, r.y + r.h / 2, 36, { colors: ['#ff6f91', '#ffd84a', '#7cdcff', '#8dff6b'], size: 13, speed: 360, max: 1.5, gravity: 420 });
     this.say(t('Geschafft! Das Türchen geht auf!'), 'good', 0);
+    this.tell(d);
+  }
+
+  // ------------------------------------------------------------------------------------------- stories
+
+  /** a story of this door is being read */
+  private isTelling(day: number): boolean {
+    return !!this.telling && !this.telling.done && this.telling.day === day;
+  }
+
+  /** reads the story of a door aloud, with subtitles; it ends the story before */
+  private tell(day: number): void {
+    const tl = new Telling(day);
+    this.telling = tl;
+    this.tellingOut = 0;
+    const end = () => tl.end();
+    this.speaker.run(tl.lines, (i) => tl.heardLine(i)).then(end, end);
+  }
+
+  /** a new sentence of the story is on screen */
+  private storyLine(tl: Telling): void {
+    const voice = tl.lines[tl.shown].voice;
+    // Flocke's sentence goes into Flocke's bubble; the figure hops when it speaks (its bubble: drawFigureLine)
+    if (voice === 'flocke') this.say(t(tl.lines[tl.shown].key), 'good', 0);
+    if (voice === 'wesen') {
+      const c = this.figureOf(tl.day);
+      if (c && !this.act) this.jump(c);
+    }
+  }
+
+  private figureOf(day: number): Creature | null {
+    return this.creatures.find((c) => this.figs.get(c.id) === day) ?? null;
+  }
+
+  /** the figure's sentence of the story, as a speech bubble over the figure */
+  private drawFigureLine(ctx: CanvasRenderingContext2D): void {
+    const tl = this.telling;
+    if (!tl || tl.done || tl.lines[tl.shown].voice !== 'wesen') return;
+    let at: { x: number; top: number } | null = null;
+    const a = this.act;
+    if (a && a.day === tl.day && a.t >= 0) at = { x: a.x, top: a.y - a.sp.radius * a.S };
+    else {
+      const c = this.figureOf(tl.day);
+      if (c) at = { x: c.x, top: c.y - c.lift - c.sprite.radius * c.depth };
+    }
+    if (!at) return;
+    const text = t(tl.lines[tl.shown].key);
+    const pop = tl.shownT < 0.3 ? ease.outBack(tl.shownT / 0.3) : 1;
+    ctx.save();
+    ctx.font = '600 32px Fredoka, system-ui, sans-serif';
+    const lines = wrap(ctx, text, 420);
+    const lh = 40;
+    const w = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 44;
+    const h = lines.length * lh + 26;
+    const tipY = Math.max(h + 40, at.top - 16);
+    const x = clamp(at.x - w / 2, 16, this.W - w - 16);
+    const y = tipY - 22 - h;
+    ctx.translate(at.x, tipY);
+    ctx.scale(pop, pop);
+    ctx.translate(-at.x, -tipY);
+    ctx.fillStyle = '#fffbe6';
+    ctx.strokeStyle = '#f0b400';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 24);
+    const tx = clamp(at.x, x + 30, x + w - 30);
+    ctx.moveTo(tx - 14, y + h);
+    ctx.lineTo(at.x, tipY);
+    ctx.lineTo(tx + 14, y + h);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillRect(tx - 11, y + h - 4, 22, 6);
+    ctx.fillStyle = '#3b2a5c';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    lines.forEach((l, i) => ctx.fillText(l, x + w / 2, y + 13 + lh * i + lh / 2));
+    ctx.restore();
+  }
+
+  /** the story's subtitles: title and the sentence being read, calm, in the sky to the left of the roof */
+  private drawSubtitles(ctx: CanvasRenderingContext2D): void {
+    const tl = this.telling;
+    if (!tl) return;
+    const alpha = tl.done ? clamp(1 - this.tellingOut / 0.6) : clamp(tl.shown === 0 ? tl.shownT / 0.4 : 1);
+    if (alpha <= 0) return;
+    const body = 32;
+    const lh = body * 1.3;
+    const pad = 22;
+    const x = 24;
+    const y = 20;
+    const font = `600 ${body}px Fredoka, system-ui, sans-serif`;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // the box is as tall as the longest sentence of the story, so it does not jump
+    ctx.font = font;
+    const layout = (w: number) => {
+      const wrapped = tl.lines.map((l, i) => (i === 0 ? [] : wrap(ctx, t(l.key), w - 2 * pad)));
+      return { w, wrapped, h: pad + 34 + Math.max(1, ...wrapped.map((l) => l.length)) * lh + pad - 6 };
+    };
+    let L = layout(Math.min(700, this.W - 48));
+    // the chimney stands on the left of the roof: the box stays left of it when it would reach down to it
+    const chim = chimneyTop(this.W);
+    const k = houseK(this.W);
+    if (y + L.h > chim.y - 16 * k - 14) L = layout(Math.max(360, chim.x - 76 * k - 16 - x));
+    const { w, wrapped, h } = L;
+    ctx.fillStyle = 'rgba(28,22,66,0.84)';
+    ctx.strokeStyle = 'rgba(255,214,110,0.75)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 22);
+    ctx.fill();
+    ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffd86e';
+    ctx.font = '700 26px Fredoka, system-ui, sans-serif';
+    ctx.fillText(t(tl.lines[0].key), x + pad, y + pad + 12, w - 2 * pad);
+    // the sentence fades in softly
+    const lines = wrapped[tl.shown];
+    ctx.globalAlpha = alpha * clamp(tl.shownT / 0.35);
+    ctx.font = font;
+    ctx.fillStyle = { erzaehler: '#ffffff', wesen: '#fff1b8', flocke: '#ffd9ec' }[tl.lines[tl.shown].voice];
+    // a short sentence sits in the middle of the room the box keeps for the longest one
+    const rows = Math.max(1, ...wrapped.map((l) => l.length));
+    const y0 = y + pad + 34 + ((rows - lines.length) * lh) / 2;
+    lines.forEach((l, i) => ctx.fillText(l, x + pad, y0 + lh * i + lh / 2));
+    ctx.restore();
+  }
+
+  /** the story is over: Flocke tells the joke of the day */
+  private storyDone(tl: Telling): void {
+    if (!this.act) this.tellJoke(tl.day, 30);
   }
 
   private finishAct(): void {
@@ -490,7 +630,9 @@ export class AdventScene extends HabitatScene {
     const p = this.day === null ? undefined : this.progress.get(this.day);
     this.counted = p?.counted ?? [];
     this.best = p?.best ?? null;
-    this.tellJoke(a.day, 40);
+    // during the story Flocke keeps quiet; the joke comes when it is over
+    if (this.isTelling(a.day)) this.backToTask();
+    else this.tellJoke(a.day, 40);
   }
 
   private tellJoke(day: number, hold: number): void {
@@ -536,8 +678,12 @@ export class AdventScene extends HabitatScene {
     if (Math.hypot(x - f.x, y - (f.y - 20)) < 95) {
       sfx.boing();
       if (this.act) return true;
-      if (this.mood === 'task') this.say(t(FLOCKE_TAPPED[Math.floor(Math.random() * FLOCKE_TAPPED.length)]), 'good', 3);
-      else this.backToTask();
+      if (this.mood === 'task') {
+        const line = FLOCKE_TAPPED[Math.floor(Math.random() * FLOCKE_TAPPED.length)];
+        this.say(t(line), 'good', 3);
+        // Flocke says it aloud, unless a story is being read
+        if (!this.telling || this.telling.done) void this.speaker.run([{ key: line, voice: 'flocke' }]);
+      } else this.backToTask();
       return true;
     }
     for (let i = this.creatures.length - 1; i >= 0; i--) {
@@ -545,7 +691,7 @@ export class AdventScene extends HabitatScene {
       if (Math.hypot(c.x - x, c.y - y) < c.sprite.radius * c.depth * 1.1) {
         this.jump(c);
         const d = this.figs.get(c.id);
-        if (d && !this.act) this.tellJoke(d, 20);
+        if (d && !this.act && !this.isTelling(d)) this.tell(d);
         return true;
       }
     }
@@ -565,7 +711,7 @@ export class AdventScene extends HabitatScene {
       for (const c of this.creatures) if (this.figs.get(c.id) === d) this.jump(c);
       const r = this.doorAt(d);
       this.particles.burst('spark', r.x + r.w / 2, r.y + r.h / 2, 8, { color: '#fff6a8', size: 14, speed: 200, max: 0.8 });
-      this.tellJoke(d, 20);
+      if (!this.isTelling(d)) this.tell(d);
       return true;
     }
     if (d > this.today) {
@@ -628,6 +774,13 @@ export class AdventScene extends HabitatScene {
         this.giggle = 0.7;
         this.particles.add({ kind: 'text', x: r.x + r.w / 2 + 20, y: r.y - 10, vy: -35, max: 1.5, size: 30, color: '#ffffff', text: t('hihi') });
       }
+    }
+    const tl = this.telling;
+    if (tl) {
+      if (!tl.done) {
+        if (tl.update(dt)) this.storyLine(tl);
+        if (tl.done) this.storyDone(tl);
+      } else if ((this.tellingOut += dt) > 0.6) this.telling = null;
     }
     const a = this.act;
     if (a) {
@@ -745,6 +898,8 @@ export class AdventScene extends HabitatScene {
     this.particles.render(ctx);
     this.def.renderFront?.(this, ctx);
     this.drawBubbleFlocke(ctx);
+    this.drawFigureLine(ctx);
+    this.drawSubtitles(ctx);
     this.fx.render(ctx);
   }
 
@@ -1038,6 +1193,12 @@ export class AdventScene extends HabitatScene {
   }
 
   async restoreState(_raw: unknown): Promise<void> {}
+
+  destroy(): void {
+    this.speaker.stop();
+    this.telling = null;
+    super.destroy();
+  }
 }
 
 /** breaks a text into lines that fit */
