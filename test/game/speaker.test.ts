@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Speaker, voiceSources, type SpeakerDeps } from '../../src/game/voice/speaker.ts';
+import { hushAll, Speaker, voiceSources, type SpeakerDeps } from '../../src/game/voice/speaker.ts';
 import { voiceId } from '../../src/game/voiceId.ts';
 
 function fake(available: Set<string>, opts: { lang?: string; volume?: number } = {}) {
@@ -138,5 +138,26 @@ describe('speaker', () => {
     s.stop();
     await p;
     expect(log.filter((l) => l.startsWith('tts')).length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('the mute button', () => {
+  it('hushes every speaker at once', async () => {
+    const { deps, log } = fake(new Set());
+    const a = new Speaker(deps);
+    const b = new Speaker(deps);
+    const pa = a.run([
+      { key: 'Eins.', voice: 'erzaehler' },
+      { key: 'Zwei.', voice: 'erzaehler' },
+    ]);
+    const pb = b.run([
+      { key: 'Drei.', voice: 'flocke' },
+      { key: 'Vier.', voice: 'flocke' },
+    ]);
+    hushAll();
+    await Promise.all([pa, pb]);
+    expect(log.filter((l) => l === 'halt').length).toBeGreaterThanOrEqual(2);
+    expect(log).not.toContain('tts de erzaehler [de] Zwei.');
+    expect(log).not.toContain('tts de flocke [de] Vier.');
   });
 });
