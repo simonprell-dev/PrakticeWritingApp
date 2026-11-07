@@ -12,6 +12,7 @@ interface Line {
 
 const SPEAKER: Record<string, string> = {
   erzaehler: 'Erzähler/in – freundlich, ruhig, deutlich',
+  flocke: 'Wichtel Flocke – frech, fröhlich, vorlaut',
   wesen: 'Wesen – niedlich, fröhlich',
   zork: 'Alien Zork – hell, quirlig, frech',
   riese: 'Riese Rumpel – tief, polternd, gutmütig',

@@ -40,28 +40,21 @@
   "text": "Sieg für",
   "speaker": "erzaehler",
   "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Sieg für {Teamname}!"
+  "partOf": "Sieg für {name}!"
  },
  {
   "id": "die-zeit-ist-um-mit-u5ojs",
   "text": "Die Zeit ist um – mit",
   "speaker": "erzaehler",
   "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Die Zeit ist um – mit {Zahl} m der höchste Turm!"
+  "partOf": "Die Zeit ist um – mit {n} m der höchste Turm!"
  },
  {
   "id": "m-der-hoechste-turm-1nqh0",
   "text": "m der höchste Turm!",
   "speaker": "erzaehler",
   "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Die Zeit ist um – mit {Zahl} m der höchste Turm!"
- },
- {
-  "id": "zuerst-ueber-der-ziellinie-12qvp",
-  "text": "Zuerst über der Ziellinie –",
-  "speaker": "erzaehler",
-  "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Zuerst über der Ziellinie – {Zahl} m hoch!"
+  "partOf": "Die Zeit ist um – mit {n} m der höchste Turm!"
  },
  {
   "id": "diesen-zettel-kenne-ich-schon-19p26",
@@ -74,14 +67,14 @@
   "text": "Zeichen kenne ich schon!",
   "speaker": "erzaehler",
   "where": "Türme bauen – nach einem Foto",
-  "partOf": "{Zahl} Zeichen kenne ich schon!"
+  "partOf": "{n} Zeichen kenne ich schon!"
  },
  {
   "id": "zeichen-konnte-ich-keinem-turm-zuord-1e4v9",
   "text": "Zeichen konnte ich keinem Turm zuordnen. Stiftfarbe prüfen!",
   "speaker": "erzaehler",
   "where": "Türme bauen – nach einem Foto",
-  "partOf": "{Zahl} Zeichen konnte ich keinem Turm zuordnen. Stiftfarbe prüfen!"
+  "partOf": "{n} Zeichen konnte ich keinem Turm zuordnen. Stiftfarbe prüfen!"
  },
  {
   "id": "ich-sehe-keine-buchstaben-legt-die-z-16e3e",
@@ -100,21 +93,21 @@
   "text": "Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!",
   "speaker": "erzaehler",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "{Teamname}: Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!"
+  "partOf": "{name}: Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!"
  },
  {
   "id": "mauer-1rqmf",
   "text": "Mauer",
   "speaker": "erzaehler",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Mauer {Zahl} geschafft!"
+  "partOf": "Mauer {n} geschafft!"
  },
  {
   "id": "geschafft-13yu2",
   "text": "geschafft!",
   "speaker": "erzaehler",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Mauer {Zahl} geschafft!"
+  "partOf": "Mauer {n} geschafft!"
  },
  {
   "id": "noch-eine-mauer-bis-zum-riesen-1hxqq",
@@ -127,7 +120,7 @@
   "text": "Mauern bis zum Riesen!",
   "speaker": "erzaehler",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Noch {Zahl} Mauern bis zum Riesen!"
+  "partOf": "Noch {n} Mauern bis zum Riesen!"
  },
  {
   "id": "die-riesenburg-ist-erobert-1emyo",
@@ -140,7 +133,7 @@
   "text": "hat gewonnen!",
   "speaker": "erzaehler",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "{Teamname} hat gewonnen!"
+  "partOf": "{name} hat gewonnen!"
  },
  {
   "id": "die-zeit-ist-um-17vzb",
@@ -153,27 +146,21 @@
   "text": "Ihr habt",
   "speaker": "erzaehler",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Ihr habt {Zahl} von {Zahl} Mauern geschafft – super gekämpft!"
+  "partOf": "Ihr habt {w} von {n} Mauern geschafft – super gekämpft!"
  },
  {
   "id": "von-15nm4",
   "text": "von",
   "speaker": "erzaehler",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Ihr habt {Zahl} von {Zahl} Mauern geschafft – super gekämpft!"
+  "partOf": "Ihr habt {w} von {n} Mauern geschafft – super gekämpft!"
  },
  {
   "id": "mauern-geschafft-super-gekaempft-1qr6i",
   "text": "Mauern geschafft – super gekämpft!",
   "speaker": "erzaehler",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Ihr habt {Zahl} von {Zahl} Mauern geschafft – super gekämpft!"
- },
- {
-  "id": "beim-naechsten-mal-schafft-ihr-die-e-mu4zm",
-  "text": "Beim nächsten Mal schafft ihr die erste Mauer!",
-  "speaker": "erzaehler",
-  "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)"
+  "partOf": "Ihr habt {w} von {n} Mauern geschafft – super gekämpft!"
  },
  {
   "id": "neues-blatt-erkannt-xe753",
@@ -198,28 +185,28 @@
   "text": "So schreibt man",
   "speaker": "erzaehler",
   "where": "Meer, Weltraum, Savanne – Vorführung: so schreibt man den Buchstaben",
-  "partOf": "So schreibt man {das X}:"
+  "partOf": "So schreibt man {c}:"
  },
  {
   "id": "ueberraschung-wer-1rodn",
   "text": "Überraschung! Wer",
   "speaker": "erzaehler",
   "where": "Meer, Weltraum, Savanne – Überraschungsblase erscheint",
-  "partOf": "Überraschung! Wer {das X} schreibt, lässt die Blase platzen!"
+  "partOf": "Überraschung! Wer {c} schreibt, lässt die Blase platzen!"
  },
  {
   "id": "schreibt-laesst-die-blase-platzen-xr1og",
   "text": "schreibt, lässt die Blase platzen!",
   "speaker": "erzaehler",
   "where": "Meer, Weltraum, Savanne – Überraschungsblase erscheint",
-  "partOf": "Überraschung! Wer {das X} schreibt, lässt die Blase platzen!"
+  "partOf": "Überraschung! Wer {c} schreibt, lässt die Blase platzen!"
  },
  {
   "id": "zeichen-konnte-ich-keinem-team-zuord-3b3pn",
   "text": "Zeichen konnte ich keinem Team zuordnen. Stiftfarbe prüfen!",
   "speaker": "erzaehler",
   "where": "Team-Duell – nach einem Foto",
-  "partOf": "{Zahl} Zeichen konnte ich keinem Team zuordnen. Stiftfarbe prüfen!"
+  "partOf": "{n} Zeichen konnte ich keinem Team zuordnen. Stiftfarbe prüfen!"
  },
  {
   "id": "ich-sehe-keine-zettel-legt-sie-unter-c19mg",
@@ -228,17 +215,10 @@
   "where": "Team-Duell – nach einem Foto"
  },
  {
-  "id": "ein-neuer-fisch-3ac56",
-  "text": "Ein neuer Fisch!",
+  "id": "diese-karte-erkenne-ich-nicht-sicher-1mnrm",
+  "text": "Diese Karte erkenne ich nicht sicher – bitte flach und ganz ins Bild legen",
   "speaker": "erzaehler",
-  "where": "Mal-Aquarium – handleCards"
- },
- {
-  "id": "neue-fische-1kkt7",
-  "text": "neue Fische!",
-  "speaker": "erzaehler",
-  "where": "Mal-Aquarium – handleCards",
-  "partOf": "{…} neue Fische!"
+  "where": "Mal-Aquarium – "
  },
  {
   "id": "neue-farben-188zl",
@@ -251,36 +231,42 @@
   "text": "kenne ich schon",
   "speaker": "erzaehler",
   "where": "Mal-Aquarium – handleCards",
-  "partOf": "{…} kenne ich schon"
+  "partOf": "{n} kenne ich schon"
  },
  {
   "id": "noch-nicht-ausgemalt-5ynvq",
   "text": "noch nicht ausgemalt",
   "speaker": "erzaehler",
   "where": "Mal-Aquarium – handleCards",
-  "partOf": "{…} noch nicht ausgemalt"
+  "partOf": "{n} noch nicht ausgemalt"
  },
  {
-  "id": "keine-fisch-karte-gefunden-7p2zu",
-  "text": "Keine Fisch-Karte gefunden",
+  "id": "karte-nicht-erkannt-1cb38",
+  "text": "Karte nicht erkannt",
   "speaker": "erzaehler",
   "where": "Mal-Aquarium – handleCards"
  },
  {
-  "id": "ich-sehe-keine-fisch-karte-liegt-sie-1p5lj",
-  "text": "Ich sehe keine Fisch-Karte. Liegt sie ganz im Bild, mit dem schwarzen Rahmen?",
+  "id": "keine-karte-gefunden-1l5du",
+  "text": "Keine Karte gefunden",
   "speaker": "erzaehler",
   "where": "Mal-Aquarium – handleCards"
  },
  {
-  "id": "dieser-fisch-ist-noch-ganz-weiss-ers-lx1yu",
-  "text": "Dieser Fisch ist noch ganz weiß – erst bunt ausmalen!",
+  "id": "ich-sehe-keine-karte-liegt-sie-ganz-udha4",
+  "text": "Ich sehe keine Karte. Liegt sie ganz im Bild, mit dem schwarzen Rahmen?",
   "speaker": "erzaehler",
   "where": "Mal-Aquarium – handleCards"
  },
  {
-  "id": "diesen-fisch-kenne-ich-schon-leg-ein-1xcwz",
-  "text": "Diesen Fisch kenne ich schon! Leg eine neue Karte unter die Kamera.",
+  "id": "dieses-tier-ist-noch-ganz-weiss-erst-1hplh",
+  "text": "Dieses Tier ist noch ganz weiß – erst bunt ausmalen!",
+  "speaker": "erzaehler",
+  "where": "Mal-Aquarium – handleCards"
+ },
+ {
+  "id": "dieses-tier-kenne-ich-schon-leg-eine-rugrn",
+  "text": "Dieses Tier kenne ich schon! Leg eine neue Karte unter die Kamera.",
   "speaker": "erzaehler",
   "where": "Mal-Aquarium – handleCards"
  },
@@ -291,24 +277,52 @@
   "where": "Foto – Foto wird ausgewertet"
  },
  {
+  "id": "1-neues-zeichen-14yvm",
+  "text": "1 neues Zeichen! (",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet",
+  "partOf": "1 neues Zeichen! ({m} spiegelverkehrt, {k} kenne ich schon)"
+ },
+ {
+  "id": "spiegelverkehrt-zxdyw",
+  "text": "spiegelverkehrt,",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet",
+  "partOf": "1 neues Zeichen! ({m} spiegelverkehrt, {k} kenne ich schon)"
+ },
+ {
+  "id": "kenne-ich-schon-p8idf",
+  "text": "kenne ich schon)",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet",
+  "partOf": "1 neues Zeichen! ({m} spiegelverkehrt, {k} kenne ich schon)"
+ },
+ {
+  "id": "spiegelverkehrt-10rcr",
+  "text": "spiegelverkehrt)",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet",
+  "partOf": "1 neues Zeichen! ({m} spiegelverkehrt)"
+ },
+ {
   "id": "1-neues-zeichen-10cot",
   "text": "1 neues Zeichen!",
   "speaker": "erzaehler",
   "where": "Foto – Foto ausgewertet"
  },
  {
-  "id": "neue-zeichen-o7p3e",
-  "text": "neue Zeichen!",
-  "speaker": "erzaehler",
-  "where": "Foto – Foto ausgewertet",
-  "partOf": "{…} neue Zeichen!"
- },
- {
   "id": "neue-zeichen-16ey9",
   "text": "neue Zeichen! (",
   "speaker": "erzaehler",
   "where": "Foto – Foto ausgewertet",
-  "partOf": "{Zahl} neue Zeichen! ({…})"
+  "partOf": "{n} neue Zeichen! ({m} spiegelverkehrt, {k} kenne ich schon)"
+ },
+ {
+  "id": "neue-zeichen-o7p3e",
+  "text": "neue Zeichen!",
+  "speaker": "erzaehler",
+  "where": "Foto – Foto ausgewertet",
+  "partOf": "{n} neue Zeichen!"
  },
  {
   "id": "spiegelschrift-zaehlt-nicht-19xuy",
@@ -329,10 +343,23 @@
   "where": "Foto – Foto ausgewertet"
  },
  {
+  "id": "die-erkennung-konnte-nicht-geladen-w-wy35s",
+  "text": "Die Erkennung konnte nicht geladen werden:",
+  "speaker": "erzaehler",
+  "where": "Hinweis – jederzeit",
+  "partOf": "Die Erkennung konnte nicht geladen werden: {error}"
+ },
+ {
   "id": "die-kamera-wurde-getrennt-bitte-wied-1lgs2",
   "text": "Die Kamera wurde getrennt. Bitte wieder anschließen.",
   "speaker": "erzaehler",
   "where": "Hinweis – jederzeit"
+ },
+ {
+  "id": "keine-kamera-bitte-oben-rechts-einri-1vqb3",
+  "text": "Keine Kamera – bitte oben rechts einrichten.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – ensureCamera"
  },
  {
   "id": "diesen-spielstand-gibt-es-nicht-mehr-1a45o",
@@ -345,7 +372,14 @@
   "text": "Weiter geht’s:",
   "speaker": "erzaehler",
   "where": "Hinweis – resume",
-  "partOf": "Weiter geht’s: {Teamname}"
+  "partOf": "Weiter geht’s: {name}"
+ },
+ {
+  "id": "der-spielstand-liess-sich-nicht-ganz-4yp4l",
+  "text": "Der Spielstand ließ sich nicht ganz laden:",
+  "speaker": "erzaehler",
+  "where": "Hinweis – resume",
+  "partOf": "Der Spielstand ließ sich nicht ganz laden: {error}"
  },
  {
   "id": "zuerst-die-kamera-einrichten-ubl6l",
@@ -354,48 +388,8 @@
   "where": "Hinweis – Farbe anlernen"
  },
  {
-  "id": "keine-kamera-bitte-oben-rechts-einri-1vqb3",
-  "text": "Keine Kamera – bitte oben rechts einrichten.",
-  "speaker": "erzaehler",
-  "where": "Hinweis – Spielstart"
- },
- {
-  "id": "schreib-buchstaben-oder-zahlen-und-d-137p3",
-  "text": "Schreib Buchstaben oder Zahlen und drücke „Fertig!“",
-  "speaker": "erzaehler",
-  "where": "Hinweis – Spielstart"
- },
- {
-  "id": "schreibe-1tg8t",
-  "text": "Schreibe",
-  "speaker": "erzaehler",
-  "where": "Hinweis – Spielstart beim Üben",
-  "partOf": "Schreibe {Zahl}× {das X} und drücke „Fertig!“"
- },
- {
-  "id": "und-druecke-fertig-munv3",
-  "text": "und drücke „Fertig!“",
-  "speaker": "erzaehler",
-  "where": "Hinweis – Spielstart beim Üben",
-  "partOf": "Schreibe {Zahl}× {das X} und drücke „Fertig!“"
- },
- {
-  "id": "heute-ueben-wir-36ahi",
-  "text": "Heute üben wir",
-  "speaker": "erzaehler",
-  "where": "Hinweis – Spielstart beim Üben",
-  "partOf": "Heute üben wir {Buchstaben}. Zuerst {Zahl}× {das X}!"
- },
- {
-  "id": "zuerst-1p7zw",
-  "text": ". Zuerst",
-  "speaker": "erzaehler",
-  "where": "Hinweis – Spielstart beim Üben",
-  "partOf": "Heute üben wir {Buchstaben}. Zuerst {Zahl}× {das X}!"
- },
- {
-  "id": "ausgemalte-fisch-karte-unter-die-kam-lrd0j",
-  "text": "Ausgemalte Fisch-Karte unter die Kamera legen und „Fertig!“ drücken!",
+  "id": "ausgemalte-karte-unter-die-kamera-le-mnfd2",
+  "text": "Ausgemalte Karte unter die Kamera legen und „Fertig!“ drücken!",
   "speaker": "erzaehler",
   "where": "Hinweis – startPaint"
  },
@@ -422,35 +416,35 @@
   "text": "Super,",
   "speaker": "erzaehler",
   "where": "Hinweis – Übungsbuchstabe geschafft",
-  "partOf": "Super, {Zahl}× {das X} geschafft! Jetzt kommt {das X}."
+  "partOf": "Super, {n}× {c} geschafft! Jetzt kommt {next}."
  },
  {
   "id": "geschafft-jetzt-kommt-1i92a",
   "text": "geschafft! Jetzt kommt",
   "speaker": "erzaehler",
   "where": "Hinweis – Übungsbuchstabe geschafft",
-  "partOf": "Super, {Zahl}× {das X} geschafft! Jetzt kommt {das X}."
+  "partOf": "Super, {n}× {c} geschafft! Jetzt kommt {next}."
  },
  {
   "id": "super-alle-52zsb",
   "text": "Super! Alle",
   "speaker": "erzaehler",
   "where": "Hinweis – Übungsbuchstabe geschafft",
-  "partOf": "Super! Alle {Zahl} Buchstaben geschafft!"
+  "partOf": "Super! Alle {n} Buchstaben geschafft!"
  },
  {
   "id": "buchstaben-geschafft-x5l6j",
   "text": "Buchstaben geschafft!",
   "speaker": "erzaehler",
   "where": "Hinweis – Übungsbuchstabe geschafft",
-  "partOf": "Super! Alle {Zahl} Buchstaben geschafft!"
+  "partOf": "Super! Alle {n} Buchstaben geschafft!"
  },
  {
   "id": "super-1nhz7",
   "text": "Super!",
   "speaker": "erzaehler",
   "where": "Hinweis – Übungsbuchstabe geschafft",
-  "partOf": "Super! {Zahl}× {das X} geschafft!"
+  "partOf": "Super! {n}× {c} geschafft!"
  },
  {
   "id": "nochmal-von-vorn-oder-neue-buchstabe-chq97",
@@ -463,6 +457,20 @@
   "text": "Willst du weiter üben oder einen neuen Buchstaben?",
   "speaker": "erzaehler",
   "where": "Hinweis – Übungsbuchstabe geschafft"
+ },
+ {
+  "id": "die-schrift-1aoou",
+  "text": "Die Schrift „",
+  "speaker": "erzaehler",
+  "where": "Hinweis – applyScript",
+  "partOf": "Die Schrift „{name}“ konnte nicht geladen werden: {error}"
+ },
+ {
+  "id": "konnte-nicht-geladen-werden-1nowb",
+  "text": "“ konnte nicht geladen werden:",
+  "speaker": "erzaehler",
+  "where": "Hinweis – applyScript",
+  "partOf": "Die Schrift „{name}“ konnte nicht geladen werden: {error}"
  },
  {
   "id": "keine-kamera-verbunden-1tk33",
@@ -487,7 +495,14 @@
   "text": "Zeichen sind spiegelverkehrt – das zählt nicht. Andersherum schreiben!",
   "speaker": "erzaehler",
   "where": "Hinweis – beim Foto",
-  "partOf": "{Zahl} Zeichen sind spiegelverkehrt – das zählt nicht. Andersherum schreiben!"
+  "partOf": "{n} Zeichen sind spiegelverkehrt – das zählt nicht. Andersherum schreiben!"
+ },
+ {
+  "id": "das-hat-nicht-geklappt-p2yrz",
+  "text": "Das hat nicht geklappt:",
+  "speaker": "erzaehler",
+  "where": "Hinweis – beim Foto",
+  "partOf": "Das hat nicht geklappt: {error}"
  },
  {
   "id": "alle-karten-gelten-wieder-als-neu-1bero",
@@ -520,17 +535,881 @@
   "where": "Hinweis – Automatisch scannen"
  },
  {
-  "id": "ich-bin-am-schoensten-t0boa",
-  "text": "Ich bin am schönsten!",
-  "speaker": "wesen",
-  "where": "Meer, Weltraum, Savanne – nach einem Foto"
+  "id": "rolf-und-der-puderzucker-j1ohu",
+  "text": "Rolf und der Puderzucker",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 1: „Rolf und der Puderzucker“"
+ },
+ {
+  "id": "rentier-rolf-hilft-in-der-weihnachts-1lok8",
+  "text": "Rentier Rolf hilft in der Weihnachtsbäckerei.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 1: „Rolf und der Puderzucker“"
+ },
+ {
+  "id": "er-soll-ganz-vorsichtig-puderzucker-12fck",
+  "text": "Er soll ganz vorsichtig Puderzucker auf die Plätzchen streuen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 1: „Rolf und der Puderzucker“"
+ },
+ {
+  "id": "aber-der-puderzucker-staubt-und-stau-1gmt9",
+  "text": "Aber der Puderzucker staubt und staubt – direkt in Rolfs Nase.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 1: „Rolf und der Puderzucker“"
+ },
+ {
+  "id": "seine-nase-kribbelt-sie-kitzelt-sie-1l54i",
+  "text": "Seine Nase kribbelt, sie kitzelt, sie zuckt …",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 1: „Rolf und der Puderzucker“"
+ },
+ {
+  "id": "paula-will-nicht-warten-lvic1",
+  "text": "Paula will nicht warten",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 2: „Paula will nicht warten“"
+ },
+ {
+  "id": "paula-ist-ein-geschenk-mit-einer-gol-1ane9",
+  "text": "Paula ist ein Geschenk mit einer goldenen Schleife.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 2: „Paula will nicht warten“"
+ },
+ {
+  "id": "sie-soll-ganz-still-unter-dem-weihna-2yzyc",
+  "text": "Sie soll ganz still unter dem Weihnachtsbaum liegen und warten.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 2: „Paula will nicht warten“"
+ },
+ {
+  "id": "aber-paula-ist-so-aufgeregt-dass-sie-170qn",
+  "text": "Aber Paula ist so aufgeregt, dass sie einfach nicht stillhalten kann.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 2: „Paula will nicht warten“"
+ },
+ {
+  "id": "huepf-huepf-huepf-und-weg-ist-sie-1g044",
+  "text": "Hüpf, hüpf, hüpf – und weg ist sie!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 2: „Paula will nicht warten“"
+ },
+ {
+  "id": "wim-der-grosse-jongleur-zkas6",
+  "text": "Wim, der große Jongleur",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 3: „Wim, der große Jongleur“"
+ },
+ {
+  "id": "wichtel-wim-hat-im-zirkus-zugeschaut-19ksk",
+  "text": "Wichtel Wim hat im Zirkus zugeschaut und will jetzt auch jonglieren.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 3: „Wim, der große Jongleur“"
+ },
+ {
+  "id": "er-nimmt-drei-glaenzende-christbaumk-1bkpj",
+  "text": "Er nimmt drei glänzende Christbaumkugeln.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 3: „Wim, der große Jongleur“"
+ },
+ {
+  "id": "eine-kugel-fliegt-hoch-die-zweite-fl-sclxd",
+  "text": "Eine Kugel fliegt hoch, die zweite fliegt hoch, die dritte fliegt hoch …",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 3: „Wim, der große Jongleur“"
+ },
+ {
+  "id": "und-eine-kommt-nicht-wieder-runter-o-1baxu",
+  "text": "Und eine kommt nicht wieder runter. Oder doch?",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 3: „Wim, der große Jongleur“"
+ },
+ {
+  "id": "hoppel-hat-schluckauf-62fgo",
+  "text": "Hoppel hat Schluckauf",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 4: „Hoppel hat Schluckauf“"
+ },
+ {
+  "id": "schneehase-hoppel-hat-viel-zu-schnel-44pmt",
+  "text": "Schneehase Hoppel hat viel zu schnell seine Möhre gegessen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 4: „Hoppel hat Schluckauf“"
+ },
+ {
+  "id": "jetzt-hat-er-schluckauf-und-bei-jede-1rx52",
+  "text": "Jetzt hat er Schluckauf, und bei jedem Hicks hüpft er in die Luft.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 4: „Hoppel hat Schluckauf“"
+ },
+ {
+  "id": "er-haelt-die-luft-an-er-trinkt-wasse-3brnl",
+  "text": "Er hält die Luft an, er trinkt Wasser, er steht auf einem Bein.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 4: „Hoppel hat Schluckauf“"
+ },
+ {
+  "id": "nichts-hilft-bis-jemand-ganz-laut-bu-1lrv8",
+  "text": "Nichts hilft. Bis jemand ganz laut „Buh!“ ruft.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 4: „Hoppel hat Schluckauf“"
+ },
+ {
+  "id": "pino-nimmt-die-abkuerzung-1mq8r",
+  "text": "Pino nimmt die Abkürzung",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 5: „Pino nimmt die Abkürzung“"
+ },
+ {
+  "id": "pinguin-pino-will-zum-weihnachtsmark-1a9hq",
+  "text": "Pinguin Pino will zum Weihnachtsmarkt.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 5: „Pino nimmt die Abkürzung“"
+ },
+ {
+  "id": "zu-fuss-watschelt-er-aber-sooo-langs-ixukf",
+  "text": "Zu Fuß watschelt er aber sooo langsam.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 5: „Pino nimmt die Abkürzung“"
+ },
+ {
+  "id": "da-hat-pino-eine-idee-er-legt-sich-a-i980l",
+  "text": "Da hat Pino eine Idee: Er legt sich auf den Bauch.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 5: „Pino nimmt die Abkürzung“"
+ },
+ {
+  "id": "und-los-geht-die-rutschpartie-quer-d-swpc2",
+  "text": "Und los geht die Rutschpartie quer durch den Schnee!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 5: „Pino nimmt die Abkürzung“"
+ },
+ {
+  "id": "kruemel-und-der-nikolaus-1atqp",
+  "text": "Krümel und der Nikolaus",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 6: „Krümel und der Nikolaus“"
+ },
+ {
+  "id": "heute-ist-nikolaustag-13n47",
+  "text": "Heute ist Nikolaustag!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 6: „Krümel und der Nikolaus“"
+ },
+ {
+  "id": "lebkuchenmann-kruemel-hat-gestern-ab-ltqlr",
+  "text": "Lebkuchenmann Krümel hat gestern Abend seinen Stiefel ganz blank geputzt.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 6: „Krümel und der Nikolaus“"
+ },
+ {
+  "id": "in-der-nacht-hoert-er-etwas-poltern-1y84b",
+  "text": "In der Nacht hört er etwas poltern, oben am Schornstein.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 6: „Krümel und der Nikolaus“"
+ },
+ {
+  "id": "am-morgen-steht-da-ein-riesiger-stie-ueubl",
+  "text": "Am Morgen steht da ein riesiger Stiefel voller Goldtaler.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 6: „Krümel und der Nikolaus“"
+ },
+ {
+  "id": "schnuppis-nase-vlp0f",
+  "text": "Schnuppis Nase",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 7: „Schnuppis Nase“"
+ },
+ {
+  "id": "schneemann-schnuppi-ist-sehr-stolz-a-hy26e",
+  "text": "Schneemann Schnuppi ist sehr stolz auf seine schöne Karottennase.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 7: „Schnuppis Nase“"
+ },
+ {
+  "id": "doch-heute-ist-es-kalt-und-windig-un-1ldww",
+  "text": "Doch heute ist es kalt und windig, und Schnuppi muss niesen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 7: „Schnuppis Nase“"
+ },
+ {
+  "id": "die-nase-fliegt-in-hohem-bogen-davon-o5cn8",
+  "text": "Die Nase fliegt in hohem Bogen davon.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 7: „Schnuppis Nase“"
+ },
+ {
+  "id": "und-wer-wartet-schon-mit-grossen-ohr-116tl",
+  "text": "Und wer wartet schon mit großen Ohren? Ein hungriger Hase!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 7: „Schnuppis Nase“"
+ },
+ {
+  "id": "kruemel-tanzt-sdmgx",
+  "text": "Krümel tanzt",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 8: „Krümel tanzt“"
+ },
+ {
+  "id": "im-kalenderhaus-ist-musik-und-lebkuc-1mmjw",
+  "text": "Im Kalenderhaus ist Musik, und Lebkuchenmann Krümel tanzt los.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 8: „Krümel tanzt“"
+ },
+ {
+  "id": "er-dreht-sich-er-huepft-er-wackelt-m-10gky",
+  "text": "Er dreht sich, er hüpft, er wackelt mit den Armen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 8: „Krümel tanzt“"
+ },
+ {
+  "id": "plopp-da-springt-ihm-ein-zuckerknopf-shz5v",
+  "text": "Plopp! Da springt ihm ein Zuckerknopf vom Bauch.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 8: „Krümel tanzt“"
+ },
+ {
+  "id": "der-knopf-rollt-und-rollt-und-rollt-12b31",
+  "text": "Der Knopf rollt und rollt und rollt.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 8: „Krümel tanzt“"
+ },
+ {
+  "id": "wim-backt-plaetzchen-1icqa",
+  "text": "Wim backt Plätzchen",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 9: „Wim backt Plätzchen“"
+ },
+ {
+  "id": "wichtel-wim-will-die-besten-plaetzch-vooxe",
+  "text": "Wichtel Wim will die besten Plätzchen der Welt backen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 9: „Wim backt Plätzchen“"
+ },
+ {
+  "id": "er-ruehrt-den-teig-er-knetet-den-tei-1cgl0",
+  "text": "Er rührt den Teig, er knetet den Teig, er schaut ganz tief in die Schüssel.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 9: „Wim backt Plätzchen“"
+ },
+ {
+  "id": "ein-bisschen-zu-tief-17b5s",
+  "text": "Ein bisschen zu tief.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 9: „Wim backt Plätzchen“"
+ },
+ {
+  "id": "platsch-eine-riesige-mehlwolke-steig-bura7",
+  "text": "Platsch! Eine riesige Mehlwolke steigt auf.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 9: „Wim backt Plätzchen“"
+ },
+ {
+  "id": "bruno-ist-muede-1kn4j",
+  "text": "Bruno ist müde",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 10: „Bruno ist müde“"
+ },
+ {
+  "id": "eisbaer-bruno-hat-die-ganze-nacht-sc-es8ri",
+  "text": "Eisbär Bruno hat die ganze Nacht Schneeflocken gezählt.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 10: „Bruno ist müde“"
+ },
+ {
+  "id": "jetzt-ist-er-so-muede-dass-ihm-im-st-mqcsh",
+  "text": "Jetzt ist er so müde, dass ihm im Stehen die Augen zufallen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 10: „Bruno ist müde“"
+ },
+ {
+  "id": "er-schnarcht-und-vor-seiner-nase-wae-o0amw",
+  "text": "Er schnarcht, und vor seiner Nase wächst eine riesige Schnarchblase.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 10: „Bruno ist müde“"
+ },
+ {
+  "id": "sie-wird-groesser-und-groesser-und-g-r5la3",
+  "text": "Sie wird größer und größer und größer …",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 10: „Bruno ist müde“"
+ },
+ {
+  "id": "rolf-uebt-fliegen-144pe",
+  "text": "Rolf übt fliegen",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 11: „Rolf übt fliegen“"
+ },
+ {
+  "id": "rentier-rolf-muss-fuer-heiligabend-d-1x9wy",
+  "text": "Rentier Rolf muss für Heiligabend das Fliegen üben.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 11: „Rolf übt fliegen“"
+ },
+ {
+  "id": "er-nimmt-anlauf-er-springt-und-er-fl-15dyz",
+  "text": "Er nimmt Anlauf, er springt, und er fliegt!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 11: „Rolf übt fliegen“"
+ },
+ {
+  "id": "er-fliegt-sogar-einen-looping-so-tol-1loe5",
+  "text": "Er fliegt sogar einen Looping, so toll ist er.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 11: „Rolf übt fliegen“"
+ },
+ {
+  "id": "nur-das-landen-hat-er-noch-nicht-geu-2n7vn",
+  "text": "Nur das Landen hat er noch nicht geübt.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 11: „Rolf übt fliegen“"
+ },
+ {
+  "id": "die-schneeballschlacht-2doxb",
+  "text": "Die Schneeballschlacht",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 12: „Die Schneeballschlacht“"
+ },
+ {
+  "id": "schneehase-hoppel-hat-den-perfekten-g027n",
+  "text": "Schneehase Hoppel hat den perfekten Schneeball gebaut.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 12: „Die Schneeballschlacht“"
+ },
+ {
+  "id": "er-ist-rund-er-ist-fest-er-ist-genau-12fbj",
+  "text": "Er ist rund, er ist fest, er ist genau richtig.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 12: „Die Schneeballschlacht“"
+ },
+ {
+  "id": "hoppel-zielt-auf-den-baum-er-wirft-xzmkt",
+  "text": "Hoppel zielt auf den Baum. Er wirft.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 12: „Die Schneeballschlacht“"
+ },
+ {
+  "id": "aber-der-schneeball-fliegt-nicht-zum-1m9s0",
+  "text": "Aber der Schneeball fliegt nicht zum Baum.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 12: „Die Schneeballschlacht“"
+ },
+ {
+  "id": "pino-auf-dem-eis-s3mm2",
+  "text": "Pino auf dem Eis",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 13: „Pino auf dem Eis“"
+ },
+ {
+  "id": "pinguin-pino-will-eiskunstlaeufer-we-1ospp",
+  "text": "Pinguin Pino will Eiskunstläufer werden.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 13: „Pino auf dem Eis“"
+ },
+ {
+  "id": "er-dreht-eine-pirouette-noch-eine-un-m9x0q",
+  "text": "Er dreht eine Pirouette, noch eine, und noch eine.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 13: „Pino auf dem Eis“"
+ },
+ {
+  "id": "so-schnell-hat-sich-noch-nie-ein-pin-1kdzk",
+  "text": "So schnell hat sich noch nie ein Pinguin gedreht.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 13: „Pino auf dem Eis“"
+ },
+ {
+  "id": "dann-bleibt-er-stehen-aber-die-welt-nt5xg",
+  "text": "Dann bleibt er stehen. Aber die Welt dreht sich weiter.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 13: „Pino auf dem Eis“"
+ },
+ {
+  "id": "paula-rappelt-d4503",
+  "text": "Paula rappelt",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 14: „Paula rappelt“"
+ },
+ {
+  "id": "unter-dem-baum-liegt-paula-das-gesch-1kpk9",
+  "text": "Unter dem Baum liegt Paula, das Geschenk.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 14: „Paula rappelt“"
+ },
+ {
+  "id": "ploetzlich-rappelt-es-in-ihr-rumpel-2zolk",
+  "text": "Plötzlich rappelt es in ihr. Rumpel, rumpel, rumpel.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 14: „Paula rappelt“"
+ },
+ {
+  "id": "was-da-wohl-drin-ist-dao1y",
+  "text": "Was da wohl drin ist?",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 14: „Paula rappelt“"
+ },
+ {
+  "id": "der-deckel-springt-auf-und-heraus-ko-e3v8g",
+  "text": "Der Deckel springt auf – und heraus kommt eine Sprungfeder!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 14: „Paula rappelt“"
+ },
+ {
+  "id": "bruno-hat-schluckauf-yeukw",
+  "text": "Bruno hat Schluckauf",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 15: „Bruno hat Schluckauf“"
+ },
+ {
+  "id": "eisbaer-bruno-hat-zu-schnell-sein-ei-1y9rt",
+  "text": "Eisbär Bruno hat zu schnell sein Eis gegessen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 15: „Bruno hat Schluckauf“"
+ },
+ {
+  "id": "jetzt-hat-er-einen-ganz-grossen-baer-7gl6p",
+  "text": "Jetzt hat er einen ganz großen Bären-Schluckauf.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 15: „Bruno hat Schluckauf“"
+ },
+ {
+  "id": "bei-jedem-hicks-springen-kleine-ster-1wiwk",
+  "text": "Bei jedem Hicks springen kleine Sterne aus seinem Mund.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 15: „Bruno hat Schluckauf“"
+ },
+ {
+  "id": "das-sieht-schoen-aus-aber-es-kitzelt-10bdy",
+  "text": "Das sieht schön aus, aber es kitzelt.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 15: „Bruno hat Schluckauf“"
+ },
+ {
+  "id": "schnuppi-ist-erkaeltet-dvcgm",
+  "text": "Schnuppi ist erkältet",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 16: „Schnuppi ist erkältet“"
+ },
+ {
+  "id": "schneemann-schnuppi-hat-sich-erkaelt-1mbus",
+  "text": "Schneemann Schnuppi hat sich erkältet.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 16: „Schnuppi ist erkältet“"
+ },
+ {
+  "id": "ein-schneemann-mit-schnupfen-das-gib-1spdr",
+  "text": "Ein Schneemann mit Schnupfen? Das gibt es!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 16: „Schnuppi ist erkältet“"
+ },
+ {
+  "id": "seine-karottennase-laeuft-und-er-mus-dj7w9",
+  "text": "Seine Karottennase läuft, und er muss ganz doll niesen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 16: „Schnuppi ist erkältet“"
+ },
+ {
+  "id": "aber-aus-schnuppi-kommen-keine-tropf-ligo8",
+  "text": "Aber aus Schnuppi kommen keine Tropfen, sondern Schneeflocken.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 16: „Schnuppi ist erkältet“"
+ },
+ {
+  "id": "kruemel-der-zauberer-7qw8k",
+  "text": "Krümel, der Zauberer",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 17: „Krümel, der Zauberer“"
+ },
+ {
+  "id": "lebkuchenmann-kruemel-will-der-klass-rdkhy",
+  "text": "Lebkuchenmann Krümel will der Klasse ein Kunststück zeigen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 17: „Krümel, der Zauberer“"
+ },
+ {
+  "id": "er-jongliert-mit-drei-zuckerperlen-10wvi",
+  "text": "Er jongliert mit drei Zuckerperlen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 17: „Krümel, der Zauberer“"
+ },
+ {
+  "id": "er-wird-immer-schneller-und-immer-mu-1dfxc",
+  "text": "Er wird immer schneller und immer mutiger.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 17: „Krümel, der Zauberer“"
+ },
+ {
+  "id": "bis-eine-perle-genau-auf-seinem-kopf-mru4h",
+  "text": "Bis eine Perle genau auf seinem Kopf landet.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 17: „Krümel, der Zauberer“"
+ },
+ {
+  "id": "kruemel-im-teig-8uppv",
+  "text": "Krümel im Teig",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 18: „Krümel im Teig“"
+ },
+ {
+  "id": "lebkuchenmann-kruemel-besucht-die-we-1l1zr",
+  "text": "Lebkuchenmann Krümel besucht die Weihnachtsbäckerei.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 18: „Krümel im Teig“"
+ },
+ {
+  "id": "er-will-nur-ganz-kurz-in-die-teigsch-1ir7y",
+  "text": "Er will nur ganz kurz in die Teigschüssel schauen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 18: „Krümel im Teig“"
+ },
+ {
+  "id": "da-rutscht-er-aus-und-landet-mitten-1jnzy",
+  "text": "Da rutscht er aus – und landet mitten im Mehl.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 18: „Krümel im Teig“"
+ },
+ {
+  "id": "wie-sieht-er-jetzt-bloss-aus-sa5sc",
+  "text": "Wie sieht er jetzt bloß aus?",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 18: „Krümel im Teig“"
+ },
+ {
+  "id": "bruno-rutscht-11kf7",
+  "text": "Bruno rutscht",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 19: „Bruno rutscht“"
+ },
+ {
+  "id": "eisbaer-bruno-hat-pino-beim-bauchrut-1x0fl",
+  "text": "Eisbär Bruno hat Pino beim Bauchrutschen zugeschaut.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 19: „Bruno rutscht“"
+ },
+ {
+  "id": "das-will-er-auch-koennen-kgbso",
+  "text": "Das will er auch können!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 19: „Bruno rutscht“"
+ },
+ {
+  "id": "er-nimmt-anlauf-legt-sich-auf-seinen-1975p",
+  "text": "Er nimmt Anlauf, legt sich auf seinen dicken Bauch und saust los.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 19: „Bruno rutscht“"
+ },
+ {
+  "id": "ein-eisbaer-rutscht-allerdings-viel-1he1r",
+  "text": "Ein Eisbär rutscht allerdings viel weiter als ein Pinguin.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 19: „Bruno rutscht“"
+ },
+ {
+  "id": "rolf-der-taenzer-10ojt",
+  "text": "Rolf, der Tänzer",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 20: „Rolf, der Tänzer“"
+ },
+ {
+  "id": "rentier-rolf-will-beim-weihnachtsbal-lduet",
+  "text": "Rentier Rolf will beim Weihnachtsball tanzen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 20: „Rolf, der Tänzer“"
+ },
+ {
+  "id": "er-uebt-eine-drehung-mit-seinem-gewe-189x8",
+  "text": "Er übt eine Drehung, mit seinem Geweih ganz hoch in der Luft.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 20: „Rolf, der Tänzer“"
+ },
+ {
+  "id": "eine-drehung-zwei-drehungen-drei-dre-1ddig",
+  "text": "Eine Drehung, zwei Drehungen, drei Drehungen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 20: „Rolf, der Tänzer“"
+ },
+ {
+  "id": "zum-glueck-hat-das-geweih-keine-lich-1uwtq",
+  "text": "Zum Glück hat das Geweih keine Lichterkette gefangen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 20: „Rolf, der Tänzer“"
+ },
+ {
+  "id": "schnuppi-wirft-zurueck-k7kj7",
+  "text": "Schnuppi wirft zurück",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 21: „Schnuppi wirft zurück“"
+ },
+ {
+  "id": "schneemann-schnuppi-hat-genug-von-de-np6i5",
+  "text": "Schneemann Schnuppi hat genug von den Schneebällen der anderen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 21: „Schnuppi wirft zurück“"
+ },
+ {
+  "id": "heute-baut-er-selbst-einen-so-gross-mi2ft",
+  "text": "Heute baut er selbst einen, so groß wie sein eigener Kopf.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 21: „Schnuppi wirft zurück“"
+ },
+ {
+  "id": "er-holt-schwung-und-wirft-1w4n4",
+  "text": "Er holt Schwung und wirft.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 21: „Schnuppi wirft zurück“"
+ },
+ {
+  "id": "rate-mal-wer-schon-wieder-getroffen-wva8q",
+  "text": "Rate mal, wer schon wieder getroffen wird.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 21: „Schnuppi wirft zurück“"
+ },
+ {
+  "id": "wim-schlaeft-ein-tkx5v",
+  "text": "Wim schläft ein",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 22: „Wim schläft ein“"
+ },
+ {
+  "id": "wichtel-wim-hat-die-ganze-nacht-gesc-11wo0",
+  "text": "Wichtel Wim hat die ganze Nacht Geschenke eingepackt.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 22: „Wim schläft ein“"
+ },
+ {
+  "id": "hundert-geschenke-mit-papier-mit-ban-19541",
+  "text": "Hundert Geschenke, mit Papier, mit Band und mit Schleife.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 22: „Wim schläft ein“"
+ },
+ {
+  "id": "jetzt-ist-er-so-muede-dass-er-im-ste-bkmp3",
+  "text": "Jetzt ist er so müde, dass er im Stehen einschläft.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 22: „Wim schläft ein“"
+ },
+ {
+  "id": "seine-schnarchblase-ist-fast-so-gros-111so",
+  "text": "Seine Schnarchblase ist fast so groß wie er selbst.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 22: „Wim schläft ein“"
+ },
+ {
+  "id": "schnuppis-nase-schon-wieder-6g3z4",
+  "text": "Schnuppis Nase, schon wieder",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 23: „Schnuppis Nase, schon wieder“"
+ },
+ {
+  "id": "schneemann-schnuppi-hat-seine-nase-e-zdz55",
+  "text": "Schneemann Schnuppi hat seine Nase extra gut festgedrückt.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 23: „Schnuppis Nase, schon wieder“"
+ },
+ {
+  "id": "diesmal-soll-sie-nicht-wegfliegen-1dsjq",
+  "text": "Diesmal soll sie nicht wegfliegen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 23: „Schnuppis Nase, schon wieder“"
+ },
+ {
+  "id": "aber-da-kommt-schon-wieder-der-hase-4d2zz",
+  "text": "Aber da kommt schon wieder der Hase vorbei.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 23: „Schnuppis Nase, schon wieder“"
+ },
+ {
+  "id": "und-schnuppi-muss-schon-wieder-niese-xlrkt",
+  "text": "Und Schnuppi muss schon wieder niesen.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 23: „Schnuppis Nase, schon wieder“"
+ },
+ {
+  "id": "heiligabend-1lolu",
+  "text": "Heiligabend",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 24: „Heiligabend“"
+ },
+ {
+  "id": "heute-ist-heiligabend-1b0mb",
+  "text": "Heute ist Heiligabend!",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 24: „Heiligabend“"
+ },
+ {
+  "id": "alle-figuren-aus-allen-24-tuerchen-k-a0bq2",
+  "text": "Alle Figuren aus allen 24 Türchen kommen vor das Kalenderhaus.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 24: „Heiligabend“"
+ },
+ {
+  "id": "rolf-paula-wim-hoppel-pino-kruemel-s-5pl7e",
+  "text": "Rolf, Paula, Wim, Hoppel, Pino, Krümel, Schnuppi und Bruno.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 24: „Heiligabend“"
+ },
+ {
+  "id": "der-stern-auf-dem-dach-leuchtet-so-h-1s9mf",
+  "text": "Der Stern auf dem Dach leuchtet so hell wie noch nie.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 24: „Heiligabend“"
+ },
+ {
+  "id": "und-alle-tanzen-zusammen-im-schnee-1g7ym",
+  "text": "Und alle tanzen zusammen im Schnee.",
+  "speaker": "erzaehler",
+  "where": "Adventskalender, Türchen 24: „Heiligabend“"
+ },
+ {
+  "id": "gesundheit-rolf-jetzt-ist-die-ganze-zc1rw",
+  "text": "Gesundheit, Rolf! Jetzt ist die ganze Küche bunt!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 1: „Rolf und der Puderzucker“"
+ },
+ {
+  "id": "paula-zurueck-unter-den-baum-weihnac-136gi",
+  "text": "Paula, zurück unter den Baum! Weihnachten ist erst in ein paar Tagen!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 2: „Paula will nicht warten“"
+ },
+ {
+  "id": "bonk-zum-glueck-hat-wim-eine-dicke-m-qvres",
+  "text": "Bonk! Zum Glück hat Wim eine dicke Mütze auf.",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 3: „Wim, der große Jongleur“"
+ },
+ {
+  "id": "buh-siehst-du-hoppel-weg-ist-er-1pssi",
+  "text": "Buh! … Siehst du, Hoppel? Weg ist er!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 4: „Hoppel hat Schluckauf“"
+ },
+ {
+  "id": "pino-bremsen-da-vorne-ist-der-weihna-ph0pt",
+  "text": "Pino, bremsen! Da vorne ist der Weihnachtsmarkt!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 5: „Pino nimmt die Abkürzung“"
+ },
+ {
+  "id": "frohen-nikolaus-kruemel-teilst-du-di-18okq",
+  "text": "Frohen Nikolaus, Krümel! Teilst du die Goldtaler mit uns?",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 6: „Krümel und der Nikolaus“"
+ },
+ {
+  "id": "keine-sorge-schnuppi-er-bringt-sie-z-1yerr",
+  "text": "Keine Sorge, Schnuppi. Er bringt sie zurück – ein bisschen angeknabbert.",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 7: „Schnuppis Nase“"
+ },
+ {
+  "id": "lauf-kruemel-lauf-der-knopf-ist-schn-15207",
+  "text": "Lauf, Krümel, lauf! Der Knopf ist schneller als du!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 8: „Krümel tanzt“"
+ },
+ {
+  "id": "wim-du-bist-ja-ganz-weiss-wie-ein-kl-1ndh5",
+  "text": "Wim, du bist ja ganz weiß! Wie ein kleines Gespenst!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 9: „Wim backt Plätzchen“"
+ },
+ {
+  "id": "plopp-guten-morgen-bruno-d63mn",
+  "text": "Plopp! Guten Morgen, Bruno!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 10: „Bruno ist müde“"
+ },
+ {
+  "id": "plumps-rolf-steckt-kopfueber-im-schn-at1sx",
+  "text": "Plumps! Rolf steckt kopfüber im Schnee. Das Landen üben wir morgen.",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 11: „Rolf übt fliegen“"
+ },
+ {
+  "id": "pfff-hoppel-ich-habe-schnee-in-der-n-lakw7",
+  "text": "Pfff! Hoppel, ich habe Schnee in der Nase!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 12: „Die Schneeballschlacht“"
+ },
+ {
+  "id": "pino-sieht-sterne-und-das-am-helllic-yal79",
+  "text": "Pino sieht Sterne. Und das am helllichten Tag!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 13: „Pino auf dem Eis“"
+ },
+ {
+  "id": "huch-paula-du-hast-mich-vielleicht-e-l5vxn",
+  "text": "Huch! Paula, du hast mich vielleicht erschreckt!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 14: „Paula rappelt“"
+ },
+ {
+  "id": "bruno-du-bist-der-erste-eisbaer-mit-4yz9y",
+  "text": "Bruno, du bist der erste Eisbär mit Sternchen-Schluckauf!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 15: „Bruno hat Schluckauf“"
+ },
+ {
+  "id": "gesundheit-schnuppi-du-bist-ja-eine-2o4z9",
+  "text": "Gesundheit, Schnuppi! Du bist ja eine richtige Schneemaschine!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 16: „Schnuppi ist erkältet“"
+ },
+ {
+  "id": "bravo-kruemel-fast-hat-es-geklappt-1d943",
+  "text": "Bravo, Krümel! Fast hat es geklappt!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 17: „Krümel, der Zauberer“"
+ },
+ {
+  "id": "kruemel-du-siehst-aus-wie-ein-schnee-15ybv",
+  "text": "Krümel, du siehst aus wie ein Schneelebkuchen!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 18: „Krümel im Teig“"
+ },
+ {
+  "id": "bruno-du-bist-ja-bis-ans-ende-des-bi-a7wx9",
+  "text": "Bruno, du bist ja bis ans Ende des Bildes gerutscht!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 19: „Bruno rutscht“"
+ },
+ {
+  "id": "rolf-du-tanzt-ja-schoener-als-jeder-1mvub",
+  "text": "Rolf, du tanzt ja schöner als jeder Wichtel!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 20: „Rolf, der Tänzer“"
+ },
+ {
+  "id": "schon-wieder-ich-warum-immer-ich-pvq50",
+  "text": "Schon wieder ich?! Warum immer ich?",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 21: „Schnuppi wirft zurück“"
+ },
+ {
+  "id": "pssst-lasst-wim-schlafen-er-hat-sich-19jji",
+  "text": "Pssst! Lasst Wim schlafen. Er hat sich das verdient.",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 22: „Wim schläft ein“"
+ },
+ {
+  "id": "der-hase-hat-wohl-hunger-auf-karotte-5uytn",
+  "text": "Der Hase hat wohl Hunger auf Karotten. Morgen bekommt er eine eigene!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 23: „Schnuppis Nase, schon wieder“"
+ },
+ {
+  "id": "ihr-habt-alle-24-tuerchen-geschafft-6odir",
+  "text": "Ihr habt alle 24 Türchen geschafft. Ihr seid die Besten!",
+  "speaker": "flocke",
+  "where": "Adventskalender, Türchen 24: „Heiligabend“"
  },
  {
   "id": "ich-sehe-aus-wie-1mef7",
   "text": "Ich sehe aus wie",
   "speaker": "wesen",
   "where": "Meer, Weltraum, Savanne – nach einem Foto",
-  "partOf": "Ich sehe aus wie {das X}!"
+  "partOf": "Ich sehe aus wie {c}!"
  },
  {
   "id": "juhu-du-hast-mich-befreit-16zde",
@@ -627,6 +1506,150 @@
   "text": "Wunderschön!",
   "speaker": "wesen",
   "where": "Tipp eines Wesens zu seinem Buchstaben"
+ },
+ {
+  "id": "ha-ha-hatschi-1s176",
+  "text": "Ha… ha… HATSCHI!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 1: „Rolf und der Puderzucker“"
+ },
+ {
+  "id": "ich-bin-gleich-wieder-da-p2ujz",
+  "text": "Ich bin gleich wieder da!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 2: „Paula will nicht warten“"
+ },
+ {
+  "id": "schaut-mal-ich-kann-das-ni6ml",
+  "text": "Schaut mal, ich kann das!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 3: „Wim, der große Jongleur“"
+ },
+ {
+  "id": "hicks-hilfe-hicks-c9adf",
+  "text": "Hicks! Hilfe! Hicks!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 4: „Hoppel hat Schluckauf“"
+ },
+ {
+  "id": "juhuuu-wer-braucht-schon-einen-schli-1f1fy",
+  "text": "Juhuuu! Wer braucht schon einen Schlitten?",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 5: „Pino nimmt die Abkürzung“"
+ },
+ {
+  "id": "der-nikolaus-war-da-und-er-hat-mir-e-1t2p0",
+  "text": "Der Nikolaus war da! Und er hat mir eine Mütze dagelassen!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 6: „Krümel und der Nikolaus“"
+ },
+ {
+  "id": "halt-das-ist-meine-nase-2153a",
+  "text": "Halt! Das ist meine Nase!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 7: „Schnuppis Nase“"
+ },
+ {
+  "id": "mein-knopf-komm-zurueck-15ua8",
+  "text": "Mein Knopf! Komm zurück!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 8: „Krümel tanzt“"
+ },
+ {
+  "id": "huch-bin-ich-jetzt-ein-schneewichtel-wgae4",
+  "text": "Huch! Bin ich jetzt ein Schneewichtel?",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 9: „Wim backt Plätzchen“"
+ },
+ {
+  "id": "chrrr-pfiii-chrrr-17rge",
+  "text": "Chrrr … pfiii … chrrr …",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 10: „Bruno ist müde“"
+ },
+ {
+  "id": "achtung-ich-komme-runter-rt1gs",
+  "text": "Achtung, ich komme runter!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 11: „Rolf übt fliegen“"
+ },
+ {
+  "id": "ups-das-wollte-ich-nicht-vrp96",
+  "text": "Ups! Das wollte ich nicht!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 12: „Die Schneeballschlacht“"
+ },
+ {
+  "id": "huiii-alles-dreht-sich-dcw6n",
+  "text": "Huiii, alles dreht sich!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 13: „Pino auf dem Eis“"
+ },
+ {
+  "id": "kuckuck-ueberraschung-1h4b2",
+  "text": "Kuckuck! Überraschung!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 14: „Paula rappelt“"
+ },
+ {
+  "id": "hicks-das-ist-gar-nicht-so-schlimm-h-qeq33",
+  "text": "Hicks! Das ist gar nicht so schlimm! Hicks!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 15: „Bruno hat Schluckauf“"
+ },
+ {
+  "id": "hatschi-oh-es-schneit-19z5d",
+  "text": "HATSCHI! Oh, es schneit!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 16: „Schnuppi ist erkältet“"
+ },
+ {
+  "id": "tadaaa-aua-q8wop",
+  "text": "Tadaaa! … Aua.",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 17: „Krümel, der Zauberer“"
+ },
+ {
+  "id": "bin-ich-jetzt-ein-lebkuchen-mit-zuck-1luzq",
+  "text": "Bin ich jetzt ein Lebkuchen mit Zuckerguss?",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 18: „Krümel im Teig“"
+ },
+ {
+  "id": "platz-da-hier-kommt-der-baerenschlit-uk2oo",
+  "text": "Platz da! Hier kommt der Bärenschlitten!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 19: „Bruno rutscht“"
+ },
+ {
+  "id": "darf-ich-bitten-gtr1l",
+  "text": "Darf ich bitten?",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 20: „Rolf, der Tänzer“"
+ },
+ {
+  "id": "hihi-volltreffer-j0nu2",
+  "text": "Hihi, Volltreffer!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 21: „Schnuppi wirft zurück“"
+ },
+ {
+  "id": "chrrr-noch-eine-schleife-chrrr-1ldz5",
+  "text": "Chrrr … noch eine Schleife … chrrr …",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 22: „Wim schläft ein“"
+ },
+ {
+  "id": "nicht-schon-wieder-hatschi-vslxd",
+  "text": "Nicht schon wieder! Hatschi!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 23: „Schnuppis Nase, schon wieder“"
+ },
+ {
+  "id": "frohe-weihnachten-liebe-kinder-1agdr",
+  "text": "Frohe Weihnachten, liebe Kinder!",
+  "speaker": "wesen",
+  "where": "Adventskalender, Türchen 24: „Heiligabend“"
  },
  {
   "id": "ha-ha-1qm2c",
@@ -873,7 +1896,7 @@
   "text": "Los,",
   "speaker": "zork",
   "where": "Türme bauen – lustige Panne „fahne“",
-  "partOf": "Los, {Teamname}!"
+  "partOf": "Los, {name}!"
  },
  {
   "id": "ups-zu-klein-1uuve",
@@ -958,21 +1981,21 @@
   "text": "m hoch!",
   "speaker": "zork",
   "where": "Türme bauen – lustige Panne „massband“",
-  "partOf": "{Zahl} m hoch!"
+  "partOf": "{n} m hoch!"
  },
  {
   "id": "noch-bh3du",
   "text": "Noch",
   "speaker": "zork",
   "where": "Türme bauen – lustige Panne „massband“",
-  "partOf": "Noch {Zahl} m bis zum Ziel!"
+  "partOf": "Noch {n} m bis zum Ziel!"
  },
  {
   "id": "m-bis-zum-ziel-1soji",
   "text": "m bis zum Ziel!",
   "speaker": "zork",
   "where": "Türme bauen – lustige Panne „massband“",
-  "partOf": "Noch {Zahl} m bis zum Ziel!"
+  "partOf": "Noch {n} m bis zum Ziel!"
  },
  {
   "id": "ziel-erreicht-17s5f",
@@ -1053,46 +2076,18 @@
   "where": "Türme bauen – Zwischensequenz (Anfang oder Sieg)"
  },
  {
-  "id": "ich-bin-zip-ich-helfe-u5mrq",
-  "text": "Ich bin Zip! Ich helfe!",
+  "id": "ich-bin-1d8vi",
+  "text": "Ich bin",
   "speaker": "zork",
-  "where": "Türme bauen – während des Spiels"
+  "where": "Türme bauen – während des Spiels",
+  "partOf": "Ich bin {name}! Ich helfe!"
  },
  {
-  "id": "ich-bin-zap-ich-helfe-zi4lj",
-  "text": "Ich bin Zap! Ich helfe!",
+  "id": "ich-helfe-1clkb",
+  "text": "! Ich helfe!",
   "speaker": "zork",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "ich-bin-zisch-ich-helfe-gyyhb",
-  "text": "Ich bin Zisch! Ich helfe!",
-  "speaker": "zork",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "ich-bin-zuppi-ich-helfe-9hrv2",
-  "text": "Ich bin Zuppi! Ich helfe!",
-  "speaker": "zork",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "ich-bin-zibbel-ich-helfe-j1pim",
-  "text": "Ich bin Zibbel! Ich helfe!",
-  "speaker": "zork",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "ich-bin-zonk-ich-helfe-zwqi3",
-  "text": "Ich bin Zonk! Ich helfe!",
-  "speaker": "zork",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "ich-bin-zappel-ich-helfe-tdyym",
-  "text": "Ich bin Zappel! Ich helfe!",
-  "speaker": "zork",
-  "where": "Türme bauen – während des Spiels"
+  "where": "Türme bauen – während des Spiels",
+  "partOf": "Ich bin {name}! Ich helfe!"
  },
  {
   "id": "oh-arbeit-das-eis-muss-warten-wk8gj",
@@ -1129,7 +2124,7 @@
   "text": "Grrr! Das war erst Mauer",
   "speaker": "riese",
   "where": "Riesenburg – Zwischensequenz (Anfang oder Sieg)",
-  "partOf": "Grrr! Das war erst Mauer {Zahl}!"
+  "partOf": "Grrr! Das war erst Mauer {n}!"
  },
  {
   "id": "ihr-habt-gewonnen-so-schoene-buchsta-1fe9f",
@@ -1166,7 +2161,7 @@
   "text": "gegen Riese Rumpel – Mauer",
   "speaker": "riese",
   "where": "Riesenburg – restoreState",
-  "partOf": "{Teamname} gegen Riese Rumpel – Mauer {…} von {Zahl}"
+  "partOf": "{name} gegen Riese Rumpel – Mauer {n} von {total}"
  },
  {
   "id": "ihr-schon-wieder-hohoho-meine-burg-s-xo2vh",
@@ -1193,34 +2188,11 @@
   "where": "Meer, Weltraum, Savanne – Überraschungsblase wartet"
  },
  {
-  "id": "2-m-14zy4",
-  "text": "+2 m",
+  "id": "m-1sduw",
+  "text": "m",
   "speaker": "ausruf",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "3-m-1qc3f",
-  "text": "+3 m",
-  "speaker": "ausruf",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "4-m-19elk",
-  "text": "+4 m",
-  "speaker": "ausruf",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "6-m-jsu7m",
-  "text": "+6 m",
-  "speaker": "ausruf",
-  "where": "Türme bauen – während des Spiels"
- },
- {
-  "id": "8-m-1t0w0",
-  "text": "+8 m",
-  "speaker": "ausruf",
-  "where": "Türme bauen – während des Spiels"
+  "where": "Türme bauen – während des Spiels",
+  "partOf": "+{n} m"
  },
  {
   "id": "pfff-1wrqc",

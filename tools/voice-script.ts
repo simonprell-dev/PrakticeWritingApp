@@ -2,16 +2,17 @@
 // straight from the source code and writes the recording script:
 //   voice/SPRECHERTEXT.md  – to read from (speaker, direction, where in the game, file name)
 //   voice/lines.json       – the same for the recording page (voice.html)
-// Usage: npm run voice
+// Usage: npm run voice   (runs with vite-node: the game's texts pull in the translations)
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PRACTICE_SETS, withArticle } from '../src/recog/classes.ts';
 import { voiceId } from '../src/game/voiceId.ts';
 import { ALIEN_NAMES } from '../src/scenes/towerScene.ts';
+import { STORIES } from '../src/game/advent/story.ts';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 
-type Speaker = 'erzaehler' | 'zork' | 'riese' | 'wesen' | 'blase' | 'ausruf' | 'buchstaben';
+type Speaker = 'erzaehler' | 'flocke' | 'zork' | 'riese' | 'wesen' | 'blase' | 'ausruf' | 'buchstaben';
 
 export interface VoiceLine {
   id: string;
@@ -25,6 +26,7 @@ export interface VoiceLine {
 
 const SPEAKERS: Record<Speaker, { title: string; direction: string }> = {
   erzaehler: { title: 'Erzählerin / Erzähler – Anweisungen und Hinweise', direction: 'freundlich, ruhig, deutlich und eher langsam – für Kinder, die noch nicht lesen können' },
+  flocke: { title: 'Wichtel Flocke (Adventskalender)', direction: 'frech, fröhlich, ein bisschen vorlaut – ein kleiner Wichtel, der gern Witze macht' },
   wesen: { title: 'Die Wesen (Fische, Aliens, Tiere) – Tipps und Freude', direction: 'niedlich, fröhlich, kindlich; Tipps aufmunternd, nie tadelnd' },
   zork: { title: 'Alien Zork und seine Klone (Türme bauen)', direction: 'hell, quirlig, ein bisschen frech; gern mit kleinen Alien-Geräuschen' },
   riese: { title: 'Riese Rumpel (Klasse gegen Riesenburg)', direction: 'tief und polternd, aber gutmütig – nie wirklich böse' },
@@ -135,8 +137,9 @@ function scan(src: string): Literal[] {
       if (t && t.kind === 'call' && !t.first) t.first = text;
       const lit: Literal = {
         text,
-        call: t?.kind === 'call' ? t.name : (stack.slice().reverse().find((s) => s.kind === 'call')?.name ?? ''),
-        callFirst: stack.slice().reverse().find((s) => s.kind === 'call')?.first ?? '',
+        // t('…') and tk('…') only translate: the call that matters is the one around them
+        call: stack.slice().reverse().find((s) => s.kind === 'call' && s.name !== 't' && s.name !== 'tk')?.name ?? '',
+        callFirst: stack.slice().reverse().find((s) => s.kind === 'call' && s.name !== 't' && s.name !== 'tk')?.first ?? '',
         key: pendingKey || (t?.kind === 'obj' ? t.key : ''),
         constName: stack.slice().reverse().find((s) => s.kind === 'obj' && s.constName)?.constName ?? '',
         near,
@@ -317,6 +320,15 @@ function collect(): VoiceLine[] {
       }
     }
   }
+  // the stories behind the doors of the advent calendar: narrator, the figure of the day, Flocke
+  STORIES.forEach((st, i) => {
+    const where = `Adventskalender, Türchen ${i + 1}: „${st.title}“`;
+    const add = (text: string, speaker: Speaker) => !seen.has(text) && seen.set(text, { id: voiceId(text), text, speaker, where });
+    add(st.title, 'erzaehler');
+    for (const n of st.narration) add(n, 'erzaehler');
+    add(st.figure, 'wesen');
+    add(st.flocke, 'flocke');
+  });
   // the gaps: letters and numbers spoken on their own
   for (const set of PRACTICE_SETS) {
     for (const ch of set.chars) {

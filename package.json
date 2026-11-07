@@ -16,7 +16,7 @@
     "test": "vitest run",
     "lab": "vite --open /lab.html",
     "calibrate": "node tools/calibrate.ts",
-    "voice": "node tools/voice-script.ts"
+    "voice": "npx --yes vite-node tools/voice-script.ts"
   },
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.11",
