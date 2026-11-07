@@ -92,15 +92,15 @@
         touch-action: none;
         cursor: crosshair;
         position: relative;
-        display: inline-block;
-        max-width: 100%;
+        /* the frame is placed in shares of this box, so it must be exactly as big as the video */
+        width: min(100%, calc(85vh * 16 / 9));
         line-height: 0;
       }
       #mark-video {
-        max-width: min(100%, 720px);
+        display: block;
+        width: 100%;
+        aspect-ratio: auto 16 / 9;
         background: #222;
-        min-width: 320px;
-        min-height: 180px;
       }
       #mark-frame {
         position: absolute;
@@ -172,6 +172,11 @@
         <select id="mark-cams"><option value="">Kamera wählen</option></select>
       </div>
       <div id="mark-view-box"><video id="mark-video" muted playsinline></video><div id="mark-frame"></div></div>
+      <div class="bar">
+        <label>Belichtung <input id="mark-exposure" type="range" hidden /></label>
+        <span id="mark-exposure-note" class="muted"></span>
+        <span id="mark-clip"></span>
+      </div>
       <p class="muted">Das Blatt ruhig hinlegen und den orangen Rahmen im Kamerabild genau um das Feld ziehen, ohne die Beschriftung darüber.</p>
       <div class="bar">
         <label>Feld <select id="mark-field"></select></label>

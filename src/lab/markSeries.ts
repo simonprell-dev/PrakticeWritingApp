@@ -16,6 +16,8 @@ export interface Shot {
   /** characters the recognition saw in the field: printed marks must not count as writing */
   glyphs: number;
   pxPerMm: number;
+  /** share of the frame that is blown out */
+  clipped?: number;
 }
 
 export interface SeriesResult {
