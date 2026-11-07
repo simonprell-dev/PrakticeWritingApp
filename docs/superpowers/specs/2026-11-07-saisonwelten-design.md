@@ -43,7 +43,7 @@ Alles freundlich und kindgerecht, nichts gruselig im echten Sinn (meine Entschei
 | Welt | Zeitraum |
 |---|---|
 | Neujahr | 27.12.–6.1. |
-| Winter | 1.12.–28.2. (im Schaltjahr bis 29.2. durch den Monatsvergleich) |
+| Winter | 1.12.–29.2. (in normalen Jahren bis 28.2.) |
 | Weihnachten | 1.12.–26.12. |
 | Ostern | 14 Tage vor bis 1 Tag nach Ostersonntag |
 | Frühling | 20.3.–31.5. |
