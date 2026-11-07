@@ -3,7 +3,7 @@ import type { Tier } from '../../vision/types.ts';
 import { clamp, lerp } from '../math.ts';
 import { mulberry32, pick, range, type Rand } from '../rng.ts';
 
-export type Archetype = 'fish' | 'alien' | 'animal' | 'fighter' | 'fable';
+export type Archetype = 'fish' | 'alien' | 'animal' | 'fighter' | 'fable' | 'season';
 export type Pattern = 'none' | 'stripes' | 'dots' | 'scales' | 'spots';
 export type EyeStyle = 'cute' | 'googly' | 'sleepy';
 
@@ -62,6 +62,10 @@ export function makeGenome(score: number, tier: Tier, seed: number, archetype: A
     const v = r();
     variant = v < 0.7 ? 0 : v < 0.85 ? 1 : 2;
     hue = pick(r, [300, 330, 270, 200, 180, 45, 0, 150]) + range(r, -8, 8);
+  } else if (archetype === 'season') {
+    // seasonal worlds: the sprite picks its kind from the variant (variant % kinds) and its own colours
+    variant = Math.floor(r() * 12);
+    hue = r() * 360;
   } else {
     hue = teamHue ?? 0;
     variant = Math.floor(r() * 3);

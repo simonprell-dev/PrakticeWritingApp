@@ -17,6 +17,7 @@ import { HabitatScene, type HabitatDef } from '../scenes/habitat.ts';
 import { PaintScene } from '../scenes/paintScene.ts';
 import { savanna } from '../scenes/savanna.ts';
 import { zauberland, ZauberScene } from '../scenes/zauberland.ts';
+import { SEASON_DEFS } from '../scenes/seasons/index.ts';
 import { rechenmeer, RechenScene, rechenVisionPatch } from '../scenes/rechenmeer.ts';
 import type { Scene, SceneHost, Snapshot } from '../scenes/scene.ts';
 import { space } from '../scenes/space.ts';
@@ -47,7 +48,7 @@ import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSav
 import { firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
 import { t } from '../i18n/i18n.ts';
 
-const HABITATS: Record<HabitatId, HabitatDef> = { meer: aquarium, weltraum: space, savanne: savanna, zauberland, rechenmeer };
+const HABITATS: Partial<Record<HabitatId, HabitatDef>> = { meer: aquarium, weltraum: space, savanne: savanna, zauberland, rechenmeer, ...SEASON_DEFS };
 const isHabitat = (m: string): m is HabitatId => m in HABITATS;
 /** the paper setting as the recognition sees it: Lineatur 1 and 2 have the same four-line shape */
 const LINEATUR = { auto: 'auto', L1: 'school4', L2: 'school4', L3: 'school2', liniert: 'plain', blanko: 'none' } as const;
@@ -667,7 +668,7 @@ export class App {
     this.thanked = false;
     this.settings.game.habitat = id;
     this.save();
-    const def = HABITATS[id];
+    const def = HABITATS[id]!;
     // the Rechenmeer asks tasks: no practice letters there
     const practice = this.settings.practice.mode === 'ueben' && id !== 'rechenmeer';
     const scene =
@@ -678,7 +679,9 @@ export class App {
           : new HabitatScene(def, this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
-      title: { meer: t('🐠 Meer'), weltraum: t('👽 Weltraum'), savanne: t('🦒 Savanne'), zauberland: t('🦄 Zauberland'), rechenmeer: t('🐬 Rechenmeer') }[id],
+      title:
+        ({ meer: t('🐠 Meer'), weltraum: t('👽 Weltraum'), savanne: t('🦒 Savanne'), zauberland: t('🦄 Zauberland'), rechenmeer: t('🐬 Rechenmeer') } as Partial<Record<HabitatId, string>>)[id] ??
+        `${MODES[id].icon} ${t(MODES[id].title)}`,
       settings: this.settings,
       camera: this.camera,
       handheld: this.handheld,

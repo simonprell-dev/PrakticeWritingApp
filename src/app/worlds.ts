@@ -1,6 +1,7 @@
 // Which games the start screen offers today. The operator plans it in the admin area (a yearly timeline);
 // the app fetches the plan, and these defaults hold until one is saved. Dates are the device's local days,
 // the first and the last day included. See docs/superpowers/specs/2026-11-07-saisonwelten-design.md.
+import { tk } from '../i18n/i18n.ts';
 
 export type WorldId =
   | 'meer'
@@ -29,6 +30,19 @@ export const SEASON_IDS: SeasonId[] = ['neujahr', 'winter', 'fruehling', 'ostern
 export const WORLD_IDS: WorldId[] = ['meer', 'weltraum', 'savanne', 'zauberland', 'duell', 'riesenburg', 'tuerme', 'malen', ...SEASON_IDS];
 
 export const SEASONAL: Set<WorldId> = new Set(SEASON_IDS);
+
+/** start tile of a seasonal world (tk-marked, translated where shown) */
+export const SEASON_INFO: Record<SeasonId, { icon: string; title: string; hint: string }> = {
+  neujahr: { icon: '🎆', title: tk('Neujahr'), hint: tk('Raketen blühen am Himmel auf') },
+  winter: { icon: '⛄', title: tk('Winter'), hint: tk('Schneemänner, Pinguine und Eisbären') },
+  fruehling: { icon: '🌷', title: tk('Frühling'), hint: tk('Blumen, Bienen und Vögel auf der Wiese') },
+  ostern: { icon: '🐣', title: tk('Ostern'), hint: tk('Osterhasen, Küken und bunte Eier') },
+  strand: { icon: '🏖️', title: tk('Strand & Sonne'), hint: tk('Krebse, Möwen und Sandburgen') },
+  herbst: { icon: '🍂', title: tk('Herbst'), hint: tk('Igel, Eichhörnchen und Drachen im Wind') },
+  halloween: { icon: '🎃', title: tk('Halloween'), hint: tk('Gespenster, Kürbisse und kleine Hexen') },
+  martin: { icon: '🏮', title: tk('Sankt Martin'), hint: tk('Ein Laternenzug durchs Dorf') },
+  weihnachten: { icon: '🎄', title: tk('Weihnachten'), hint: tk('Wichtel, Rentiere und Geschenke') },
+};
 
 export const isWorldId = (v: unknown): v is WorldId => typeof v === 'string' && (WORLD_IDS as string[]).includes(v);
 

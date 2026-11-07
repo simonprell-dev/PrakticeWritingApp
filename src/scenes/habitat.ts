@@ -19,6 +19,8 @@ import type { RGBAImage, ScanResult, ScannedGlyph } from '../vision/types.ts';
 import { loadGlyph, saveGlyph, type SavedGlyph, type SceneSave } from './saved.ts';
 import type { Scene, SceneHost, Snapshot } from './scene.ts';
 import { t } from '../i18n/i18n.ts';
+import type { HabitatId } from '../app/settings.ts';
+import type { TileKit } from './seasons/kit.ts';
 
 export interface Creature {
   id: number;
@@ -80,7 +82,7 @@ export interface Bounds {
 }
 
 export interface HabitatDef {
-  id: 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer';
+  id: HabitatId;
   archetype: Archetype;
   /** name of one creature (tk-marked, translated where shown) */
   word: [string, string];
@@ -94,6 +96,8 @@ export interface HabitatDef {
   renderBack?(s: HabitatScene, ctx: CanvasRenderingContext2D): void;
   renderFront?(s: HabitatScene, ctx: CanvasRenderingContext2D): void;
   behave(s: HabitatScene, c: Creature, dt: number): void;
+  /** the start tile picture (480 × 360) of a seasonal world */
+  tile?(ctx: CanvasRenderingContext2D, W: number, H: number, kit: TileKit): void;
   /** y sorting (savanna) */
   sortY?: boolean;
   speechColor?: string;

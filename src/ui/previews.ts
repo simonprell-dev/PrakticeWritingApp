@@ -22,6 +22,9 @@ import { drawBadgeSticker, type Sprite } from '../game/creatures/sprite.ts';
 import { TAU } from '../game/math.ts';
 import { blockWidth, drawBlock } from '../game/tower/towerArt.ts';
 import { tierOf } from '../recog/score.ts';
+import type { SeasonId } from '../app/worlds.ts';
+import { SEASON_DEFS } from '../scenes/seasons/index.ts';
+import type { TileKit } from '../scenes/seasons/kit.ts';
 
 export function letterSticker(ch: string, color = '#2b2b7a', size = 90): AnyCanvas {
   const { canvas, ctx } = makeCanvas(size, size * 1.15);
@@ -50,7 +53,9 @@ function genome(score: number, seed: number, a: Archetype, hue?: number, variant
   return g;
 }
 
-export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'duell' | 'riesenburg' | 'tuerme' | 'malen';
+export type TileKind = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'duell' | 'riesenburg' | 'tuerme' | 'malen' | SeasonId;
+
+const KIT: TileKit = { draw, genome: (score, seed, variant) => genome(score, seed, 'season', undefined, variant), sticker: (ch) => letterSticker(ch) };
 
 const PAINTED: CardLook = { fills: { body: '#ff9a3c', tail: '#ff5f8f', dorsal: '#4fb3ff', anal: '#4fb3ff', pelvic: '#4fb3ff', pectoral: '#ffd84a' } };
 const PAINTED_2: CardLook = { fills: { body: '#8f6bff', tail: '#7ccf6b', dorsal: '#ffd84a', anal: '#ffd84a', pelvic: '#ffd84a', pectoral: '#ff6fd8' } };
@@ -61,6 +66,11 @@ export function tilePreview(kind: TileKind, canvas: HTMLCanvasElement): void {
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
+  const season = SEASON_DEFS[kind as SeasonId];
+  if (season?.tile) {
+    season.tile(ctx, W, H, KIT);
+    return;
+  }
   if (kind === 'meer') {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, '#8fe3f3');

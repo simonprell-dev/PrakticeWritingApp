@@ -2,9 +2,10 @@
 // saved under a name, deleted, downloaded as a file and loaded from a file. Everything stays in this
 // browser (IndexedDB) unless a file is downloaded.
 import { RECHENMEER } from './features.ts';
+import { SEASON_INFO, type SeasonId } from './worlds.ts';
 import { t, tk } from '../i18n/i18n.ts';
 
-export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'malen' | 'duell' | 'riesenburg' | 'tuerme';
+export type GameMode = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | 'malen' | 'duell' | 'riesenburg' | 'tuerme' | SeasonId;
 
 /** title: German, translated where it is shown (t(MODES[m].title)) */
 export const MODES: Record<GameMode, { icon: string; title: string }> = {
@@ -13,6 +14,7 @@ export const MODES: Record<GameMode, { icon: string; title: string }> = {
   savanne: { icon: '🦒', title: tk('Savanne') },
   zauberland: { icon: '🦄', title: tk('Zauberland') },
   rechenmeer: { icon: '🐬', title: tk('Rechenmeer') },
+  ...SEASON_INFO,
   malen: { icon: '🎨', title: tk('Mal-Aquarium') },
   duell: { icon: '⚔️', title: tk('Team-Duell') },
   riesenburg: { icon: '🏰', title: tk('Riesenburg') },
