@@ -29,7 +29,8 @@ export const HORIZON = 640;
 
 const SLOTS: Slot[] = [
   // roof: chimney flap, round gable window, two dormers
-  { shape: 'chimney', x: 978, y: 150, w: 84, h: 78 },
+  // the chimney stands on the left: the camera picture of the game covers the top right corner
+  { shape: 'chimney', x: 88, y: 150, w: 84, h: 78 },
   { shape: 'round', x: 520, y: 148, w: 110, h: 110 },
   { shape: 'dormer', x: 285, y: 228, w: 100, h: 90 },
   { shape: 'dormer', x: 765, y: 228, w: 100, h: 90 },
@@ -116,7 +117,7 @@ export function roofStar(W: number): { x: number; y: number; r: number } {
 
 /** top of the chimney (smoke) */
 export function chimneyTop(W: number): { x: number; y: number } {
-  return map(W, 1020, 98);
+  return map(W, 130, 98);
 }
 
 /** where Flocke stands */
@@ -485,15 +486,15 @@ function paintHouse(ctx: Ctx, W: number): void {
   ctx.stroke();
   // gable: a round window in a wooden frame (slot 1 sits on it)
   // chimney
-  const roofY = (x: number) => lerp(ROOF_A.y, ROOF_R.y, (x - ROOF_A.x) / (ROOF_R.x - ROOF_A.x));
+  const roofY = (x: number) => lerp(ROOF_A.y, ROOF_L.y, (ROOF_A.x - x) / (ROOF_A.x - ROOF_L.x));
   ctx.fillStyle = '#9a4b3c';
   ctx.strokeStyle = '#4f2219';
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.moveTo(960, 112);
-  ctx.lineTo(1080, 112);
-  ctx.lineTo(1080, roofY(1080) + 14);
-  ctx.lineTo(960, roofY(960) + 14);
+  ctx.moveTo(70, 112);
+  ctx.lineTo(190, 112);
+  ctx.lineTo(190, roofY(190) + 14);
+  ctx.lineTo(70, roofY(70) + 14);
   ctx.closePath();
   ctx.fill();
   ctx.save();
@@ -502,9 +503,9 @@ function paintHouse(ctx: Ctx, W: number): void {
   ctx.lineWidth = 2.5;
   for (let y = 124, row = 0; y < 300; y += 18, row++) {
     ctx.beginPath();
-    ctx.moveTo(960, y);
-    ctx.lineTo(1080, y);
-    for (let x = 960 + (row % 2) * 20; x < 1080; x += 40) {
+    ctx.moveTo(70, y);
+    ctx.lineTo(190, y);
+    for (let x = 70 + (row % 2) * 20; x < 190; x += 40) {
       ctx.moveTo(x, y);
       ctx.lineTo(x, y + 18);
     }
@@ -513,8 +514,8 @@ function paintHouse(ctx: Ctx, W: number): void {
   ctx.restore();
   ctx.stroke();
   ctx.fillStyle = '#6e3328';
-  ctx.fillRect(950, 98, 140, 18);
-  ctx.strokeRect(950, 98, 140, 18);
+  ctx.fillRect(60, 98, 140, 18);
+  ctx.strokeRect(60, 98, 140, 18);
   // snow on the roof: a thick white blanket with a wavy lower edge, icicles at the eaves
   ctx.fillStyle = '#f7faff';
   ctx.beginPath();
@@ -542,7 +543,7 @@ function paintHouse(ctx: Ctx, W: number): void {
   // snow cap on the chimney
   ctx.fillStyle = '#f7faff';
   ctx.beginPath();
-  ctx.ellipse(1020, 98, 76, 14, 0, Math.PI, TAU);
+  ctx.ellipse(130, 98, 76, 14, 0, Math.PI, TAU);
   ctx.fill();
   // eaves with icicles
   ctx.fillStyle = '#e8f2ff';
