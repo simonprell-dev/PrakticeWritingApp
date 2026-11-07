@@ -5,7 +5,8 @@ import type { HabitatDef } from '../habitat.ts';
 import { fruehling } from './fruehling.ts';
 import { neujahr } from './neujahr.ts';
 import { ostern } from './ostern.ts';
+import { strand } from './strand.ts';
 import { weihnachten } from './weihnachten.ts';
 import { winter } from './winter.ts';
 
-export const SEASON_DEFS: Partial<Record<SeasonId, HabitatDef>> = { neujahr, winter, fruehling, ostern, weihnachten };
+export const SEASON_DEFS: Partial<Record<SeasonId, HabitatDef>> = { neujahr, winter, fruehling, ostern, strand, weihnachten };
