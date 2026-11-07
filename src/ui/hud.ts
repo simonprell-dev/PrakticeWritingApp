@@ -1,5 +1,7 @@
 // In-game overlay: title, practice task, camera thumbnail, auto-scan ring, big "Fertig!" button.
-import type { Settings } from '../app/settings.ts';
+import { saveSettings, type Settings } from '../app/settings.ts';
+import { setSound } from '../game/audio.ts';
+import { hushAll } from '../game/voice/speaker.ts';
 import type { Camera } from '../camera/camera.ts';
 import { drawGuideLines, drawPencil, drawWriting, writeDuration, writtenGlyph } from '../game/strokes.ts';
 import { isDigit } from '../recog/classes.ts';
@@ -36,6 +38,22 @@ export interface HudDeps {
 }
 
 export class Hud {
+  /** sound and reading aloud on or off; kept in the settings, a running story stops at once */
+  toggleSound(): void {
+    const g = this.d.settings.game;
+    g.sound = !g.sound;
+    saveSettings(this.d.settings);
+    setSound(g.sound, g.volume);
+    if (!g.sound) hushAll();
+    this.showSound();
+  }
+
+  private showSound(): void {
+    const on = this.d.settings.game.sound;
+    this.soundBtn.textContent = on ? '🔊' : '🔇';
+    this.soundBtn.setAttribute('aria-pressed', String(!on));
+  }
+
   root: HTMLElement;
   private go: HTMLButtonElement;
   private goLabel: HTMLElement;
@@ -50,6 +68,7 @@ export class Hud {
   private fair: HTMLElement | null = null;
   private cam: HTMLCanvasElement;
   private autoBtn: HTMLButtonElement;
+  private soundBtn: HTMLButtonElement;
   private ring: SVGCircleElement;
   private d: HudDeps;
   private timer = 0;
@@ -81,6 +100,8 @@ export class Hud {
     this.ring.style.strokeDashoffset = `${2 * Math.PI * 29}`;
     svg.append(this.ring);
     this.autoBtn = button('👁', d.onToggleAuto, 'btn icon auto-btn', t('Automatisch scannen (A)'));
+    this.soundBtn = button('', () => this.toggleSound(), 'btn icon sound-btn', t('Ton an oder aus (M)'));
+    this.showSound();
     this.autoBtn.append(svg);
     if (d.practice) {
       this.task = h('div', { class: 'task' });
@@ -108,6 +129,7 @@ export class Hud {
             'div',
             { class: 'hud-buttons' },
             this.autoBtn,
+            this.soundBtn,
             d.onSave ? button('💾', d.onSave, 'btn icon', t('Spiel speichern (S)')) : null,
             button('⛶', d.onFullscreen, 'btn icon', t('Vollbild (F)')),
           ),

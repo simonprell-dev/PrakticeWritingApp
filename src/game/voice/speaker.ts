@@ -91,6 +91,18 @@ function browserDeps(): SpeakerDeps {
   };
 }
 
+/** every speaker there is, so the mute button can silence them all at once */
+const live = new Set<WeakRef<Speaker>>();
+
+/** stops all reading aloud right now (the mute button) */
+export function hushAll(): void {
+  for (const ref of live) {
+    const sp = ref.deref();
+    if (sp) sp.stop();
+    else live.delete(ref);
+  }
+}
+
 export class Speaker {
   private readonly deps: SpeakerDeps;
   /** files known to be missing (no second request) */
@@ -100,6 +112,7 @@ export class Speaker {
 
   constructor(deps: SpeakerDeps = browserDeps()) {
     this.deps = deps;
+    live.add(new WeakRef(this));
   }
 
   /** reads the lines one after the other; a later run or stop() ends it. onLine hears the index of each line

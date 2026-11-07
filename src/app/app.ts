@@ -1244,6 +1244,10 @@ export class App {
       case 'F':
         this.toggleFullscreen();
         break;
+      case 'm':
+      case 'M':
+        this.hud?.toggleSound();
+        break;
       case 's':
       case 'S':
         e.preventDefault();
