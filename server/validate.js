@@ -69,6 +69,39 @@ export function parseDays(raw) {
 
 export const MESSAGE_STATUS = ['new', 'read', 'done'];
 
+/** the games the yearly plan knows; the same list as WORLD_IDS in src/app/worlds.ts (a test checks it) */
+export const WORLD_IDS = [
+  'meer', 'weltraum', 'savanne', 'zauberland', 'duell', 'riesenburg', 'tuerme', 'malen',
+  'neujahr', 'winter', 'fruehling', 'ostern', 'strand', 'herbst', 'halloween', 'martin', 'weihnachten',
+];
+/** the plan is small; this leaves room */
+export const MAX_WORLDS_BODY = 8 * 1024;
+const WORLD_MODES = ['plan', 'on', 'off'];
+const MONTH_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const isMonthDay = (v) =>
+  typeof v === 'string' && /^\d\d-\d\d$/.test(v) && +v.slice(0, 2) >= 1 && +v.slice(0, 2) <= 12 && +v.slice(3) >= 1 && +v.slice(3) <= MONTH_DAYS[+v.slice(0, 2) - 1];
+const isEasterDay = (v) => isInt(v) && v >= 0 && v <= 60;
+
+/** the yearly plan of the worlds from the admin area: every known world once, nothing else */
+export function validateWorlds(body) {
+  if (!isObj(body) || !isObj(body.worlds)) return { ok: false, error: 'worlds' };
+  const keys = Object.keys(body.worlds);
+  if (keys.length !== WORLD_IDS.length || !keys.every((k) => WORLD_IDS.includes(k))) return { ok: false, error: 'world ids' };
+  const worlds = {};
+  for (const id of WORLD_IDS) {
+    const e = body.worlds[id];
+    if (!isObj(e) || !WORLD_MODES.includes(e.mode)) return { ok: false, error: `${id}: mode` };
+    if (id === 'ostern') {
+      if (!isObj(e.easter) || !isEasterDay(e.easter.before) || !isEasterDay(e.easter.after)) return { ok: false, error: `${id}: easter` };
+      worlds[id] = { mode: e.mode, easter: { before: e.easter.before, after: e.easter.after } };
+    } else {
+      if (!isMonthDay(e.from) || !isMonthDay(e.to)) return { ok: false, error: `${id}: days` };
+      worlds[id] = { mode: e.mode, from: e.from, to: e.to };
+    }
+  }
+  return { ok: true, value: { version: 1, worlds } };
+}
+
 /** an admin change of one message: { status } or { delete: true } */
 export function validateMessageAction(body) {
   if (!isObj(body)) return { ok: false, error: 'not an object' };

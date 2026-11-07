@@ -13,6 +13,8 @@ import {
   RateLimiter,
   validateContact,
   validateMessageAction,
+  validateWorlds,
+  MAX_WORLDS_BODY,
 } from './validate.js';
 
 const DAY_MS = 24 * 3600 * 1000;
@@ -114,6 +116,13 @@ export function createApi(env = process.env) {
     if (!db.ready) throw new HttpError(503, 'Datenbank noch nicht bereit');
     return db;
   };
+  /** the yearly plan of the worlds, read once from the database; undefined until then */
+  let worlds;
+  const loadWorlds = async () => {
+    if (worlds === undefined && db?.ready) worlds = await db.getSetting('worlds');
+    return worlds ?? null;
+  };
+
   const isAdmin = (req) => verifyToken(secret, readCookie(req.headers.cookie, COOKIE));
   const secure = (req) => req.headers['x-forwarded-proto'] === 'https';
 
@@ -132,6 +141,9 @@ export function createApi(env = process.env) {
       if (!v.spam) await d.addMessage(v.value);
       return send(res, 200, { ok: true });
     }
+
+    // the plan for every visitor; without a database the app keeps its defaults
+    if (path === '/api/worlds' && method === 'GET') return send(res, 200, { plan: await loadWorlds() });
 
     if (path.startsWith('/api/admin/')) {
       if (!adminPassword) throw new HttpError(503, 'Admin ist aus (ADMIN_PASSWORD fehlt)');
@@ -160,6 +172,14 @@ export function createApi(env = process.env) {
         const st = url.searchParams.get('status');
         const status = MESSAGE_STATUS.includes(st) ? st : null;
         return send(res, 200, await needDb().messages(page, 20, status));
+      }
+      if (path === '/api/admin/worlds' && method === 'POST') {
+        const d = needDb();
+        const v = validateWorlds(await jsonBody(req, MAX_WORLDS_BODY));
+        if (!v.ok) throw new HttpError(400, `Ungültiger Plan (${v.error})`);
+        await d.setSetting('worlds', v.value);
+        worlds = v.value;
+        return send(res, 200, { ok: true });
       }
       const m = /^\/api\/admin\/messages\/(\d{1,18})$/.exec(path);
       if (m && method === 'POST') {

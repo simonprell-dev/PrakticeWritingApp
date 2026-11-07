@@ -54,6 +54,17 @@ const MIGRATIONS = [
       );
     `,
   },
+  {
+    // operator settings as JSON, e.g. the yearly plan of the worlds ('worlds')
+    version: 4,
+    sql: `
+      CREATE TABLE settings (
+        key text PRIMARY KEY,
+        value jsonb NOT NULL,
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+    `,
+  },
 ];
 
 /** the day of a page view in German time (one bucket per calendar day, no time of day is stored) */
@@ -160,6 +171,19 @@ export class Db {
       ? await this.pool.query('DELETE FROM messages WHERE id = $1', [id])
       : await this.pool.query('UPDATE messages SET status = $2 WHERE id = $1', [id, action.status]);
     return r.rowCount > 0;
+  }
+
+  /** a stored setting, null when there is none */
+  async getSetting(key) {
+    const { rows } = await this.pool.query('SELECT value FROM settings WHERE key = $1', [key]);
+    return rows[0]?.value ?? null;
+  }
+
+  async setSetting(key, value) {
+    await this.pool.query(
+      'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()',
+      [key, JSON.stringify(value)],
+    );
   }
 
   close() {
