@@ -8,6 +8,7 @@ export type WorldId =
   | 'weltraum'
   | 'savanne'
   | 'zauberland'
+  | 'woerterzoo'
   | 'duell'
   | 'riesenburg'
   | 'tuerme'
@@ -32,7 +33,7 @@ export const SEASON_IDS: SeasonId[] = ['neujahr', 'winter', 'fruehling', 'ostern
 export type FrontId = SeasonId | 'advent';
 export const FRONT_IDS: FrontId[] = ['advent', ...SEASON_IDS];
 
-export const WORLD_IDS: WorldId[] = ['meer', 'weltraum', 'savanne', 'zauberland', 'duell', 'riesenburg', 'tuerme', 'malen', ...SEASON_IDS, 'advent'];
+export const WORLD_IDS: WorldId[] = ['meer', 'weltraum', 'savanne', 'zauberland', 'woerterzoo', 'duell', 'riesenburg', 'tuerme', 'malen', ...SEASON_IDS, 'advent'];
 
 export const SEASONAL: Set<WorldId> = new Set(FRONT_IDS);
 
@@ -80,6 +81,7 @@ export const DEFAULT_PLAN: WorldPlan = {
     weltraum: { mode: 'on', from: '01-01', to: '12-31' },
     savanne: { mode: 'on', from: '01-01', to: '12-31' },
     zauberland: { mode: 'on', from: '01-01', to: '12-31' },
+    woerterzoo: { mode: 'on', from: '01-01', to: '12-31' },
     duell: { mode: 'on', from: '01-01', to: '12-31' },
     riesenburg: { mode: 'on', from: '01-01', to: '12-31' },
     tuerme: { mode: 'on', from: '01-01', to: '12-31' },

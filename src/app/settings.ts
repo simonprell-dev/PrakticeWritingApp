@@ -7,7 +7,7 @@ import { isScriptId, scriptOf, type ScriptId } from '../recog/scripts.ts';
 import type { PenPreset, PlayerId, Rotation, Strictness } from '../vision/types.ts';
 import { TASK_KINDS, type TaskKind } from '../game/math/tasks.ts';
 
-export type HabitatId = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'rechenmeer' | FrontId;
+export type HabitatId = 'meer' | 'weltraum' | 'savanne' | 'zauberland' | 'woerterzoo' | 'rechenmeer' | FrontId;
 
 /**
  * fest: a document camera or webcam looks at the paper all the time (projector in class);
@@ -112,8 +112,16 @@ export interface Settings {
   };
   /** Rechenmeer: the kinds of tasks that are asked (at least one) */
   math: { kinds: TaskKind[] };
+  /** Wörter-Zoo: how much help (1 copy, 2 remember, 3 picture only) and the letters the class knows */
+  woerter: { help: WordHelp; known: string };
   firstRunDone: boolean;
 }
+
+/** Wörter-Zoo help: 1 the word stands there, 2 it is covered after 5 s, 3 only the picture */
+export type WordHelp = 1 | 2 | 3;
+
+/** every letter a word of the Wörter-Zoo may have (lower case) */
+export const WORD_LETTERS = 'abcdefghijklmnopqrstuvwxyzäöüß';
 
 export const DEFAULTS: Settings = {
   version: 1,
@@ -150,6 +158,7 @@ export const DEFAULTS: Settings = {
     timeLimit: 0,
   },
   math: { kinds: ['plus20', 'minus20'] },
+  woerter: { help: 1, known: WORD_LETTERS },
   firstRunDone: false,
 };
 
@@ -219,10 +228,23 @@ export function loadSettings(): Settings {
     // Rechenmeer: only known task kinds, each once, at least one
     const kinds = Array.isArray(s.math?.kinds) ? [...new Set(s.math.kinds.filter((k) => (TASK_KINDS as readonly string[]).includes(k)))] : [];
     s.math = { kinds: kinds.length ? kinds : [...DEFAULTS.math.kinds] };
+    s.woerter = cleanWoerter(s.woerter);
     return s;
   } catch {
     return freshSettings();
   }
+}
+
+/**
+ * Wörter-Zoo settings from storage or a saved game: a known help level, only letters a word may have, each
+ * once, in the order of WORD_LETTERS; none known at all means all (the lobby keeps at least one word possible)
+ */
+export function cleanWoerter(raw: unknown): Settings['woerter'] {
+  const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const help: WordHelp = r.help === 2 || r.help === 3 ? r.help : 1;
+  const given = typeof r.known === 'string' ? r.known.toLowerCase() : WORD_LETTERS;
+  const known = [...WORD_LETTERS].filter((c) => given.includes(c)).join('');
+  return { help, known: known || WORD_LETTERS };
 }
 
 export function saveSettings(s: Settings): void {

@@ -46,7 +46,7 @@ describe('world plan', () => {
   });
 
   it('the old games are always there', () => {
-    for (const id of ['meer', 'weltraum', 'savanne', 'zauberland', 'duell', 'riesenburg', 'tuerme', 'malen'] as const) {
+    for (const id of ['meer', 'weltraum', 'savanne', 'zauberland', 'woerterzoo', 'duell', 'riesenburg', 'tuerme', 'malen'] as const) {
       expect(DEFAULT_PLAN.worlds[id].mode).toBe('on');
       expect(SEASONAL.has(id)).toBe(false);
     }

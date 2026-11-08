@@ -343,6 +343,48 @@
   "where": "Foto – Foto ausgewertet"
  },
  {
+  "id": "moment-gleich-kommt-das-naechste-bil-an4y0",
+  "text": "Moment, gleich kommt das nächste Bild!",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – nach einem Foto"
+ },
+ {
+  "id": "fast-namen-von-dingen-schreibt-man-g-1xlel",
+  "text": "Fast! Namen von Dingen schreibt man groß.",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – react"
+ },
+ {
+  "id": "fast-ein-buchstabe-stimmt-noch-nicht-1ctj1",
+  "text": "Fast! Ein Buchstabe stimmt noch nicht.",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – react"
+ },
+ {
+  "id": "schau-nochmal-genau-hin-a55cd",
+  "text": "Schau nochmal genau hin!",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – react"
+ },
+ {
+  "id": "fast-richtig-das-zaehlt-auch-1ii3u",
+  "text": "Fast richtig – das zählt auch!",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – success"
+ },
+ {
+  "id": "was-ist-das-schreib-es-auf-kjao3",
+  "text": "Was ist das? Schreib es auf!",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – ask"
+ },
+ {
+  "id": "schau-merk-dir-s-schreib-1g5yq",
+  "text": "Schau – merk dir’s – schreib!",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – ask"
+ },
+ {
   "id": "die-erkennung-konnte-nicht-geladen-w-wy35s",
   "text": "Die Erkennung konnte nicht geladen werden:",
   "speaker": "erzaehler",
@@ -386,6 +428,12 @@
   "text": "Zuerst die Kamera einrichten.",
   "speaker": "erzaehler",
   "where": "Hinweis – Farbe anlernen"
+ },
+ {
+  "id": "schreib-das-wort-zum-bild-und-drueck-3mlhh",
+  "text": "Schreib das Wort zum Bild und drücke „Fertig!“",
+  "speaker": "erzaehler",
+  "where": "Hinweis – Spielstart"
  },
  {
   "id": "ausgemalte-karte-unter-die-kamera-le-mnfd2",
@@ -1261,6 +1309,504 @@
   "where": "Adventskalender, Türchen 24: „Heiligabend“"
  },
  {
+  "id": "o-ma-1jjht",
+  "text": "O – ma",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Oma“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "o-pa-1icxg",
+  "text": "O – pa",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Opa“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ma-ma-12ot1",
+  "text": "Ma – ma",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Mama“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "pa-pa-npr0j",
+  "text": "Pa – pa",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Papa“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "eis-1omsq",
+  "text": "Eis",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Eis“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ei-glaxu",
+  "text": "Ei",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Ei“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ast-13ya0",
+  "text": "Ast",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Ast“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "en-te-1h4hh",
+  "text": "En – te",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Ente“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "e-sel-1kncj",
+  "text": "E – sel",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Esel“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "i-gel-1pyrz",
+  "text": "I – gel",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Igel“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "na-se-rqfxg",
+  "text": "Na – se",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Nase“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ro-se-cl58y",
+  "text": "Ro – se",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Rose“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "so-fa-1nhkj",
+  "text": "So – fa",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Sofa“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "li-mo-y0dyo",
+  "text": "Li – mo",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Limo“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "la-ma-13ulc",
+  "text": "La – ma",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Lama“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "maus-jj8uw",
+  "text": "Maus",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Maus“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "mond-mb3g4",
+  "text": "Mond",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Mond“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "nest-1pvdf",
+  "text": "Nest",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Nest“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "hut-nlzat",
+  "text": "Hut",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Hut“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ho-se-dcmuj",
+  "text": "Ho – se",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Hose“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "tor-37xwq",
+  "text": "Tor",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Tor“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "eu-le-r4063",
+  "text": "Eu – le",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Eule“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "au-to-1f1q4",
+  "text": "Au – to",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Auto“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "wal-12yr4",
+  "text": "Wal",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Wal“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "di-no-ei2mu",
+  "text": "Di – no",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Dino“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ra-be-1t0l2",
+  "text": "Ra – be",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Rabe“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "nu-del-1x5kd",
+  "text": "Nu – del",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Nudel“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "to-ma-te-19dyy",
+  "text": "To – ma – te",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Tomate“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "hund-1vd8p",
+  "text": "Hund",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Hund“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ha-se-p37n3",
+  "text": "Ha – se",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Hase“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "lam-pe-17qwi",
+  "text": "Lam – pe",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Lampe“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "tul-pe-16326",
+  "text": "Tul – pe",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Tulpe“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "am-pel-1rc8p",
+  "text": "Am – pel",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Ampel“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ker-ze-1vp65",
+  "text": "Ker – ze",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Kerze“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "kro-ne-53o77",
+  "text": "Kro – ne",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Krone“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ze-bra-q18yu",
+  "text": "Ze – bra",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Zebra“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ti-ger-1moij",
+  "text": "Ti – ger",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Tiger“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ba-na-ne-178os",
+  "text": "Ba – na – ne",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Banane“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "blu-me-6vhjt",
+  "text": "Blu – me",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Blume“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "wol-ke-1c1kq",
+  "text": "Wol – ke",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Wolke“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "burg-1dcil",
+  "text": "Burg",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Burg“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "brot-1kz3n",
+  "text": "Brot",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Brot“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "rad-1dtct",
+  "text": "Rad",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Rad“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "bus-1imb8",
+  "text": "Bus",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Bus“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "gras-dj7y7",
+  "text": "Gras",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Gras“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "kran-6qmgf",
+  "text": "Kran",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Kran“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "a-mei-se-j1uqn",
+  "text": "A – mei – se",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Ameise“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "lei-ter-r4x0w",
+  "text": "Lei – ter",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Leiter“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "gur-ke-fpzcn",
+  "text": "Gur – ke",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Gurke“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "loe-we-yt2s0",
+  "text": "Lö – we",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Löwe“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "baer-1iihk",
+  "text": "Bär",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Bär“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "zelt-711y0",
+  "text": "Zelt",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Zelt“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "pilz-vu2a1",
+  "text": "Pilz",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Pilz“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ka-mel-1d5ak",
+  "text": "Ka – mel",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Kamel“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "me-lo-ne-1liyy",
+  "text": "Me – lo – ne",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Melone“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ra-ke-te-9557i",
+  "text": "Ra – ke – te",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Rakete“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ap-fel-1v5uy",
+  "text": "Ap – fel",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Apfel“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "fisch-j5a6k",
+  "text": "Fisch",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Fisch“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "schaf-1seur",
+  "text": "Schaf",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Schaf“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "bie-ne-mxf6y",
+  "text": "Bie – ne",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Biene“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "kat-ze-1t5nc",
+  "text": "Kat – ze",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Katze“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "schu-le-erlf8",
+  "text": "Schu – le",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Schule“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "buch-1e83f",
+  "text": "Buch",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Buch“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ku-chen-2l9iy",
+  "text": "Ku – chen",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Kuchen“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "frosch-t1ans",
+  "text": "Frosch",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Frosch“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "fuchs-19ng1",
+  "text": "Fuchs",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Fuchs“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "stern-1obxa",
+  "text": "Stern",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Stern“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "schne-cke-1e43z",
+  "text": "Schne – cke",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Schnecke“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "ball-174mq",
+  "text": "Ball",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Ball“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "pup-pe-lilgu",
+  "text": "Pup – pe",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Puppe“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "schiff-q8odb",
+  "text": "Schiff",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Schiff“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "gi-raf-fe-dbqry",
+  "text": "Gi – raf – fe",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Giraffe“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "pin-gu-in-oel6l",
+  "text": "Pin – gu – in",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Pinguin“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "e-le-fant-4y98w",
+  "text": "E – le – fant",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Elefant“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "dra-che-1cn11",
+  "text": "Dra – che",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Drache“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "bril-le-10o16",
+  "text": "Bril – le",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Brille“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "schuh-535i4",
+  "text": "Schuh",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Schuh“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "kuh-1gsf7",
+  "text": "Kuh",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Kuh“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "uhr-1afax",
+  "text": "Uhr",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Uhr“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "zahn-184o2",
+  "text": "Zahn",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Zahn“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "zie-ge-199jw",
+  "text": "Zie – ge",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Ziege“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "spin-ne-1ptdd",
+  "text": "Spin – ne",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Spinne“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
+  "id": "af-fe-5uils",
+  "text": "Af – fe",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo, Bild „Affe“ – das Wort in Silben (Hilfe „Nur Bild“)"
+ },
+ {
   "id": "gesundheit-rolf-jetzt-ist-die-ganze-zc1rw",
   "text": "Gesundheit, Rolf! Jetzt ist die ganze Küche bunt!",
   "speaker": "flocke",
@@ -1650,6 +2196,504 @@
   "text": "Frohe Weihnachten, liebe Kinder!",
   "speaker": "wesen",
   "where": "Adventskalender, Türchen 24: „Heiligabend“"
+ },
+ {
+  "id": "komm-her-ich-hab-kekse-fuer-dich-zx5vz",
+  "text": "Komm her, ich hab Kekse für dich!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Oma“"
+ },
+ {
+  "id": "wo-ist-denn-bloss-meine-brille-1i2fx",
+  "text": "Wo ist denn bloß meine Brille?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Opa“"
+ },
+ {
+  "id": "hab-dich-lieb-mein-schatz-1pxwv",
+  "text": "Hab dich lieb, mein Schatz!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Mama“"
+ },
+ {
+  "id": "huiii-flugzeug-fliegen-7be0c",
+  "text": "Huiii, Flugzeug fliegen!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Papa“"
+ },
+ {
+  "id": "hilfe-ich-schmelze-k1cse",
+  "text": "Hilfe, ich schmelze!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Eis“"
+ },
+ {
+  "id": "knack-wer-kommt-da-raus-us2qz",
+  "text": "Knack! Wer kommt da raus?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Ei“"
+ },
+ {
+  "id": "ich-bin-ein-ast-kein-zweig-ist-doch-g9w07",
+  "text": "Ich bin ein Ast, kein Zweig, ist doch klar!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Ast“"
+ },
+ {
+  "id": "quak-wer-will-baden-jth7v",
+  "text": "Quak! Wer will baden?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Ente“"
+ },
+ {
+  "id": "i-aah-ich-bin-gar-nicht-dumm-corjc",
+  "text": "I-aah! Ich bin gar nicht dumm!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Esel“"
+ },
+ {
+  "id": "nicht-streicheln-das-piekst-d5i0k",
+  "text": "Nicht streicheln, das piekst!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Igel“"
+ },
+ {
+  "id": "ha-ha-hatschi-753eh",
+  "text": "Ha-ha-hatschi!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Nase“"
+ },
+ {
+  "id": "riech-mal-wie-gut-ich-dufte-199ep",
+  "text": "Riech mal, wie gut ich dufte!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Rose“"
+ },
+ {
+  "id": "huepfen-verboten-na-gut-einmal-163rr",
+  "text": "Hüpfen verboten! … Na gut, einmal.",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Sofa“"
+ },
+ {
+  "id": "blubb-blubb-das-kitzelt-17oh8",
+  "text": "Blubb blubb, das kitzelt!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Limo“"
+ },
+ {
+  "id": "ich-spucke-nur-ein-kleines-bisschen-wt4ok",
+  "text": "Ich spucke nur ein kleines bisschen!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Lama“"
+ },
+ {
+  "id": "piep-hat-jemand-kaese-gesehen-1jlr7",
+  "text": "Piep! Hat jemand Käse gesehen?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Maus“"
+ },
+ {
+  "id": "gaehn-ist-es-schon-nacht-1ikma",
+  "text": "Gähn … ist es schon Nacht?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Mond“"
+ },
+ {
+  "id": "pssst-hier-schlafen-vogelkinder-vh9u3",
+  "text": "Pssst, hier schlafen Vogelkinder!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Nest“"
+ },
+ {
+  "id": "steht-mir-der-hut-er-steht-mir-gut-148qw",
+  "text": "Steht mir der Hut? Er steht mir gut!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Hut“"
+ },
+ {
+  "id": "ich-hab-ein-loch-guck-nicht-hin-ugnlv",
+  "text": "Ich hab ein Loch – guck nicht hin!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Hose“"
+ },
+ {
+  "id": "tooor-tooor-tooor-1af7t",
+  "text": "Tooor! Tooor! Tooor!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Tor“"
+ },
+ {
+  "id": "huhu-ich-bin-wach-du-auch-2kmzr",
+  "text": "Huhu! Ich bin wach, du auch?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Eule“"
+ },
+ {
+  "id": "brumm-brumm-anschnallen-bitte-z0v9v",
+  "text": "Brumm brumm, anschnallen bitte!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Auto“"
+ },
+ {
+  "id": "pfffff-ich-mach-eine-wasserfontaene-1c5at",
+  "text": "Pfffff! Ich mach eine Wasserfontäne!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Wal“"
+ },
+ {
+  "id": "roooar-keine-angst-ich-esse-nur-sala-1v4uy",
+  "text": "Roooar! Keine Angst, ich esse nur Salat.",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Dino“"
+ },
+ {
+  "id": "krah-ich-sammle-glaenzende-sachen-balgl",
+  "text": "Krah! Ich sammle glänzende Sachen!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Rabe“"
+ },
+ {
+  "id": "ich-bin-so-lang-ich-weiss-gar-nicht-clyns",
+  "text": "Ich bin so lang, ich weiß gar nicht, wo ich aufhöre!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Nudel“"
+ },
+ {
+  "id": "ich-werde-ganz-rot-vor-freude-lhx9e",
+  "text": "Ich werde ganz rot vor Freude!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Tomate“"
+ },
+ {
+  "id": "wuff-wirfst-du-den-ball-cud95",
+  "text": "Wuff! Wirfst du den Ball?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Hund“"
+ },
+ {
+  "id": "hoppel-hoppel-ich-bin-schneller-als-1ihjj",
+  "text": "Hoppel hoppel, ich bin schneller als du!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Hase“"
+ },
+ {
+  "id": "klick-jetzt-wird-es-hell-5cn16",
+  "text": "Klick! Jetzt wird es hell!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Lampe“"
+ },
+ {
+  "id": "ich-wachse-und-wachse-und-wachse-ey2cm",
+  "text": "Ich wachse und wachse und wachse!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Tulpe“"
+ },
+ {
+  "id": "rot-gelb-gruen-ich-kann-mich-nicht-e-1gr3r",
+  "text": "Rot, gelb, grün – ich kann mich nicht entscheiden!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Ampel“"
+ },
+ {
+  "id": "puste-mich-nicht-aus-bitte-114bd",
+  "text": "Puste mich nicht aus, bitte!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Kerze“"
+ },
+ {
+  "id": "ich-bin-die-krone-von-krakel-und-kro-12j4y",
+  "text": "Ich bin die Krone von Krakel und Krone!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Krone“"
+ },
+ {
+  "id": "bin-ich-weiss-mit-schwarzen-streifen-1ieu6",
+  "text": "Bin ich weiß mit schwarzen Streifen oder schwarz mit weißen?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Zebra“"
+ },
+ {
+  "id": "grrr-ich-bin-ein-kuscheltiger-5hzkr",
+  "text": "Grrr … ich bin ein Kuscheltiger!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Tiger“"
+ },
+ {
+  "id": "vorsicht-nicht-ausrutschen-jm0ga",
+  "text": "Vorsicht, nicht ausrutschen!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Banane“"
+ },
+ {
+  "id": "summ-summ-wo-sind-die-bienen-zza37",
+  "text": "Summ summ, wo sind die Bienen?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Blume“"
+ },
+ {
+  "id": "gleich-regnet-es-auf-dich-1jxf4",
+  "text": "Gleich regnet es – auf dich!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Wolke“"
+ },
+ {
+  "id": "zugbruecke-runter-der-koenig-kommt-1xgpy",
+  "text": "Zugbrücke runter, der König kommt!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Burg“"
+ },
+ {
+  "id": "ich-bin-frisch-und-knusprig-end51",
+  "text": "Ich bin frisch und knusprig!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Brot“"
+ },
+ {
+  "id": "klingeling-aus-dem-weg-7xpi8",
+  "text": "Klingeling, aus dem Weg!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Rad“"
+ },
+ {
+  "id": "alle-einsteigen-wir-fahren-zur-schul-1mdmg",
+  "text": "Alle einsteigen, wir fahren zur Schule!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Bus“"
+ },
+ {
+  "id": "ich-wachse-auch-wenn-du-nicht-hinsch-jn3t7",
+  "text": "Ich wachse, auch wenn du nicht hinschaust!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Gras“"
+ },
+ {
+  "id": "ich-hebe-alles-hoch-sogar-einen-elef-1q220",
+  "text": "Ich hebe alles hoch, sogar einen Elefanten!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Kran“"
+ },
+ {
+  "id": "ich-trage-zehnmal-so-viel-wie-ich-wi-1u76d",
+  "text": "Ich trage zehnmal so viel wie ich wiege!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Ameise“"
+ },
+ {
+  "id": "kletter-mal-ganz-nach-oben-9guj7",
+  "text": "Kletter mal ganz nach oben!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Leiter“"
+ },
+ {
+  "id": "ich-bin-cool-wie-eine-gurke-17xcc",
+  "text": "Ich bin cool wie eine Gurke!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Gurke“"
+ },
+ {
+  "id": "ich-bin-der-koenig-heute-nachmittag-gj6tk",
+  "text": "Ich bin der König – heute Nachmittag.",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Löwe“"
+ },
+ {
+  "id": "brumm-ist-da-honig-drin-ghfku",
+  "text": "Brumm! Ist da Honig drin?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Bär“"
+ },
+ {
+  "id": "heute-schlafen-wir-draussen-lelc8",
+  "text": "Heute schlafen wir draußen!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Zelt“"
+ },
+ {
+  "id": "ich-bin-ein-glueckspilz-bq9ae",
+  "text": "Ich bin ein Glückspilz!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Pilz“"
+ },
+ {
+  "id": "zwei-hoecker-kein-durst-1i7gx",
+  "text": "Zwei Höcker, kein Durst!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Kamel“"
+ },
+ {
+  "id": "spuck-die-kerne-weit-1vjh7",
+  "text": "Spuck die Kerne weit!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Melone“"
+ },
+ {
+  "id": "drei-zwei-eins-start-jy490",
+  "text": "Drei, zwei, eins … Start!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Rakete“"
+ },
+ {
+  "id": "wer-hat-hier-reingebissen-y5wrt",
+  "text": "Wer hat hier reingebissen?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Apfel“"
+ },
+ {
+  "id": "blubb-ich-kann-nicht-sprechen-nur-bl-10sn4",
+  "text": "Blubb! Ich kann nicht sprechen, nur blubbern.",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Fisch“"
+ },
+ {
+  "id": "maeh-ich-bin-ganz-flauschig-1y60p",
+  "text": "Mäh! Ich bin ganz flauschig!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Schaf“"
+ },
+ {
+  "id": "summ-summ-ich-hab-honig-gemacht-166fa",
+  "text": "Summ summ, ich hab Honig gemacht!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Biene“"
+ },
+ {
+  "id": "miau-kraul-mich-am-kinn-15436",
+  "text": "Miau! Kraul mich am Kinn!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Katze“"
+ },
+ {
+  "id": "ring-ring-die-pause-ist-vorbei-de64k",
+  "text": "Ring ring, die Pause ist vorbei!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Schule“"
+ },
+ {
+  "id": "lies-mich-ich-hab-eine-tolle-geschic-ae09v",
+  "text": "Lies mich, ich hab eine tolle Geschichte!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Buch“"
+ },
+ {
+  "id": "ein-stueck-fuer-dich-ein-stueck-fuer-1g9dn",
+  "text": "Ein Stück für dich, ein Stück für mich!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Kuchen“"
+ },
+ {
+  "id": "quaak-kuess-mich-oder-lieber-doch-ni-1utsh",
+  "text": "Quaak! Küss mich – oder lieber doch nicht!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Frosch“"
+ },
+ {
+  "id": "ich-bin-schlau-ich-hab-mich-versteck-1sk3l",
+  "text": "Ich bin schlau, ich hab mich versteckt!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Fuchs“"
+ },
+ {
+  "id": "ich-funkle-nur-fuer-dich-5mzrx",
+  "text": "Ich funkle nur für dich!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Stern“"
+ },
+ {
+  "id": "ich-bin-gaaanz-schnell-fuer-eine-sch-sutgp",
+  "text": "Ich bin gaaanz schnell … für eine Schnecke.",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Schnecke“"
+ },
+ {
+  "id": "boing-boing-fang-mich-sdnnz",
+  "text": "Boing! Boing! Fang mich!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Ball“"
+ },
+ {
+  "id": "spielst-du-mit-mir-teeparty-yh8e9",
+  "text": "Spielst du mit mir Teeparty?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Puppe“"
+ },
+ {
+  "id": "tuuut-alle-mann-an-bord-1h7oj",
+  "text": "Tuuut! Alle Mann an Bord!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Schiff“"
+ },
+ {
+  "id": "wie-ist-das-wetter-da-unten-1lzp1",
+  "text": "Wie ist das Wetter da unten?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Giraffe“"
+ },
+ {
+  "id": "ich-trage-immer-einen-frack-mpmwq",
+  "text": "Ich trage immer einen Frack!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Pinguin“"
+ },
+ {
+  "id": "toeroeoeoe-wer-will-duschen-7ujvr",
+  "text": "Törööö! Wer will duschen?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Elefant“"
+ },
+ {
+  "id": "ich-spucke-nur-seifenblasen-vz2oj",
+  "text": "Ich spucke nur Seifenblasen!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Drache“"
+ },
+ {
+  "id": "mit-mir-siehst-du-alles-ganz-scharf-1yi68",
+  "text": "Mit mir siehst du alles ganz scharf!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Brille“"
+ },
+ {
+  "id": "wo-ist-mein-zweiter-schuh-1qxdx",
+  "text": "Wo ist mein zweiter Schuh?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Schuh“"
+ },
+ {
+  "id": "muh-frische-milch-gefaellig-1w0oq",
+  "text": "Muh! Frische Milch gefällig?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Kuh“"
+ },
+ {
+  "id": "tick-tack-gleich-ist-pause-c0lpl",
+  "text": "Tick tack, gleich ist Pause!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Uhr“"
+ },
+ {
+  "id": "ich-wackle-bald-kommt-die-zahnfee-1o8or",
+  "text": "Ich wackle! Bald kommt die Zahnfee!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Zahn“"
+ },
+ {
+  "id": "maeh-ich-fresse-deine-hausaufgaben-mplt2",
+  "text": "Mäh! Ich fresse deine Hausaufgaben!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Ziege“"
+ },
+ {
+  "id": "ich-hab-acht-beine-zum-kitzeln-1jdj9",
+  "text": "Ich hab acht Beine zum Kitzeln!",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Spinne“"
+ },
+ {
+  "id": "uh-uh-ah-ah-wer-hat-meine-banane-11cfs",
+  "text": "Uh uh ah ah, wer hat meine Banane?",
+  "speaker": "wesen",
+  "where": "Wörter-Zoo, Bild „Affe“"
  },
  {
   "id": "ha-ha-1qm2c",
@@ -2241,6 +3285,12 @@
   "text": "Prachtstück",
   "speaker": "ausruf",
   "where": "Stufe über einem neuen Wesen"
+ },
+ {
+  "id": "richtig-ys090",
+  "text": "Richtig!",
+  "speaker": "ausruf",
+  "where": "Wörter-Zoo – success"
  },
  {
   "id": "das-a-1el0s",

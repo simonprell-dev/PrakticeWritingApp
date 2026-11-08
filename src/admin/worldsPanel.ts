@@ -9,6 +9,7 @@ const NAMES: Record<Exclude<WorldId, FrontId>, string> = {
   weltraum: '👽 Weltraum',
   savanne: '🦒 Savanne',
   zauberland: '🦄 Zauberland',
+  woerterzoo: '🦁 Wörter-Zoo',
   duell: '⚔️ Team-Duell',
   riesenburg: '🏰 Riesenburg',
   tuerme: '🏗️ Türme bauen',
