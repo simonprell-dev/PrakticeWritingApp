@@ -15,6 +15,20 @@ describe('which line a shown text is', () => {
     expect(lineOf('Sieg für Team Blau!')).toMatchObject({ voice: 'erzaehler', gap: true });
   });
 
+  it('a line with a gap comes in pieces, the value marked', () => {
+    expect(lineOf('Mauer 3 geschafft!')?.pieces).toEqual([
+      { text: 'Mauer', gap: false },
+      { text: '3', gap: true },
+      { text: 'geschafft!', gap: false },
+    ]);
+  });
+
+  it('the class name in front of the giant line is not said', () => {
+    expect(lineOf('Unsere Klasse: Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!')?.pieces).toEqual([
+      { text: 'Schreibt schöne Buchstaben – jeder Stern ist ein Schlag!', gap: false },
+    ]);
+  });
+
   it('an error message is not read to the children', () => {
     expect(lineOf('Das hat nicht geklappt: TypeError: x is undefined')).toBeNull();
   });

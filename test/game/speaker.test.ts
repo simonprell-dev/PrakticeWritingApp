@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { hushAll, Speaker, voiceSources, type SpeakerDeps } from '../../src/game/voice/speaker.ts';
 import { voiceId } from '../../src/game/voiceId.ts';
+import { pieceFile, sentenceFile } from '../../src/game/voice/pieces.ts';
 
-function fake(available: Set<string>, opts: { lang?: string; volume?: number } = {}) {
+function fake(available: Set<string>, opts: { lang?: string; volume?: number; files?: string[] | null } = {}) {
   const log: string[] = [];
   const deps: SpeakerDeps = {
     lang: () => opts.lang ?? 'de',
@@ -19,6 +20,10 @@ function fake(available: Set<string>, opts: { lang?: string; volume?: number } =
     halt() {
       log.push('halt');
     },
+    async files() {
+      return opts.files === null ? null : new Set(opts.files ?? []);
+    },
+    preload() {},
   };
   return { deps, log };
 }
@@ -159,5 +164,52 @@ describe('the mute button', () => {
     expect(log.filter((l) => l === 'halt').length).toBeGreaterThanOrEqual(2);
     expect(log).not.toContain('tts de erzaehler [de] Zwei.');
     expect(log).not.toContain('tts de flocke [de] Vier.');
+  });
+});
+
+describe('a text with a filled gap', () => {
+  const line = {
+    key: 'Mauer {n} geschafft!',
+    voice: 'riese' as const,
+    text: 'Mauer 3 geschafft!',
+    gap: true,
+    pieces: [
+      { text: 'Mauer', gap: false },
+      { text: '3', gap: true },
+      { text: 'geschafft!', gap: false },
+    ],
+  };
+  const url = (f: string) => `/voice/ai/de/${f}.mp3`;
+  const all = [sentenceFile('Mauer 3 geschafft!'), pieceFile('riese', 'Mauer'), pieceFile('riese', '3'), pieceFile('riese', 'geschafft!')];
+
+  it('a whole sentence made for it comes first', async () => {
+    const { deps, log } = fake(new Set(all.map(url)), { files: all });
+    await new Speaker(deps).run([line]);
+    expect(log).toEqual([`play ${url(all[0])}`]);
+  });
+
+  it('else it is put together from its pieces', async () => {
+    const { deps, log } = fake(new Set(all.map(url)), { files: all.slice(1) });
+    await new Speaker(deps).run([line]);
+    expect(log).toEqual(all.slice(1).map((f) => `play ${url(f)}`));
+  });
+
+  it('a value without a file is read by the browser, the rest from the files', async () => {
+    const files = [all[1], all[3]];
+    const { deps, log } = fake(new Set(all.map(url)), { files });
+    await new Speaker(deps).run([line]);
+    expect(log).toEqual([`play ${url(all[1])}`, 'tts de riese 3', `play ${url(all[3])}`]);
+  });
+
+  it('a fixed part without a file: the browser reads the whole text, no mix of voices', async () => {
+    const { deps, log } = fake(new Set(all.map(url)), { files: [all[1], all[2]] });
+    await new Speaker(deps).run([line]);
+    expect(log).toEqual(['tts de riese Mauer 3 geschafft!']);
+  });
+
+  it('without a list of files the browser reads the whole text', async () => {
+    const { deps, log } = fake(new Set(all.map(url)), { files: null });
+    await new Speaker(deps).run([line]);
+    expect(log).toEqual(['tts de riese Mauer 3 geschafft!']);
   });
 });

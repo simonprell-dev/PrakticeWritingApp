@@ -2,10 +2,11 @@
 // text is looked up among the lines of the recording script (voice/lines.json, npm run voice): if it is one,
 // its speaker reads it with the best voice there is (src/game/voice/speaker.ts), in the page's language.
 // Texts that are no line (labels, errors) stay silent. A text with a filled gap ("Sieg für Team Blau!") is
-// read whole by the browser, as no file can hold the name.
+// said as a whole sentence made beforehand or put together from pieces (pieces.ts).
 import lines from '../../../voice/lines.json';
 import source from '../../i18n/source.json';
 import { language, t } from '../../i18n/i18n.ts';
+import { piecesOf } from './pieces.ts';
 import { Speaker, type Line, type Voice } from './speaker.ts';
 
 /** a line about to be said */
@@ -48,7 +49,7 @@ for (const r of lines as Row[]) {
 interface Index {
   lang: string;
   exact: Map<string, string>;
-  templates: { re: RegExp; key: string }[];
+  templates: { re: RegExp; key: string; shown: string }[];
 }
 let index: Index | null = null;
 
@@ -64,7 +65,7 @@ function build(): Index {
     const shown = normalizeVoiceText(t(SOURCE.get(key) ?? key));
     if (/\{\w+\}/.test(shown)) {
       const re = new RegExp(`^${escape(shown).replace(/\\\{\w+\\\}/g, '(.+?)')}$`);
-      templates.push({ re, key });
+      templates.push({ re, key, shown });
     } else exact.set(shown, key);
   }
   index = { lang, exact, templates };
@@ -78,8 +79,11 @@ export function lineOf(shown: string): Spoken | null {
   const ix = build();
   const key = ix.exact.get(text);
   if (key) return { key, voice: SPOKEN.get(key)!, text, gap: false };
-  const tpl = ix.templates.find((x) => x.re.test(text));
-  return tpl ? { key: tpl.key, voice: SPOKEN.get(tpl.key)!, text, gap: true } : null;
+  for (const tpl of ix.templates) {
+    const m = tpl.re.exec(text);
+    if (m) return { key: tpl.key, voice: SPOKEN.get(tpl.key)!, text, gap: true, pieces: piecesOf(tpl.shown, m.slice(1)) };
+  }
+  return null;
 }
 
 /** the important speakers are not talked over by the little ones */

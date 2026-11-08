@@ -5,6 +5,7 @@
 import { soundVolume } from '../audio.ts';
 import { language, t } from '../../i18n/i18n.ts';
 import { voiceId } from '../voiceId.ts';
+import { pieceFile, sentenceFile, type Piece } from './pieces.ts';
 
 /** the speakers of the game (the roles of voice/SPRECHERTEXT.md) */
 export type Voice = 'erzaehler' | 'flocke' | 'wesen' | 'riese' | 'zork' | 'blase' | 'ausruf' | 'buchstaben';
@@ -15,8 +16,10 @@ export interface Line {
   voice: Voice;
   /** the text as shown, read by the browser when there is no file */
   text?: string;
-  /** a text with a filled gap (a name, a number): no file fits, the browser reads it whole */
+  /** a text with a filled gap (a name, a number): said as a whole sentence made for it, or in pieces */
   gap?: boolean;
+  /** the pieces of such a text (pieces.ts) */
+  pieces?: Piece[];
 }
 
 export interface SpeakerDeps {
@@ -30,6 +33,10 @@ export interface SpeakerDeps {
   tts(text: string, lang: string, voice: Voice, volume: number): Promise<void>;
   /** stops whatever is playing or speaking */
   halt(): void;
+  /** the generated files of a language (its manifest, without .mp3), null when the list cannot be loaded */
+  files(lang: string): Promise<Set<string> | null>;
+  /** starts loading a file that is played soon (no gap between pieces) */
+  preload(url: string): void;
 }
 
 /** the files that may hold a text, best first */
@@ -57,7 +64,28 @@ const LOCALE: Record<string, string> = {
 
 function browserDeps(): SpeakerDeps {
   let audio: HTMLAudioElement | null = null;
+  const lists = new Map<string, Promise<Set<string> | null>>();
+  const loaded = new Map<string, HTMLAudioElement>();
   return {
+    files(lang) {
+      let p = lists.get(lang);
+      if (!p) {
+        p = fetch(`/voice/ai/${lang}/manifest.json`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((m: Record<string, string> | null) => (m ? new Set(Object.keys(m)) : null))
+          .catch(() => null);
+        lists.set(lang, p);
+      }
+      return p;
+    },
+    preload(url) {
+      if (typeof Audio === 'undefined' || loaded.has(url)) return;
+      const a = new Audio();
+      a.preload = 'auto';
+      a.src = url;
+      loaded.set(url, a);
+      if (loaded.size > 60) loaded.delete(loaded.keys().next().value!);
+    },
     lang: language,
     volume: soundVolume,
     translate: (k) => t(k),
@@ -143,8 +171,29 @@ export class Speaker {
     this.deps.halt();
   }
 
+  /** a text with a filled gap from the generated files: the whole sentence, else its pieces (a value without
+   * a file read by the browser). False when a fixed part has no file: then the browser reads it all. */
+  private async sayFilled(line: Line, lang: string, volume: number): Promise<boolean> {
+    const files = await this.deps.files(lang);
+    if (!files || !line.text) return false;
+    const url = (f: string) => `/voice/ai/${lang}/${f}.mp3`;
+    const whole = sentenceFile(line.text);
+    if (files.has(whole) && (await this.deps.play(url(whole), volume))) return true;
+    const pieces = line.pieces ?? [];
+    if (!pieces.length || pieces.some((p) => !p.gap && !files.has(pieceFile(line.voice, p.text)))) return false;
+    const mine = this.turn;
+    for (const p of pieces) if (files.has(pieceFile(line.voice, p.text))) this.deps.preload(url(pieceFile(line.voice, p.text)));
+    for (const p of pieces) {
+      if (mine !== this.turn) return true;
+      const f = pieceFile(line.voice, p.text);
+      if (!files.has(f) || !(await this.deps.play(url(f), volume))) await this.deps.tts(p.text, lang, line.voice, volume);
+    }
+    return true;
+  }
+
   private async say(line: Line, volume: number): Promise<void> {
     const lang = this.deps.lang();
+    if (line.gap && (await this.sayFilled(line, lang, volume))) return;
     for (const url of line.gap ? [] : voiceSources(line.key, lang)) {
       if (this.missing.has(url)) continue;
       if (await this.deps.play(url, volume)) return;
