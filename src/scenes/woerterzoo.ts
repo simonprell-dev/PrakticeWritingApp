@@ -619,7 +619,7 @@ export interface ZooEntry {
 }
 
 export type Feedback =
-  | { kind: 'fast'; reason: 'gross' | 'buchstabe'; written: string; at: number; t: number }
+  | { kind: 'fast'; reason: 'gross' | 'buchstabe' | 'laut'; written: string; at: number; t: number }
   | { kind: 'daneben'; written: string; t: number };
 
 type Phase = 'enter' | 'ask' | 'alive' | 'walk';
@@ -749,7 +749,7 @@ export class WoerterZooScene extends HabitatScene {
       const rects = fieldLayout(group, this.fieldRect);
       this.field = letters.map((l, i) => ({ ...l, rect: rects[i], landed: false }));
       this.flying = group.length;
-      this.verdict = { v: judge(this.word.word, written), written, letters };
+      this.verdict = { v: judge(this.word.word, written, this.host.settings.woerter?.spelling ?? 'streng'), written, letters };
     }
     this.fx.start(
       snap,
@@ -787,13 +787,14 @@ export class WoerterZooScene extends HabitatScene {
   /** the written word was judged */
   react(v: Verdict, written: string, letters: Letter[]): void {
     if (this.phase !== 'ask' && this.phase !== 'enter') return;
-    if (v.result === 'richtig') return this.success(letters, false);
+    if (v.result === 'richtig') return this.success(letters, false, v.lautgetreu === true);
     if (v.result === 'fast') {
       this.tries++;
       if (this.tries >= MAX_TRIES) return this.success(letters, true);
       this.feedback = { kind: 'fast', reason: v.reason, written, at: v.at, t: 0 };
       sfx.boing();
       if (v.reason === 'gross') speak(t('Fast! Namen von Dingen schreibt man groß.'));
+      else if (v.reason === 'laut') speak(t('Gut gehört! Aber so schreibt man es richtig.'));
       else speak(t('Fast! Ein Buchstabe stimmt noch nicht.'));
       return;
     }
@@ -804,7 +805,9 @@ export class WoerterZooScene extends HabitatScene {
     if (this.help >= 2) this.revealUntil = this.askT + 3;
   }
 
-  private success(letters: Letter[], counted: boolean): void {
+  /** the word is in the zoo; `counted`: after three "Fast", `soundTrue`: written as heard ("Hunt"), which counts
+   * with the sound-true setting – the right spelling stands big on the card */
+  private success(letters: Letter[], counted: boolean, soundTrue = false): void {
     const score = letters.length ? letters.reduce((a, l) => a + l.glyph.score.score, 0) / letters.length : 60;
     const tier = tierOf(score);
     const picto = pictoOf(this.word.word);
@@ -838,7 +841,8 @@ export class WoerterZooScene extends HabitatScene {
     const p = { x: this.W / 2, y: CARD_Y + PIC_DY };
     this.particles.burst('confetti', p.x, p.y, 40, { colors: ['#ff6f91', '#ffd84a', '#7cdcff', '#8dff6b'], size: 13, speed: 420, max: 1.6, gravity: 420 });
     if (tier === 'prachtvoll') this.particles.add({ kind: 'ring', x: p.x, y: p.y, size: 380, max: 0.6, color: 'rgba(255,240,160,0.95)' });
-    if (counted) speak(t('Fast richtig – das zählt auch!'), t(this.word.say));
+    if (soundTrue) speak(t('Gut gehört – das zählt! So schreibt man es richtig.'), t(this.word.say));
+    else if (counted) speak(t('Fast richtig – das zählt auch!'), t(this.word.say));
     else speak(t('Richtig!'), t(this.word.say));
     this.host.progress();
   }
@@ -1370,14 +1374,14 @@ export class WoerterZooScene extends HabitatScene {
       return;
     }
     ctx.font = `600 28px ${FONT}`;
-    const msg = fb.reason === 'gross' ? t('Namen von Dingen schreibt man groß.') : t('Ein Buchstabe stimmt noch nicht.');
+    const msg = fb.reason === 'gross' ? t('Namen von Dingen schreibt man groß.') : fb.reason === 'laut' ? t('So schreibt man es richtig.') : t('Ein Buchstabe stimmt noch nicht.');
     const msgLines = wrap(ctx, msg, R.w - 40);
     const h = 252 + msgLines.length * 32 + 12;
     this.panel(ctx, { ...R, h }, '#fff8e6', '#ff9f1a', pop);
     ctx.textAlign = 'left';
     ctx.fillStyle = '#e07b00';
     ctx.font = `700 44px ${FONT}`;
-    ctx.fillText(t('Fast!'), R.x + 26, R.y + 44);
+    ctx.fillText(fb.reason === 'laut' ? t('Gut gehört!') : t('Fast!'), R.x + 26, R.y + 44);
     // tries: one dot for each "Fast"
     for (let i = 0; i < MAX_TRIES; i++) {
       ctx.fillStyle = i < this.tries ? '#ff9f1a' : 'rgba(255,159,26,0.25)';

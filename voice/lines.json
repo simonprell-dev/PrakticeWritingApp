@@ -355,6 +355,12 @@
   "where": "Wörter-Zoo – react"
  },
  {
+  "id": "gut-gehoert-aber-so-schreibt-man-es-f4nh9",
+  "text": "Gut gehört! Aber so schreibt man es richtig.",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – react"
+ },
+ {
   "id": "fast-ein-buchstabe-stimmt-noch-nicht-1ctj1",
   "text": "Fast! Ein Buchstabe stimmt noch nicht.",
   "speaker": "erzaehler",
@@ -365,6 +371,12 @@
   "text": "Schau nochmal genau hin!",
   "speaker": "erzaehler",
   "where": "Wörter-Zoo – react"
+ },
+ {
+  "id": "gut-gehoert-das-zaehlt-so-schreibt-m-1ki6t",
+  "text": "Gut gehört – das zählt! So schreibt man es richtig.",
+  "speaker": "erzaehler",
+  "where": "Wörter-Zoo – success"
  },
  {
   "id": "fast-richtig-das-zaehlt-auch-1ii3u",
@@ -396,6 +408,18 @@
   "text": "Die Kamera wurde getrennt. Bitte wieder anschließen.",
   "speaker": "erzaehler",
   "where": "Hinweis – jederzeit"
+ },
+ {
+  "id": "die-vorschau-aller-welten-geht-nur-m-1jipb",
+  "text": "Die Vorschau aller Welten geht nur mit Admin-Anmeldung (/admin).",
+  "speaker": "erzaehler",
+  "where": "Hinweis – adminPreview"
+ },
+ {
+  "id": "admin-vorschau-alle-welten-sind-offe-c5gzi",
+  "text": "Admin-Vorschau: alle Welten sind offen",
+  "speaker": "erzaehler",
+  "where": "Hinweis – adminPreview"
  },
  {
   "id": "keine-kamera-bitte-oben-rechts-einri-1vqb3",

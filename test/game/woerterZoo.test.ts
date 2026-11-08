@@ -119,6 +119,26 @@ describe('Wörter-Zoo', () => {
     expect(s.feedback).toMatchObject({ kind: 'fast', reason: 'gross', at: 0 });
   });
 
+  it('written as heard ("Hunt"): with the sound-true setting the word counts', () => {
+    const { s } = scene({ spelling: 'lautgetreu' });
+    run(s, 1);
+    s.word = WORDS.find((x) => x.word === 'Hund')!;
+    write(s, 'Hunt');
+    expect(s.feedback).toBeNull();
+    expect(s.phase).toBe('alive');
+    expect(s.done?.counted).toBe(false);
+  });
+
+  it('written as heard, only the right spelling counts: "Gut gehört!" and the same word again', () => {
+    const { s } = scene({ spelling: 'streng' });
+    run(s, 1);
+    s.word = WORDS.find((x) => x.word === 'Hund')!;
+    write(s, 'Hunt');
+    expect(s.feedback).toMatchObject({ kind: 'fast', reason: 'laut', written: 'Hunt' });
+    expect(s.phase).toBe('ask');
+    expect(s.tries).toBe(1);
+  });
+
   it('after the third "Fast" the word counts anyway', () => {
     const { s } = scene();
     run(s, 1);
@@ -314,10 +334,10 @@ describe('Wörter-Zoo layout', () => {
 
 describe('Wörter-Zoo settings', () => {
   it('old or broken settings get the defaults', () => {
-    expect(cleanWoerter(undefined)).toEqual({ help: 1, known: WORD_LETTERS });
-    expect(cleanWoerter({ help: 7, known: 42 })).toEqual({ help: 1, known: WORD_LETTERS });
-    expect(cleanWoerter({ help: 3, known: 'MAMx!a' })).toEqual({ help: 3, known: 'amx' });
-    expect(cleanWoerter({ help: 2, known: '' })).toEqual({ help: 2, known: WORD_LETTERS });
+    expect(cleanWoerter(undefined)).toEqual({ help: 1, known: WORD_LETTERS, spelling: 'streng' });
+    expect(cleanWoerter({ help: 7, known: 42, spelling: 'egal' })).toEqual({ help: 1, known: WORD_LETTERS, spelling: 'streng' });
+    expect(cleanWoerter({ help: 3, known: 'MAMx!a' })).toEqual({ help: 3, known: 'amx', spelling: 'streng' });
+    expect(cleanWoerter({ help: 2, known: '', spelling: 'lautgetreu' })).toEqual({ help: 2, known: WORD_LETTERS, spelling: 'lautgetreu' });
   });
 
   it('the lobby counts the words the letters allow', () => {

@@ -1,6 +1,6 @@
 // Setup for the Wörter-Zoo: how much help (copy, remember, picture only) and the letters the class already
 // knows, as the reading primer brings them in. Only words made of these letters come; at least one must fit.
-import { WORD_LETTERS, type Settings, type WordHelp } from '../app/settings.ts';
+import { WORD_LETTERS, type Settings, type Spelling, type WordHelp } from '../app/settings.ts';
 import { usable, WORDS } from '../game/words/words.ts';
 import { language, t } from '../i18n/i18n.ts';
 import { scriptOf, type ScriptId } from '../recog/scripts.ts';
@@ -83,6 +83,27 @@ export function openWoerterLobby(settings: Settings, save: () => void, start: ()
       ),
     ),
     h('p', { class: 'help' }, t('Abschreiben: Bild und Wort stehen da. Merkwort: Das Wort verschwindet nach 5 Sekunden. Nur Bild: Die Stimme spricht das Wort in Silben vor.')),
+    h(
+      'div',
+      { class: 'row' },
+      h('label', null, t('Schreibweise')),
+      segmented(
+        [
+          { value: 'lautgetreu', label: t('Lautgetreu zählt') },
+          { value: 'streng', label: t('Nur richtig geschrieben') },
+        ],
+        s.spelling,
+        (v) => {
+          s.spelling = v as Spelling;
+          save();
+        },
+      ),
+    ),
+    h(
+      'p',
+      { class: 'help' },
+      t('Lautgetreu zählt: Wer schreibt, was er hört („Hunt“, „Fogel“, „Schtern“), hat das Wort geschafft – danach zeigt der Zoo, wie man es richtig schreibt. Nur richtig geschrieben: Dann heißt es „Gut gehört!“ und das Wort wird noch einmal geschrieben.'),
+    ),
     h('h3', null, t('Diese Buchstaben kennt die Klasse schon')),
     grid,
     h(

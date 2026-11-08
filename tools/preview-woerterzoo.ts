@@ -1,5 +1,5 @@
 // Renders the Wörter-Zoo to PNGs to look at it (dev only, @napi-rs/canvas): the picture with each help level,
-// "Fast!", "Schau nochmal genau hin!", a picture alive (splendid and crumpled), the walk into the zoo, a small and
+// "Fast!", "Gut gehört!" (written as heard), "Schau nochmal genau hin!", a picture alive (splendid and crumpled), the walk into the zoo, a small and
 // a full zoo, at 1920 and 1440 wide, and the start tile.
 // Usage: npx vite-node tools/preview-woerterzoo.ts <outDir>
 import { createCanvas, GlobalFonts, Path2D } from '@napi-rs/canvas';
@@ -111,6 +111,13 @@ for (const W of [1920, 1440]) {
   write(s, 'Baname', 70);
   run(s, 0.5);
   shot(s, `${W}-fast`);
+  // written as heard, only the right spelling counts: "Gut gehört!"
+  s = make(W, 1, 3);
+  run(s, 1);
+  use(s, 'Schnecke');
+  write(s, 'Schneke', 70);
+  run(s, 0.5);
+  shot(s, `${W}-laut`);
   // the capital
   s = make(W, 2, 4);
   fill(s, 3);

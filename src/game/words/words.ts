@@ -4,6 +4,7 @@
 // See docs/superpowers/specs/2026-11-07-woerter-zoo-design.md.
 import { tk } from '../../i18n/i18n.ts';
 import type { ScannedGlyph } from '../../vision/types.ts';
+import { soundsRight } from './lautgetreu.ts';
 
 export interface ZooWord {
   word: string;
@@ -156,7 +157,13 @@ export function readWord(glyphs: Written[]): string {
 /** letters whose small and big forms look alike: for them, the size cannot be told apart reliably */
 const SAME_SHAPE = new Set('cksouvwxz'.split(''));
 
-export type Verdict = { result: 'richtig' } | { result: 'fast'; reason: 'gross' | 'buchstabe'; at: number } | { result: 'daneben' };
+/** how strictly the spelling is judged: 'lautgetreu' also counts what sounds right ("Hunt"), see lautgetreu.ts */
+export type Spelling = 'streng' | 'lautgetreu';
+
+export type Verdict =
+  | { result: 'richtig'; lautgetreu?: true }
+  | { result: 'fast'; reason: 'gross' | 'buchstabe' | 'laut'; at: number }
+  | { result: 'daneben' };
 
 /** first place where two words differ */
 function firstDiff(a: string, b: string): number {
@@ -174,16 +181,18 @@ function distance(a: string, b: string): number {
 }
 
 /** right, close (one letter, or only the capital) or off; only the first letter's size is judged */
-export function judge(target: string, written: string): Verdict {
+export function judge(target: string, written: string, spelling: Spelling = 'streng'): Verdict {
   if (!written) return { result: 'daneben' };
   const t = target.toLowerCase();
   const wr = written.toLowerCase();
   if (t === wr) {
     const first = target[0];
     const smallFirst = written[0] !== first && written[0] === first.toLowerCase();
-    if (smallFirst && !SAME_SHAPE.has(first.toLowerCase())) return { result: 'fast', reason: 'gross', at: 0 };
+    if (smallFirst && !SAME_SHAPE.has(first.toLowerCase()) && spelling === 'streng') return { result: 'fast', reason: 'gross', at: 0 };
     return { result: 'richtig' };
   }
+  // what the child heard is right, only the spelling is not yet
+  if (soundsRight(target, written)) return spelling === 'lautgetreu' ? { result: 'richtig', lautgetreu: true } : { result: 'fast', reason: 'laut', at: firstDiff(t, wr) };
   if (distance(t, wr) === 1) return { result: 'fast', reason: 'buchstabe', at: firstDiff(t, wr) };
   return { result: 'daneben' };
 }

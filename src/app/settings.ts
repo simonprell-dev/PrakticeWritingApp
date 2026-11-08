@@ -115,12 +115,15 @@ export interface Settings {
   /** Rechenmeer: the kinds of tasks that are asked (at least one) */
   math: { kinds: TaskKind[] };
   /** Wörter-Zoo: how much help (1 copy, 2 remember, 3 picture only) and the letters the class knows */
-  woerter: { help: WordHelp; known: string };
+  /** spelling: 'lautgetreu' also counts what sounds right ("Hunt"), see src/game/words/lautgetreu.ts */
+  woerter: { help: WordHelp; known: string; spelling: Spelling };
   firstRunDone: boolean;
 }
 
 /** Wörter-Zoo help: 1 the word stands there, 2 it is covered after 5 s, 3 only the picture */
 export type WordHelp = 1 | 2 | 3;
+/** how the Wörter-Zoo judges the spelling (the same type as Spelling in src/game/words/words.ts) */
+export type Spelling = 'streng' | 'lautgetreu';
 
 /** every letter a word of the Wörter-Zoo may have (lower case) */
 export const WORD_LETTERS = 'abcdefghijklmnopqrstuvwxyzäöüß';
@@ -160,7 +163,7 @@ export const DEFAULTS: Settings = {
     timeLimit: 0,
   },
   math: { kinds: ['plus20', 'minus20'] },
-  woerter: { help: 1, known: WORD_LETTERS },
+  woerter: { help: 1, known: WORD_LETTERS, spelling: 'streng' },
   firstRunDone: false,
 };
 
@@ -246,7 +249,8 @@ export function cleanWoerter(raw: unknown): Settings['woerter'] {
   const help: WordHelp = r.help === 2 || r.help === 3 ? r.help : 1;
   const given = typeof r.known === 'string' ? r.known.toLowerCase() : WORD_LETTERS;
   const known = [...WORD_LETTERS].filter((c) => given.includes(c)).join('');
-  return { help, known: known || WORD_LETTERS };
+  const spelling: Spelling = r.spelling === 'lautgetreu' ? 'lautgetreu' : 'streng';
+  return { help, known: known || WORD_LETTERS, spelling };
 }
 
 export function saveSettings(s: Settings): void {

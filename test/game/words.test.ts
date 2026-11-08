@@ -57,9 +57,11 @@ describe('judging the word', () => {
   });
 
   it('one letter wrong, missing or too many is close, with its place', () => {
-    expect(judge('Hund', 'Hunt')).toMatchObject({ result: 'fast', reason: 'buchstabe', at: 3 });
+    expect(judge('Hund', 'Hunk')).toMatchObject({ result: 'fast', reason: 'buchstabe', at: 3 });
     expect(judge('Hund', 'Hnd')).toMatchObject({ result: 'fast', reason: 'buchstabe', at: 1 });
-    expect(judge('Hund', 'Hunnd')).toMatchObject({ result: 'fast', reason: 'buchstabe' });
+    expect(judge('Hund', 'Hunde')).toMatchObject({ result: 'fast', reason: 'buchstabe' });
+    // a doubled letter sounds the same: sound-true, see lautgetreu.test.ts
+    expect(judge('Hund', 'Hunnd')).toMatchObject({ result: 'fast', reason: 'laut' });
   });
 
   it('more than one mistake is off', () => {
