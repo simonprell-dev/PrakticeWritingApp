@@ -41,7 +41,7 @@ function clean(s) {
  */
 export function validateContact(body) {
   if (!isObj(body)) return { ok: false, error: 'not an object' };
-  const allowed = new Set(['message', 'name', 'email', 'website', 'elapsedMs', 'lang']);
+  const allowed = new Set(['message', 'name', 'email', 'website', 'elapsedMs', 'lang', 'kind', 'game']);
   for (const k of Object.keys(body)) if (!allowed.has(k)) return { ok: false, error: `unknown field ${k}` };
   const str = (v) => (v === undefined || v === null ? '' : typeof v === 'string' ? clean(v) : null);
   const message = str(body.message);
@@ -57,7 +57,11 @@ export function validateContact(body) {
   if (email.length > MAX_EMAIL || (email && !EMAIL.test(email))) return { ok: false, error: 'email' };
   const lang = body.lang === undefined || body.lang === null ? null : LANGS.includes(body.lang) ? body.lang : undefined;
   if (lang === undefined) return { ok: false, error: 'lang' };
-  return { ok: true, spam: false, value: { message, name: name || null, email: email || null, lang } };
+  const kind = body.kind === undefined || body.kind === null ? null : MESSAGE_KINDS.includes(body.kind) ? body.kind : undefined;
+  if (kind === undefined) return { ok: false, error: 'kind' };
+  const game = body.game === undefined || body.game === null ? null : GAME_IDS.includes(body.game) ? body.game : undefined;
+  if (game === undefined) return { ok: false, error: 'game' };
+  return { ok: true, spam: false, value: { message, name: name || null, email: email || null, lang, kind, game } };
 }
 
 /** `days` of the stats request: 1..400, default 30 */
@@ -68,12 +72,42 @@ export function parseDays(raw) {
 }
 
 export const MESSAGE_STATUS = ['new', 'read', 'done'];
+/** what a message is about (the choice in the contact form) */
+export const MESSAGE_KINDS = ['idee', 'feedback', 'fehler', 'frage'];
+export const RATINGS = ['gruen', 'gelb', 'rot'];
+
+/**
+ * A vote of the feedback light after a game: the game and green, yellow or red (and the page language), with the
+ * ticket the app got when the game started. Nothing about who voted.
+ */
+export function validateRating(body) {
+  if (!isObj(body)) return { ok: false, error: 'not an object' };
+  for (const k of Object.keys(body)) if (!['game', 'rating', 'lang', 'ticket'].includes(k)) return { ok: false, error: `unknown field ${k}` };
+  // the ticket of the game (server/ratingGuard.js) is checked by the caller
+  if (typeof body.ticket !== 'string' || !body.ticket || body.ticket.length > 400) return { ok: false, error: 'ticket' };
+  if (!GAME_IDS.includes(body.game)) return { ok: false, error: 'game' };
+  if (!RATINGS.includes(body.rating)) return { ok: false, error: 'rating' };
+  const lang = body.lang === undefined || body.lang === null ? null : LANGS.includes(body.lang) ? body.lang : undefined;
+  if (lang === undefined) return { ok: false, error: 'lang' };
+  return { ok: true, value: { game: body.game, rating: body.rating, lang, ticket: body.ticket } };
+}
+
+/** what the admin deletes of the votes: one ({ id }), those of a game ({ game }) or all ({ all: true }) */
+export function validateRatingDelete(body) {
+  if (!isObj(body) || Object.keys(body).length !== 1) return { ok: false, error: 'action' };
+  if (typeof body.id === 'string' && /^\d{1,18}$/.test(body.id)) return { ok: true, value: { id: body.id } };
+  if (GAME_IDS.includes(body.game)) return { ok: true, value: { game: body.game } };
+  if (body.all === true) return { ok: true, value: { all: true } };
+  return { ok: false, error: 'action' };
+}
 
 /** the games the yearly plan knows; the same list as WORLD_IDS in src/app/worlds.ts (a test checks it) */
 export const WORLD_IDS = [
   'meer', 'weltraum', 'savanne', 'zauberland', 'woerterzoo', 'duell', 'riesenburg', 'tuerme', 'malen',
   'neujahr', 'winter', 'fruehling', 'ostern', 'strand', 'herbst', 'halloween', 'martin', 'weihnachten', 'advent',
 ];
+/** every game a message or a vote can be about: the worlds and the Rechenmeer (outside the plan) */
+export const GAME_IDS = [...WORLD_IDS, 'rechenmeer'];
 /** the plan is small; this leaves room */
 export const MAX_WORLDS_BODY = 8 * 1024;
 const WORLD_MODES = ['plan', 'on', 'off'];

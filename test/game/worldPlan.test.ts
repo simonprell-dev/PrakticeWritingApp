@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { visibleSaves, type SaveMeta } from '../../src/app/saves.ts';
-import { currentPlan, loadPlan, offeredWorlds, resetPlan, worldActive } from '../../src/app/worldPlan.ts';
+import { currentPlan, loadPlan, offeredWorlds, resetPlan, setPreview, worldActive } from '../../src/app/worldPlan.ts';
 import { DEFAULT_PLAN, type WorldPlan } from '../../src/app/worlds.ts';
 
 const KEY = 'krakelkrone.worlds';
@@ -18,6 +18,7 @@ beforeEach(() => {
 afterEach(() => {
   delete (globalThis as { localStorage?: unknown }).localStorage;
   resetPlan();
+  setPreview(false);
 });
 
 const answer = (body: unknown) => (async () => new Response(JSON.stringify(body), { status: 200 })) as unknown as typeof fetch;
@@ -116,6 +117,24 @@ describe('offered worlds', () => {
     const list = offeredWorlds(new Date(2026, 6, 1), built);
     expect(list.map((w) => w.id)).not.toContain('duell');
     expect(list.find((w) => w.id === 'halloween')).toEqual({ id: 'halloween', until: null });
+  });
+});
+
+describe('the admin preview', () => {
+  it('offers every world, also those switched off or out of their time, without a last day', () => {
+    store.set(KEY, JSON.stringify(halloweenOff()));
+    resetPlan();
+    setPreview(true);
+    const list = offeredWorlds(new Date(2026, 6, 1), () => true);
+    expect(list.map((w) => w.id)).toEqual(expect.arrayContaining(['halloween', 'weihnachten', 'advent', 'ostern', 'meer', 'duell']));
+    expect(list.every((w) => w.until === null)).toBe(true);
+    expect(worldActive('halloween', new Date(2026, 6, 1))).toBe(true);
+    expect(visibleSaves([{ mode: 'halloween' } as SaveMeta], new Date(2026, 6, 1))).toHaveLength(1);
+  });
+
+  it('a world not built yet is not offered in the preview either', () => {
+    setPreview(true);
+    expect(offeredWorlds(new Date(2026, 6, 1), (id) => id !== 'winter').map((w) => w.id)).not.toContain('winter');
   });
 });
 

@@ -10,6 +10,8 @@ import {
   RateLimiter,
   validateContact,
   validateMessageAction,
+  validateRating,
+  validateRatingDelete,
 } from '../../server/validate.js';
 
 describe('countsAsVisit', () => {
@@ -36,7 +38,15 @@ describe('validateContact', () => {
 
   it('accepts a message with optional name and e-mail', () => {
     const v = validateContact({ ...base, name: ' Simon ', email: 'a@b.de', lang: 'de', website: '' });
-    expect(v).toEqual({ ok: true, spam: false, value: { message: 'Tolles Spiel!', name: 'Simon', email: 'a@b.de', lang: 'de' } });
+    expect(v).toEqual({ ok: true, spam: false, value: { message: 'Tolles Spiel!', name: 'Simon', email: 'a@b.de', lang: 'de', kind: null, game: null } });
+  });
+
+  it('takes the kind of message and the game it is about', () => {
+    expect(validateContact({ ...base, kind: 'idee' }).value).toMatchObject({ kind: 'idee', game: null });
+    expect(validateContact({ ...base, kind: 'feedback', game: 'riesenburg' }).value).toMatchObject({ kind: 'feedback', game: 'riesenburg' });
+    expect(validateContact({ ...base, game: 'rechenmeer' }).ok).toBe(true);
+    expect(validateContact({ ...base, kind: 'werbung' }).ok).toBe(false);
+    expect(validateContact({ ...base, game: 'mond' }).ok).toBe(false);
   });
 
   it('needs a message', () => {
@@ -145,5 +155,37 @@ describe('admin session', () => {
   it('reads one cookie from the header', () => {
     expect(readCookie('a=1; kk_admin=tok.en; b=2', 'kk_admin')).toBe('tok.en');
     expect(readCookie(undefined, 'kk_admin')).toBeNull();
+  });
+});
+
+describe('the feedback light after a game', () => {
+  it('takes green, yellow and red for a game, with the ticket of the game', () => {
+    expect(validateRating({ game: 'meer', rating: 'gruen', lang: 'de', ticket: 'a.b' })).toEqual({ ok: true, value: { game: 'meer', rating: 'gruen', lang: 'de', ticket: 'a.b' } });
+    expect(validateRating({ game: 'rechenmeer', rating: 'rot', ticket: 'a.b' })).toEqual({ ok: true, value: { game: 'rechenmeer', rating: 'rot', lang: null, ticket: 'a.b' } });
+    expect(validateRating({ game: 'halloween', rating: 'gelb', ticket: 'a.b' }).ok).toBe(true);
+  });
+
+  it('a vote without a ticket is refused', () => {
+    expect(validateRating({ game: 'meer', rating: 'gruen' }).ok).toBe(false);
+    expect(validateRating({ game: 'meer', rating: 'gruen', ticket: 5 }).ok).toBe(false);
+    expect(validateRating({ game: 'meer', rating: 'gruen', ticket: 'x'.repeat(401) }).ok).toBe(false);
+  });
+
+  it('refuses other colours, unknown games and extra fields', () => {
+    expect(validateRating({ game: 'meer', rating: 'blau', ticket: 'a.b' }).ok).toBe(false);
+    expect(validateRating({ game: 'mond', rating: 'rot', ticket: 'a.b' }).ok).toBe(false);
+    expect(validateRating({ game: 'meer', rating: 'rot', ticket: 'a.b', name: 'x' }).ok).toBe(false);
+    expect(validateRating({ game: 'meer', rating: 'rot', ticket: 'a.b', lang: 'xx' }).ok).toBe(false);
+    expect(validateRating(null).ok).toBe(false);
+  });
+
+  it('deletes one vote, all votes of a game or all votes', () => {
+    expect(validateRatingDelete({ id: '42' })).toEqual({ ok: true, value: { id: '42' } });
+    expect(validateRatingDelete({ game: 'duell' })).toEqual({ ok: true, value: { game: 'duell' } });
+    expect(validateRatingDelete({ all: true })).toEqual({ ok: true, value: { all: true } });
+    expect(validateRatingDelete({ id: '4x' }).ok).toBe(false);
+    expect(validateRatingDelete({ game: 'mond' }).ok).toBe(false);
+    expect(validateRatingDelete({ all: 'ja' }).ok).toBe(false);
+    expect(validateRatingDelete({}).ok).toBe(false);
   });
 });

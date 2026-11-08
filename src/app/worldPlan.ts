@@ -7,6 +7,16 @@ const KEY = 'krakelkrone.worlds';
 const WAIT_MS = 30_000;
 
 let plan: WorldPlan | null = null;
+/** the admin's preview (/?vorschau, only with an admin session): every world is open, whatever the plan says */
+let preview = false;
+
+export function setPreview(on: boolean): void {
+  preview = on;
+}
+
+export function previewOn(): boolean {
+  return preview;
+}
 
 function stored(): WorldPlan {
   try {
@@ -62,7 +72,7 @@ export async function loadPlan(fetcher: typeof fetch = fetch, timeoutMs = WAIT_M
 }
 
 export function worldActive(id: WorldId, now = new Date()): boolean {
-  return isActive(currentPlan().worlds[id], now);
+  return preview || isActive(currentPlan().worlds[id], now);
 }
 
 /** a time this long is the whole year: it has no last day to tell */
@@ -70,6 +80,7 @@ const WHOLE_YEAR_DAYS = 364;
 
 /** the last day of a world's running time, null when it is always on, planned the whole year or not planned now */
 export function worldUntil(id: WorldId, now = new Date()): Date | null {
+  if (preview) return null;
   const e = currentPlan().worlds[id];
   const until = activeUntil(e, now);
   if (!until) return null;

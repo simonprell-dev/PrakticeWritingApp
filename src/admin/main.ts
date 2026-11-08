@@ -1,9 +1,10 @@
-// Admin page (/admin): login, page views per day and the contact inbox. Talks to /api/admin/* (server/api.js).
+// Admin page (/admin): login, page views per day, the feedback light, the worlds and the inbox (ideas, feedback …). Talks to /api/admin/* (server/api.js).
 import './admin.css';
 import { clear, h } from '../ui/dom.ts';
 import { LAND, MAP_H, MAP_W } from '../ui/worldMapData.ts';
 import { COUNTRY_PATHS } from './countryMapData.ts';
-import { worldsPanel } from './worldsPanel.ts';
+import { gameName, worldsPanel } from './worldsPanel.ts';
+import { ratingsPanel } from './ratingsPanel.ts';
 
 interface DayRow {
   day: string;
@@ -33,7 +34,10 @@ interface Message {
   message: string;
   lang: string | null;
   status: 'new' | 'read' | 'done';
+  kind: Kind | null;
+  game: string | null;
 }
+type Kind = 'idee' | 'feedback' | 'fehler' | 'frage';
 interface MessagePage {
   items: Message[];
   total: number;
@@ -47,6 +51,7 @@ const num = (n: number) => fmt.format(n);
 let days = 30;
 let msgPage = 1;
 let msgStatus: '' | Message['status'] = '';
+let msgKind: '' | Kind | 'ohne' = '';
 
 class ApiError extends Error {
   status: number;
@@ -270,10 +275,13 @@ async function renderStats(box: HTMLElement): Promise<number> {
 }
 
 const STATUS_LABEL = { '': 'Alle', new: 'Neu', read: 'Gelesen', done: 'Erledigt' } as const;
+const KIND_LABEL = { '': 'Jede Art', idee: '💡 Ideen', feedback: '💬 Feedback', fehler: '🐞 Fehler', frage: '❓ Fragen', ohne: 'ohne Art' } as const;
+const KIND_BADGE: Record<Kind, string> = { idee: '💡 Idee', feedback: '💬 Feedback', fehler: '🐞 Fehler', frage: '❓ Frage' };
 
 async function renderMessages(box: HTMLElement): Promise<void> {
   const q = new URLSearchParams({ page: String(msgPage) });
   if (msgStatus) q.set('status', msgStatus);
+  if (msgKind) q.set('kind', msgKind);
   const p = await api<MessagePage>(`/api/admin/messages?${q}`);
   clear(box);
   const reload = () => void renderMessages(box).catch(fail);
@@ -302,6 +310,25 @@ async function renderMessages(box: HTMLElement): Promise<void> {
         ),
       ),
     ),
+    h(
+      'div',
+      { class: 'filter' },
+      ...(Object.keys(KIND_LABEL) as (keyof typeof KIND_LABEL)[]).map((k) =>
+        h(
+          'button',
+          {
+            type: 'button',
+            class: msgKind === k ? 'on' : '',
+            onclick: () => {
+              msgKind = k;
+              msgPage = 1;
+              reload();
+            },
+          },
+          KIND_LABEL[k],
+        ),
+      ),
+    ),
   );
   if (!p.items.length) box.append(h('p', { class: 'muted' }, 'Keine Nachrichten.'));
   for (const m of p.items) {
@@ -314,6 +341,8 @@ async function renderMessages(box: HTMLElement): Promise<void> {
         h(
           'div',
           { class: 'meta' },
+          m.kind ? h('span', { class: `kind ${m.kind}` }, KIND_BADGE[m.kind]) : null,
+          m.game ? h('span', { class: 'kind game' }, gameName(m.game)) : null,
           h('b', null, m.name || 'Ohne Namen'),
           m.email ? h('a', { href: `mailto:${m.email}?subject=${encodeURIComponent('Krakel & Krone')}` }, m.email) : null,
           h('span', null, when),
@@ -392,7 +421,7 @@ async function showDashboard(): Promise<void> {
         'Abmelden',
       ),
     ),
-    h('main', null, h('div', { id: 'admin-error', class: 'error' }), stats, worldsPanel({ api, fail }), inbox),
+    h('main', null, h('div', { id: 'admin-error', class: 'error' }), stats, ratingsPanel({ api, fail }), worldsPanel({ api, fail }), inbox),
   );
   refresh();
 }

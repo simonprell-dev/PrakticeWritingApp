@@ -95,6 +95,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
     // a seasonal world tells when it goes again
     const badge = until ? [h('div', { class: 'until' }, t('nur bis {date}', { date: `${until.getDate()}.${until.getMonth() + 1}.` }))] : [];
     const b = button([cv, ...badge, h('div', { class: 'label' }, label), h('div', { class: 'hint' }, hint)], onClick, `tile${until ? ' seasonal' : ''}`, label);
+    b.dataset.world = id;
     const draw = () => tilePreview(id, cv);
     if (document.fonts?.ready) void document.fonts.ready.then(draw);
     else draw();
@@ -159,6 +160,7 @@ export function renderStart(root: HTMLElement, d: StartDeps): void {
         button(t('📂 Spielstände'), d.openSaves, 'btn small'),
         button(t('⚙️ Einstellungen'), d.openSettings, 'btn small'),
         button(t('👩‍🏫 Für Lehrer und Eltern'), openGuide, 'btn small'),
+        button(t('💡 Idee einreichen'), () => openContact({ kind: 'idee', intro: t('Was sollen wir als Nächstes bauen? Ein Spiel, eine Welt, eine Funktion – wir freuen uns über jede Idee!') }), 'btn small'),
         button(t('✉️ Kontakt & Feedback'), () => openContact(), 'btn small'),
         donateButton(),
       ),

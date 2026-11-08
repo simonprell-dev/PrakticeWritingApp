@@ -77,6 +77,8 @@ export interface Settings {
     autosave: boolean | null;
     /** trade fair: the Mal-Aquarium shows a QR code and the web address, so visitors can find the game */
     fair: boolean;
+    /** after a game: "Wie war das Spiel?" with green, yellow and red */
+    feedback: boolean;
   };
   practice: {
     mode: 'frei' | 'ueben';
@@ -129,7 +131,7 @@ export const DEFAULTS: Settings = {
   lang: '',
   camera: { mode: 'fest', rotation: 0, mirror: false },
   recog: { pen: 'auto', lineatur: 'auto', strictness: 'mittel', style: 'beide', autoScan: false, autoDelay: 1.5, noMirror: false },
-  game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: null, fair: false },
+  game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: null, fair: false, feedback: true },
   practice: { mode: 'frei', targets: ['A'], count: 5, surprise: true },
   duel: {
     by: 'pen',

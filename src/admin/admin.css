@@ -266,6 +266,12 @@ th.num {
 .world-name {
   font-weight: 600;
 }
+.world-start {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
 .world-when {
   display: block;
   font-size: 12px;
@@ -339,5 +345,88 @@ th.num {
   .world-row .world-track,
   .world-row .world-month-row {
     grid-column: 1 / -1;
+  }
+}
+
+/* ------------------------------------------------------------------ feedback light (ratingsPanel.ts) */
+.ratings-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ratings-head h2 {
+  margin-right: auto;
+}
+.ratings-table td,
+.ratings-table th {
+  white-space: nowrap;
+}
+.ratings-table tr.sum td {
+  font-weight: 700;
+  border-top: 2px solid var(--line);
+}
+.ratings-table .bar-cell {
+  width: 30%;
+  min-width: 120px;
+}
+.rating-bar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+}
+.rating-bar .rb {
+  border-radius: 4px;
+  min-width: 4px;
+}
+.rb.gruen {
+  background: #27a35a;
+}
+.rb.gelb {
+  background: #f0b400;
+}
+.rb.rot {
+  background: #e0435c;
+}
+.votes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+}
+.votes li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+.votes li button {
+  margin-left: auto;
+}
+button.small {
+  padding: 2px 8px;
+  font-size: 13px;
+}
+.msg .kind {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #ece6ff;
+}
+.msg .kind.fehler {
+  background: #ffe0e5;
+}
+.msg .kind.idee {
+  background: #fff4c7;
+}
+.msg .kind.game {
+  background: #e3f4ea;
+}
+@media (max-width: 700px) {
+  .ratings-table .bar-cell {
+    display: none;
   }
 }

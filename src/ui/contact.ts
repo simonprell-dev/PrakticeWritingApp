@@ -1,14 +1,51 @@
-// "Kontakt & Feedback": a message to the operator, stored on the server (POST /api/contact).
+// "Kontakt & Feedback": a message to the operator, stored on the server (POST /api/contact). It says what it is
+// (an idea, feedback, a bug, a question) and, when it comes from the feedback light, which game it is about.
 import { button, h, modal } from './dom.ts';
 import { toast } from './toast.ts';
-import { language, t } from '../i18n/i18n.ts';
+import { language, t, tk } from '../i18n/i18n.ts';
+
+export type ContactKind = 'idee' | 'feedback' | 'fehler' | 'frage';
+const KINDS: [ContactKind, string][] = [
+  ['idee', tk('💡 Idee')],
+  ['feedback', tk('💬 Feedback')],
+  ['fehler', tk('🐞 Fehler')],
+  ['frage', tk('❓ Frage')],
+];
+
+export interface ContactOptions {
+  kind?: ContactKind;
+  /** the game the message is about (its id), and its shown name */
+  game?: string;
+  gameTitle?: string;
+  /** a line above the form instead of the usual one */
+  intro?: string;
+  lang?: string;
+}
 
 const MAX_MESSAGE = 4000;
 /** the server ignores forms sent faster than this (bots) */
 const MIN_FILL_MS = 3000;
 
-export function openContact(lang: string = language()): void {
+export function openContact(o: ContactOptions = {}): void {
+  const lang = o.lang ?? language();
   const opened = performance.now();
+  let kind: ContactKind | null = o.kind ?? null;
+  const kindRow = h(
+    'div',
+    { class: 'contact-kinds', role: 'radiogroup', 'aria-label': t('Worum geht es?') },
+    ...KINDS.map(([k, label]) => {
+      const b = h('button', { type: 'button', role: 'radio', class: `chip${kind === k ? ' on' : ''}`, 'aria-checked': String(kind === k) }, t(label));
+      b.addEventListener('click', () => {
+        kind = kind === k ? null : k;
+        for (const c of kindRow.children) {
+          const on = c === b && kind === k;
+          c.classList.toggle('on', on);
+          c.setAttribute('aria-checked', String(on));
+        }
+      });
+      return b;
+    }),
+  );
   const message = h('textarea', { rows: 7, maxlength: String(MAX_MESSAGE), required: true, placeholder: t('Lob, Ideen, Fehler, Fragen …') }) as HTMLTextAreaElement;
   const name = h('input', { type: 'text', maxlength: '100', autocomplete: 'name' }) as HTMLInputElement;
   const email = h('input', { type: 'email', maxlength: '200', autocomplete: 'email', placeholder: t('nur wenn wir antworten sollen') }) as HTMLInputElement;
@@ -46,6 +83,8 @@ export function openContact(lang: string = language()): void {
           website: website.value,
           elapsedMs: Math.round(performance.now() - opened),
           lang,
+          kind: kind ?? undefined,
+          game: o.game,
         }),
       });
       if (!r.ok) {
@@ -72,7 +111,9 @@ export function openContact(lang: string = language()): void {
       },
     },
     h('h2', null, t('✉️ Kontakt & Feedback')),
-    h('p', { class: 'help' }, t('Wie gefällt euch Krakel & Krone? Wir freuen uns über Lob, Ideen und Hinweise auf Fehler.')),
+    h('p', { class: 'help' }, o.intro ?? t('Wie gefällt euch Krakel & Krone? Wir freuen uns über Lob, Ideen und Hinweise auf Fehler.')),
+    o.gameTitle ? h('p', { class: 'contact-game' }, t('Zum Spiel: {game}', { game: o.gameTitle })) : null,
+    h('div', { class: 'contact-field' }, h('span', null, t('Worum geht es?')), kindRow),
     field(t('Nachricht *'), message),
     h('div', { style: 'text-align:right;margin-top:-6px' }, left),
     h('div', { class: 'contact-row' }, field(t('Name (freiwillig)'), name), field(t('E-Mail (freiwillig)'), email)),

@@ -65,6 +65,21 @@ const MIGRATIONS = [
       );
     `,
   },
+  {
+    // ideas and feedback: what a message is about and which game; the feedback light after a game
+    version: 5,
+    sql: `
+      ALTER TABLE messages ADD COLUMN kind text, ADD COLUMN game text;
+      CREATE TABLE ratings (
+        id bigserial PRIMARY KEY,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        game text NOT NULL,
+        rating text NOT NULL CHECK (rating IN ('gruen', 'gelb', 'rot')),
+        lang text
+      );
+      CREATE INDEX ratings_created ON ratings (created_at DESC);
+    `,
+  },
 ];
 
 /** the day of a page view in German time (one bucket per calendar day, no time of day is stored) */
@@ -114,10 +129,12 @@ export class Db {
     this.ready = true;
   }
 
-  /** messages after 12 months (the page view counts say nothing about anybody and stay) */
+  /** messages and votes after 12 months (the page view counts say nothing about anybody and stay) */
   async cleanup() {
     const m = await this.pool.query(`DELETE FROM messages WHERE created_at < now() - interval '12 months'`);
     if (m.rowCount) console.log(`Datenbank: ${m.rowCount} alte Nachrichten gelöscht.`);
+    const r = await this.pool.query(`DELETE FROM ratings WHERE created_at < now() - interval '12 months'`);
+    if (r.rowCount) console.log(`Datenbank: ${r.rowCount} alte Ampel-Stimmen gelöscht.`);
   }
 
   /** one more page view today, from `country` (ISO code, null when unknown) */
@@ -130,7 +147,43 @@ export class Db {
   }
 
   async addMessage(msg) {
-    await this.pool.query('INSERT INTO messages (name, email, message, lang) VALUES ($1, $2, $3, $4)', [msg.name, msg.email, msg.message, msg.lang]);
+    await this.pool.query('INSERT INTO messages (name, email, message, lang, kind, game) VALUES ($1, $2, $3, $4, $5, $6)', [
+      msg.name,
+      msg.email,
+      msg.message,
+      msg.lang,
+      msg.kind ?? null,
+      msg.game ?? null,
+    ]);
+  }
+
+  async addRating(v) {
+    await this.pool.query('INSERT INTO ratings (game, rating, lang) VALUES ($1, $2, $3)', [v.game, v.rating, v.lang]);
+  }
+
+  /** the votes of the last `days` days: per game green / yellow / red, in all, and the latest ones */
+  async ratings(days) {
+    const since = `now() - ($1::int * interval '1 day')`;
+    const [perGame, latest, total] = await Promise.all([
+      this.pool.query(
+        `SELECT game, count(*) FILTER (WHERE rating = 'gruen')::int AS gruen, count(*) FILTER (WHERE rating = 'gelb')::int AS gelb,
+                count(*) FILTER (WHERE rating = 'rot')::int AS rot FROM ratings WHERE created_at >= ${since} GROUP BY game ORDER BY count(*) DESC, game`,
+        [days],
+      ),
+      this.pool.query(`SELECT id::text, created_at, game, rating, lang FROM ratings WHERE created_at >= ${since} ORDER BY created_at DESC, id DESC LIMIT 50`, [days]),
+      this.pool.query('SELECT count(*)::int AS n FROM ratings'),
+    ]);
+    return { days, perGame: perGame.rows, latest: latest.rows, allTime: total.rows[0].n };
+  }
+
+  /** removes one vote ({ id }), those of a game ({ game }) or all ({ all }); returns how many */
+  async deleteRatings(what) {
+    const r = what.id
+      ? await this.pool.query('DELETE FROM ratings WHERE id = $1', [what.id])
+      : what.game
+        ? await this.pool.query('DELETE FROM ratings WHERE game = $1', [what.game])
+        : await this.pool.query('DELETE FROM ratings');
+    return r.rowCount;
   }
 
   /** page views of the last `days` days (today included), and in all since the first one */
@@ -155,12 +208,21 @@ export class Db {
     return { days, ...head.rows[0], perDay: perDay.rows, perCountry: perCountry.rows };
   }
 
-  async messages(page, pageSize, status) {
-    const where = status ? 'WHERE status = $3' : '';
-    const args = status ? [pageSize, (page - 1) * pageSize, status] : [pageSize, (page - 1) * pageSize];
+  /** a page of messages, filtered by status and kind ('ohne' = messages without a kind) when given */
+  async messages(page, pageSize, status, kind) {
+    const conds = [];
+    const args = [];
+    if (status) conds.push(`status = $${args.push(status)}`);
+    if (kind === 'ohne') conds.push('kind IS NULL');
+    else if (kind) conds.push(`kind = $${args.push(kind)}`);
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const n = args.length;
     const [items, total] = await Promise.all([
-      this.pool.query(`SELECT id::text, created_at, name, email, message, lang, status FROM messages ${where} ORDER BY created_at DESC, id DESC LIMIT $1 OFFSET $2`, args),
-      this.pool.query(`SELECT count(*)::int AS n FROM messages ${status ? 'WHERE status = $1' : ''}`, status ? [status] : []),
+      this.pool.query(
+        `SELECT id::text, created_at, name, email, message, lang, status, kind, game FROM messages ${where} ORDER BY created_at DESC, id DESC LIMIT $${n + 1} OFFSET $${n + 2}`,
+        [...args, pageSize, (page - 1) * pageSize],
+      ),
+      this.pool.query(`SELECT count(*)::int AS n FROM messages ${where}`, args),
     ]);
     return { items: items.rows, total: total.rows[0].n, page, pageSize };
   }

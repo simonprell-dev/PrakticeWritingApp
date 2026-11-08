@@ -20,7 +20,7 @@ import { zauberland, ZauberScene } from '../scenes/zauberland.ts';
 import { SEASON_DEFS } from '../scenes/seasons/index.ts';
 import { advent, AdventScene } from '../scenes/advent.ts';
 import { woerterzoo, WoerterZooScene } from '../scenes/woerterzoo.ts';
-import { currentPlan, loadPlan } from './worldPlan.ts';
+import { currentPlan, loadPlan, setPreview } from './worldPlan.ts';
 import { rechenmeer, RechenScene, rechenVisionPatch } from '../scenes/rechenmeer.ts';
 import type { Scene, SceneHost, Snapshot } from '../scenes/scene.ts';
 import { space } from '../scenes/space.ts';
@@ -52,6 +52,7 @@ import { packTyped, unpackTyped } from './imageCodec.ts';
 import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSaves, loadSave, MODES, newSaveId, putSave, readSaveFile, type GameMode, type SaveGame } from './saves.ts';
 import { cleanWoerter, firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
 import { t } from '../i18n/i18n.ts';
+import { openFeedbackLight, requestTicket, shouldAsk } from '../ui/feedbackLight.ts';
 
 const HABITATS: Partial<Record<HabitatId, HabitatDef>> = { meer: aquarium, weltraum: space, savanne: savanna, zauberland, woerterzoo, rechenmeer, ...SEASON_DEFS, advent };
 const isHabitat = (m: string): m is HabitatId => Object.hasOwn(HABITATS, m);
@@ -60,6 +61,24 @@ const LINEATUR = { auto: 'auto', L1: 'school4', L2: 'school4', L3: 'school2', li
 const DEBUG = new URLSearchParams(location.search).has('debug');
 
 type Mode = { kind: 'start' } | { kind: 'habitat'; id: HabitatId } | { kind: 'paint' } | { kind: 'duel' } | { kind: 'siege' } | { kind: 'tower' };
+
+/** the game of a mode, as the saves and the server name it */
+function gameOf(mode: Mode): GameMode | null {
+  switch (mode.kind) {
+    case 'habitat':
+      return mode.id as GameMode;
+    case 'paint':
+      return 'malen';
+    case 'duel':
+      return 'duell';
+    case 'siege':
+      return 'riesenburg';
+    case 'tower':
+      return 'tuerme';
+    default:
+      return null;
+  }
+}
 
 /** a phone camera goes off this long after the last photo (battery; the next photo starts faster before) */
 const HAND_CAMERA_OFF = 20_000;
@@ -112,6 +131,11 @@ export class App {
   private saving: Promise<void> | null = null;
   /** the thank-you with the donate button was shown in this game */
   private thanked = false;
+  /** when the running game started, and whether the feedback light was shown for it */
+  private gameStart = 0;
+  private rated = false;
+  /** the feedback light's ticket of the running game (spam protection) */
+  private ticket: Promise<string | null> = Promise.resolve(null);
 
   constructor(canvas: HTMLCanvasElement, ui: HTMLElement) {
     this.ui = ui;
@@ -161,7 +185,8 @@ export class App {
       if (!this.handheld && !this.camera.ready() && this.settings.camera.deviceId) void this.openCamera(this.settings.camera.deviceId).catch(() => undefined);
     });
     this.showStart();
-    void this.boot();
+    // the preview after the start (a camera opening at the start redraws the start screen)
+    void this.boot().then(() => this.adminPreview());
     // the yearly plan of the worlds: a changed one redraws the start screen
     const known = JSON.stringify(currentPlan());
     void loadPlan().then((p) => {
@@ -175,6 +200,25 @@ export class App {
       day = today;
       if (this.mode.kind === 'start') this.showStart();
     }, 60_000);
+  }
+
+  /** /?vorschau[=<world>] with an admin session: every world open (also off or out of season), the named one
+   * started. Only a convenience for the admin – the worlds are in the app anyway. */
+  private async adminPreview(): Promise<void> {
+    const q = new URLSearchParams(location.search);
+    if (!q.has('vorschau')) return;
+    const ok = await fetch('/api/admin/me', { cache: 'no-store' })
+      .then((r) => r.ok)
+      .catch(() => false);
+    if (!ok) {
+      toast('Die Vorschau aller Welten geht nur mit Admin-Anmeldung (/admin).', 'warn', 6000);
+      return;
+    }
+    setPreview(true);
+    if (this.mode.kind === 'start') this.showStart();
+    toast('👑 Admin-Vorschau: alle Welten sind offen', 'good', 4000);
+    const id = q.get('vorschau');
+    if (id && this.mode.kind === 'start') this.ui.querySelector<HTMLElement>(`.tile[data-world="${CSS.escape(id)}"]`)?.click();
   }
 
   private async boot(): Promise<void> {
@@ -239,6 +283,7 @@ export class App {
    * kept on this device (nothing is kept before that).
    */
   private toMenu(): void {
+    if (this.askFeedback()) return;
     if (this.thankFirst()) return;
     const scene = this.scene;
     if (this.settings.game.autosave !== null || !scene?.saveState || this.frozen) return this.showStart();
@@ -254,6 +299,29 @@ export class App {
       },
       () => this.showStart(),
     );
+  }
+
+  /** a game starts: its time runs, nobody was asked about it yet */
+  private newGame(): void {
+    this.thanked = false;
+    this.rated = false;
+    this.gameStart = performance.now();
+    const game = gameOf(this.mode);
+    this.ticket = game && this.settings.game.feedback ? requestTicket(game) : Promise.resolve(null);
+  }
+
+  /** a game played for a while is left: the feedback light first, then the way to the menu goes on */
+  private askFeedback(): boolean {
+    const game = gameOf(this.mode);
+    if (!game || this.frozen || !shouldAsk(this.settings.game.feedback, performance.now() - this.gameStart, this.rated)) return false;
+    this.rated = true;
+    const scene = this.scene;
+    openFeedbackLight(game, `${MODES[game].icon} ${t(MODES[game].title)}`, this.ticket, (rating) => {
+      // on red the contact form comes next: no thank-you window on top of it
+      if (rating === 'rot') this.thanked = true;
+      if (this.scene === scene) this.toMenu();
+    });
+    return true;
   }
 
   /**
@@ -703,7 +771,7 @@ export class App {
   startHabitat(id: HabitatId, resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'habitat', id };
-    this.thanked = false;
+    this.newGame();
     this.settings.game.habitat = id;
     this.save();
     const def = HABITATS[id]!;
@@ -766,7 +834,7 @@ export class App {
   startPaint(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'paint' };
-    this.thanked = false;
+    this.newGame();
     const scene = new PaintScene(this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
@@ -794,7 +862,7 @@ export class App {
   startDuel(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'duel' };
-    this.thanked = false;
+    this.newGame();
     const scene = new DuelScene(this.host(), this.stage.worldW);
     this.scene = scene;
     this.hud = new Hud(this.ui, {
@@ -824,7 +892,7 @@ export class App {
   startSiege(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'siege' };
-    this.thanked = false;
+    this.newGame();
     this.scene = new SiegeScene(this.host(), this.stage.worldW);
     this.hud = new Hud(this.ui, {
       title: t('🏰 Riesenburg'),
@@ -850,7 +918,7 @@ export class App {
   startTowers(resuming = false): void {
     this.enterGame(resuming);
     this.mode = { kind: 'tower' };
-    this.thanked = false;
+    this.newGame();
     this.scene = new TowerScene(this.host(), this.stage.worldW);
     this.hud = new Hud(this.ui, {
       title: t('🏗️ Türme bauen'),

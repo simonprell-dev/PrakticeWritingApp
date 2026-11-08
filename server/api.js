@@ -1,6 +1,8 @@
 // The /api routes: the contact form and the admin area, plus the page view counter (called by server.js).
 // No IP address is stored and no cookie is set except the admin's own session cookie.
+import { randomBytes } from 'node:crypto';
 import { Db } from './db.js';
+import { checkRatingTicket, makeRatingTicket, TicketBook } from './ratingGuard.js';
 import { GeoIp } from './geo.js';
 import { clearCookie, COOKIE, makeToken, readCookie, safeEqual, sessionCookie, sessionSecret, verifyToken } from './session.js';
 import {
@@ -10,7 +12,11 @@ import {
   MESSAGE_STATUS,
   parseDays,
   parseJson,
+  GAME_IDS,
+  MESSAGE_KINDS,
   RateLimiter,
+  validateRating,
+  validateRatingDelete,
   validateContact,
   validateMessageAction,
   validateWorlds,
@@ -79,12 +85,24 @@ function sameOrigin(req) {
   }
 }
 
-export function createApi(env = process.env) {
-  const db = env.DATABASE_URL ? new Db(env.DATABASE_URL, env.DATABASE_SSL === 'true') : null;
+/**
+ * @param {NodeJS.ProcessEnv} [env]
+ * @param {{ now?: () => number, db?: any }} [opts] for tests: the clock and a database stand-in
+ */
+export function createApi(env = process.env, opts = {}) {
+  const now = opts.now ?? (() => Date.now());
+  const db = opts.db ?? (env.DATABASE_URL ? new Db(env.DATABASE_URL, env.DATABASE_SSL === 'true') : null);
+  // the key of the feedback light tickets: new with every start, so nobody can make tickets of their own
+  const ticketKey = randomBytes(32);
+  const tickets = new TicketBook(now);
   const adminPassword = env.ADMIN_PASSWORD || '';
   const secret = sessionSecret(env);
   const limits = {
     contact: new RateLimiter(5, 15 * 60_000),
+    // the feedback light: tickets at the start of a game, votes per address and per address and game
+    ticket: new RateLimiter(60, 3600_000, now),
+    rating: new RateLimiter(20, 3600_000, now),
+    ratingGame: new RateLimiter(1, 3 * 60_000, now),
     login: new RateLimiter(8, 15 * 60_000),
     admin: new RateLimiter(300, 60_000),
   };
@@ -106,7 +124,12 @@ export function createApi(env = process.env) {
     };
     void start();
     timers.push(setInterval(() => db.ready && db.cleanup().catch((e) => console.warn('Aufräumen:', e.message)), DAY_MS).unref());
-    timers.push(setInterval(() => Object.values(limits).forEach((l) => l.prune()), 10 * 60_000).unref());
+    timers.push(
+      setInterval(() => {
+        Object.values(limits).forEach((l) => l.prune());
+        tickets.prune();
+      }, 10 * 60_000).unref(),
+    );
   } else {
     console.warn('Hinweis: DATABASE_URL fehlt – Aufrufzähler, Kontaktformular und Admin sind aus (API antwortet 503).');
   }
@@ -151,6 +174,27 @@ export function createApi(env = process.env) {
       return send(res, 200, { ok: true });
     }
 
+    // the feedback light after a game: a ticket when the game starts, the vote with it when the game is left
+    if (path === '/api/rating/ticket' && method === 'POST') {
+      if (!limits.ticket.hit(ip)) throw new HttpError(429, 'Zu viele Spiele – bitte später noch einmal.');
+      const body = await jsonBody(req, MAX_BODY);
+      if (!body || typeof body !== 'object' || !GAME_IDS.includes(body.game) || Object.keys(body).length !== 1) throw new HttpError(400, 'game');
+      return send(res, 200, { ticket: makeRatingTicket(ticketKey, body.game, now()) });
+    }
+    if (path === '/api/rating' && method === 'POST') {
+      if (!limits.rating.hit(ip)) throw new HttpError(429, 'Zu viele Stimmen – bitte später noch einmal.');
+      const v = validateRating(await jsonBody(req, MAX_BODY));
+      if (!v.ok) throw new HttpError(400, v.error);
+      const tk = checkRatingTicket(ticketKey, v.value.ticket, v.value.game, now());
+      if (!tk.ok) throw new HttpError(403, `Stimme zählt nicht (${tk.error})`);
+      if (!limits.ratingGame.hit(`${ip}|${v.value.game}`)) throw new HttpError(429, 'Für dieses Spiel gab es gerade schon eine Stimme.');
+      const d = needDb();
+      if (!tickets.use(tk.nonce, tk.until)) throw new HttpError(403, 'Stimme zählt nicht (schon abgegeben)');
+      const { ticket: _ticket, ...vote } = v.value;
+      await d.addRating(vote);
+      return send(res, 200, { ok: true });
+    }
+
     // the plan for every visitor; without a database the app keeps its defaults
     if (path === '/api/worlds' && method === 'GET') return send(res, 200, { plan: await loadWorlds() });
 
@@ -180,7 +224,15 @@ export function createApi(env = process.env) {
         const page = Math.max(1, Math.min(10_000, Math.round(Number(url.searchParams.get('page')) || 1)));
         const st = url.searchParams.get('status');
         const status = MESSAGE_STATUS.includes(st) ? st : null;
-        return send(res, 200, await needDb().messages(page, 20, status));
+        const k = url.searchParams.get('kind');
+        const kind = MESSAGE_KINDS.includes(k) || k === 'ohne' ? k : null;
+        return send(res, 200, await needDb().messages(page, 20, status, kind));
+      }
+      if (path === '/api/admin/ratings' && method === 'GET') return send(res, 200, await needDb().ratings(parseDays(url.searchParams.get('days'))));
+      if (path === '/api/admin/ratings/delete' && method === 'POST') {
+        const v = validateRatingDelete(await jsonBody(req, MAX_BODY));
+        if (!v.ok) throw new HttpError(400, v.error);
+        return send(res, 200, { ok: true, deleted: await needDb().deleteRatings(v.value) });
       }
       if (path === '/api/admin/worlds' && method === 'GET') {
         needDb();

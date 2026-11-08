@@ -34,7 +34,9 @@ const MODES: [WorldMode, string][] = [
   ['off', 'aus'],
 ];
 
-const nameOf = (id: WorldId) => (SEASONAL.has(id) ? `${SEASON_INFO[id as FrontId].icon} ${SEASON_INFO[id as FrontId].title}` : NAMES[id as Exclude<WorldId, FrontId>]);
+export const nameOf = (id: WorldId) => (SEASONAL.has(id) ? `${SEASON_INFO[id as FrontId].icon} ${SEASON_INFO[id as FrontId].title}` : NAMES[id as Exclude<WorldId, FrontId>]);
+/** the name of any game a message or vote can be about (the worlds and the Rechenmeer) */
+export const gameName = (id: string): string => (id === 'rechenmeer' ? '🐬 Rechenmeer' : (WORLD_IDS as readonly string[]).includes(id) ? nameOf(id as WorldId) : id);
 const short = (d: Date) => `${d.getDate()}.${d.getMonth() + 1}.`;
 /** day of the year 0..364 of a date (the 29th of February counts as the 28th) */
 const dayOf = (d: Date) => dayOfYear(`${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
@@ -133,7 +135,9 @@ export function worldsPanel(d: WorldsDeps): HTMLElement {
       (tr as HTMLElement & { paint?: () => void }).paint?.();
       mark();
     });
-    return h('div', { class: 'world-row' }, h('div', { class: 'world-name' }, nameOf(id), info), sel, tr);
+    // opens the app in a new tab with every world open (also off or out of season) and starts this one
+    const start = h('a', { class: 'world-start', href: `/?vorschau=${id}`, target: '_blank', rel: 'noopener', title: 'In der App starten – auch wenn die Welt gerade nicht aktiv ist' }, '▶ Starten');
+    return h('div', { class: 'world-row' }, h('div', { class: 'world-name' }, nameOf(id), start, info), sel, tr);
   }
 
   const months = () => h('div', { class: 'world-row world-months' }, h('div'), h('div'), h('div', { class: 'world-month-row' }, ...MONTHS.map((m) => h('span', null, m))));
@@ -178,6 +182,12 @@ export function worldsPanel(d: WorldsDeps): HTMLElement {
       box.replaceChildren(
         h('h2', null, 'Welten'),
         h('p', { class: 'muted' }, 'Wann welches Spiel auf dem Startbildschirm steht. Balken an den Enden ziehen ändert Anfang oder Ende, in der Mitte ziehen verschiebt. Die rote Linie ist heute.'),
+        h(
+          'p',
+          { class: 'muted' },
+          '„▶ Starten“ öffnet eine Welt in der App, auch wenn sie aus ist oder ihre Zeit nicht ist (nur für dich als Admin, die Kinder sehen davon nichts). ',
+          h('a', { href: '/?vorschau', target: '_blank', rel: 'noopener' }, 'Startbildschirm mit allen Welten öffnen'),
+        ),
         rows,
         h('div', { class: 'world-actions' }, save, reset, note),
       );

@@ -188,6 +188,19 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       ),
       h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Blendet im Mal-Aquarium einen QR-Code und die Webadresse ein, damit Besucher das Spiel zu Hause wiederfinden.')),
     ),
+    h(
+      'div',
+      null,
+      h(
+        'div',
+        { class: 'row' },
+        toggle(t('Feedback-Ampel nach dem Spiel'), s.game.feedback, (on) => {
+          s.game.feedback = on;
+          d.save();
+        }),
+      ),
+      h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Nach einem Spiel fragt eine Ampel „Wie war das Spiel?“ (Grün, Gelb, Rot). Bei Rot öffnet sich das Kontaktfeld. Gespeichert wird nur die Farbe und das Spiel.')),
+    ),
     ...(RECHENMEER
       ? [
           h('h3', null, t('Rechenmeer')),
