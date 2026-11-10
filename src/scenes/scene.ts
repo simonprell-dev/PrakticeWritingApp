@@ -26,6 +26,8 @@ export interface SceneHost {
   progress(): void;
   /** duel finished */
   finished?(stats: unknown): void;
+  /** these letters are known for sure (a word spelled right in the Wörter-Zoo): labels for the handwriting samples */
+  confirmSamples?(glyphIds: number[], chars: string[]): void;
 }
 
 export interface Scene {

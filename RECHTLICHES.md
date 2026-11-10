@@ -48,6 +48,10 @@ Außerdem:
 - [ ] **Schule:** Den Einsatz mit der Schulleitung abstimmen. Die/den **Datenschutzbeauftragte/n** einbinden. Die Verarbeitung ins **Verzeichnis von Verarbeitungstätigkeiten** (Art. 30 DSGVO) aufnehmen.
 - [ ] **Datenschutz-Folgenabschätzung (Art. 35 DSGVO):** Die Bilder werden nur lokal verarbeitet; gespeichert werden nur Spielstände im Browser des Geräts (ohne Kamerafotos). Deshalb ist sie voraussichtlich nicht erforderlich. Die Entscheidung trifft der Verantwortliche zusammen mit der/dem Datenschutzbeauftragten.
 - [ ] **Eltern informieren** (empfohlen, siehe Vorlage in Abschnitt 4). Eine Einwilligung ist für die App selbst nicht nötig, weil keine Daten der Kinder das Gerät verlassen.
+- [ ] **Schriftproben (freiwillig):** Nach einer Stunde fragt die App, ob die ausgeschnittenen Buchstaben zum Training der Erkennung hochgeladen werden sollen (Einstellung „Schriftproben spenden“: fragen / immer / nie). Das ist die einzige Funktion, bei der Handschrift der Kinder das Gerät verlässt.
+  - Rechtsgrundlage ist eine Einwilligung. Für Schulen: vorher mit Schulleitung und Datenschutzbeauftragter/m klären und die Eltern um Einwilligung bitten; sonst „Nie“ einstellen.
+  - Gespeichert werden nur Tinten-Ausschnitte einzelner Zeichen (keine Fotos, keine Namen), in der Datenbank bei Railway; automatische Löschung nach 12 Monaten, im Admin früher.
+  - Beschrieben in der Datenschutzerklärung, Abschnitt „Schriftproben (freiwillig)“; Hintergrund in `docs/trainingsdaten-analyse.md`.
 - [ ] **Im Unterricht:**
   - Die Kamera nur auf das Papier richten, keine Gesichter.
   - Keine Namen von Kindern als Teamnamen.

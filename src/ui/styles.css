@@ -2413,6 +2413,42 @@ input[type='range'] {
   margin: 4px 0;
 }
 
+/* ---------------------------------------------------------------- handwriting samples after a lesson (samplesQuestion.ts) */
+.sample-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 34vh;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 16px;
+  background: #fff;
+  border: 2px dashed rgba(59, 42, 92, 0.25);
+}
+.sample-thumb {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+}
+.sample-thumb canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+.sample-more {
+  align-self: center;
+  font-weight: 700;
+  color: var(--ink-soft);
+  padding: 0 8px;
+}
+.samples-never {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  margin: 6px 0;
+}
+
 /* ---------------------------------------------------------------- feedback light after a game (feedbackLight.ts) */
 .feedback-light {
   text-align: center;

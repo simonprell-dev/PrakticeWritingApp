@@ -1441,6 +1441,76 @@
    "text": "12 neue Zeichen!"
   },
   {
+   "file": "s/danke-1-buchstaben-helfen-jetzt-beim-gr984",
+   "speaker": "erzaehler",
+   "text": "Danke! 1 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-2-buchstaben-helfen-jetzt-beim-6rpur",
+   "speaker": "erzaehler",
+   "text": "Danke! 2 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-3-buchstaben-helfen-jetzt-beim-14zdk",
+   "speaker": "erzaehler",
+   "text": "Danke! 3 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-4-buchstaben-helfen-jetzt-beim-aggs1",
+   "speaker": "erzaehler",
+   "text": "Danke! 4 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-5-buchstaben-helfen-jetzt-beim-1i478",
+   "speaker": "erzaehler",
+   "text": "Danke! 5 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-6-buchstaben-helfen-jetzt-beim-11dqi",
+   "speaker": "erzaehler",
+   "text": "Danke! 6 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-7-buchstaben-helfen-jetzt-beim-y4ijg",
+   "speaker": "erzaehler",
+   "text": "Danke! 7 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-8-buchstaben-helfen-jetzt-beim-175fu",
+   "speaker": "erzaehler",
+   "text": "Danke! 8 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-9-buchstaben-helfen-jetzt-beim-11gna",
+   "speaker": "erzaehler",
+   "text": "Danke! 9 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-10-buchstaben-helfen-jetzt-bei-1enm0",
+   "speaker": "erzaehler",
+   "text": "Danke! 10 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-11-buchstaben-helfen-jetzt-bei-1cbkm",
+   "speaker": "erzaehler",
+   "text": "Danke! 11 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "s/danke-12-buchstaben-helfen-jetzt-bei-jo3f7",
+   "speaker": "erzaehler",
+   "text": "Danke! 12 Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
+   "file": "t/erzaehler-danke-1ggmg",
+   "speaker": "erzaehler",
+   "text": "Danke!"
+  },
+  {
+   "file": "t/erzaehler-buchstaben-helfen-jetzt-beim-trainin-oeyaa",
+   "speaker": "erzaehler",
+   "text": "Buchstaben helfen jetzt beim Training der Erkennung."
+  },
+  {
    "file": "s/weiter-geht-s-meer-1oiyc",
    "speaker": "erzaehler",
    "text": "Weiter geht’s: Meer"
@@ -4856,6 +4926,76 @@
    "file": "s/12-new-characters-9sqwn",
    "speaker": "erzaehler",
    "text": "12 new characters!"
+  },
+  {
+   "file": "s/thank-you-1-letters-are-now-helping-1o3gk",
+   "speaker": "erzaehler",
+   "text": "Thank you! 1 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-2-letters-are-now-helping-zseag",
+   "speaker": "erzaehler",
+   "text": "Thank you! 2 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-3-letters-are-now-helping-162xa",
+   "speaker": "erzaehler",
+   "text": "Thank you! 3 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-4-letters-are-now-helping-euli0",
+   "speaker": "erzaehler",
+   "text": "Thank you! 4 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-5-letters-are-now-helping-t7gle",
+   "speaker": "erzaehler",
+   "text": "Thank you! 5 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-6-letters-are-now-helping-1khag",
+   "speaker": "erzaehler",
+   "text": "Thank you! 6 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-7-letters-are-now-helping-srza3",
+   "speaker": "erzaehler",
+   "text": "Thank you! 7 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-8-letters-are-now-helping-e433f",
+   "speaker": "erzaehler",
+   "text": "Thank you! 8 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-9-letters-are-now-helping-1xlec",
+   "speaker": "erzaehler",
+   "text": "Thank you! 9 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-10-letters-are-now-helping-3br37",
+   "speaker": "erzaehler",
+   "text": "Thank you! 10 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-11-letters-are-now-helping-1vlgp",
+   "speaker": "erzaehler",
+   "text": "Thank you! 11 letters are now helping to train the recognition."
+  },
+  {
+   "file": "s/thank-you-12-letters-are-now-helping-jl1vz",
+   "speaker": "erzaehler",
+   "text": "Thank you! 12 letters are now helping to train the recognition."
+  },
+  {
+   "file": "t/erzaehler-thank-you-1y83z",
+   "speaker": "erzaehler",
+   "text": "Thank you!"
+  },
+  {
+   "file": "t/erzaehler-letters-are-now-helping-to-train-the-1hvr3",
+   "speaker": "erzaehler",
+   "text": "letters are now helping to train the recognition."
   },
   {
    "file": "s/let-s-carry-on-sea-176j1",
@@ -8330,6 +8470,76 @@
    "text": "12 nouveaux signes !"
   },
   {
+   "file": "s/merci-1-lettres-aident-maintenant-en-1s9t4",
+   "speaker": "erzaehler",
+   "text": "Merci ! 1 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-2-lettres-aident-maintenant-en-1ai9c",
+   "speaker": "erzaehler",
+   "text": "Merci ! 2 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-3-lettres-aident-maintenant-en-9lywg",
+   "speaker": "erzaehler",
+   "text": "Merci ! 3 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-4-lettres-aident-maintenant-en-1hftf",
+   "speaker": "erzaehler",
+   "text": "Merci ! 4 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-5-lettres-aident-maintenant-en-1iupk",
+   "speaker": "erzaehler",
+   "text": "Merci ! 5 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-6-lettres-aident-maintenant-en-tndkn",
+   "speaker": "erzaehler",
+   "text": "Merci ! 6 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-7-lettres-aident-maintenant-en-1eqpf",
+   "speaker": "erzaehler",
+   "text": "Merci ! 7 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-8-lettres-aident-maintenant-en-bm3ra",
+   "speaker": "erzaehler",
+   "text": "Merci ! 8 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-9-lettres-aident-maintenant-en-1qhcz",
+   "speaker": "erzaehler",
+   "text": "Merci ! 9 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-10-lettres-aident-maintenant-e-jwscy",
+   "speaker": "erzaehler",
+   "text": "Merci ! 10 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-11-lettres-aident-maintenant-e-1eqd7",
+   "speaker": "erzaehler",
+   "text": "Merci ! 11 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "s/merci-12-lettres-aident-maintenant-e-oz7d6",
+   "speaker": "erzaehler",
+   "text": "Merci ! 12 lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
+   "file": "t/erzaehler-merci-97773",
+   "speaker": "erzaehler",
+   "text": "Merci !"
+  },
+  {
+   "file": "t/erzaehler-lettres-aident-maintenant-entra-ner-1uxyp",
+   "speaker": "erzaehler",
+   "text": "lettres aident maintenant à entraîner la reconnaissance."
+  },
+  {
    "file": "s/on-continue-mer-1fmz2",
    "speaker": "erzaehler",
    "text": "On continue : Mer"
@@ -11802,6 +12012,76 @@
    "text": "¡12 signos nuevos!"
   },
   {
+   "file": "s/gracias-1-letras-ya-ayudan-a-entrena-1aqxo",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 1 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-2-letras-ya-ayudan-a-entrena-o2acu",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 2 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-3-letras-ya-ayudan-a-entrena-kzwjd",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 3 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-4-letras-ya-ayudan-a-entrena-1guqe",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 4 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-5-letras-ya-ayudan-a-entrena-lxq8b",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 5 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-6-letras-ya-ayudan-a-entrena-ma826",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 6 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-7-letras-ya-ayudan-a-entrena-1iofo",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 7 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-8-letras-ya-ayudan-a-entrena-kd3bz",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 8 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-9-letras-ya-ayudan-a-entrena-u7kfx",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 9 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-10-letras-ya-ayudan-a-entren-bg6od",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 10 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-11-letras-ya-ayudan-a-entren-16u2g",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 11 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "s/gracias-12-letras-ya-ayudan-a-entren-s1z73",
+   "speaker": "erzaehler",
+   "text": "¡Gracias! 12 letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
+   "file": "t/erzaehler-gracias-18ypu",
+   "speaker": "erzaehler",
+   "text": "¡Gracias!"
+  },
+  {
+   "file": "t/erzaehler-letras-ya-ayudan-a-entrenar-el-recon-68s30",
+   "speaker": "erzaehler",
+   "text": "letras ya ayudan a entrenar el reconocimiento."
+  },
+  {
    "file": "s/seguimos-mar-grmjs",
    "speaker": "erzaehler",
    "text": "Seguimos: Mar"
@@ -15267,6 +15547,76 @@
    "file": "s/12-nuovi-segni-r2of8",
    "speaker": "erzaehler",
    "text": "12 nuovi segni!"
+  },
+  {
+   "file": "s/grazie-1-lettere-ora-aiutano-ad-adde-1grsh",
+   "speaker": "erzaehler",
+   "text": "Grazie! 1 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-2-lettere-ora-aiutano-ad-adde-6r9s6",
+   "speaker": "erzaehler",
+   "text": "Grazie! 2 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-3-lettere-ora-aiutano-ad-adde-1vrix",
+   "speaker": "erzaehler",
+   "text": "Grazie! 3 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-4-lettere-ora-aiutano-ad-adde-kgfly",
+   "speaker": "erzaehler",
+   "text": "Grazie! 4 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-5-lettere-ora-aiutano-ad-adde-534vk",
+   "speaker": "erzaehler",
+   "text": "Grazie! 5 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-6-lettere-ora-aiutano-ad-adde-1l4ke",
+   "speaker": "erzaehler",
+   "text": "Grazie! 6 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-7-lettere-ora-aiutano-ad-adde-idkmm",
+   "speaker": "erzaehler",
+   "text": "Grazie! 7 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-8-lettere-ora-aiutano-ad-adde-2cq0o",
+   "speaker": "erzaehler",
+   "text": "Grazie! 8 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-9-lettere-ora-aiutano-ad-adde-86crx",
+   "speaker": "erzaehler",
+   "text": "Grazie! 9 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-10-lettere-ora-aiutano-ad-add-18ep1",
+   "speaker": "erzaehler",
+   "text": "Grazie! 10 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-11-lettere-ora-aiutano-ad-add-1wt78",
+   "speaker": "erzaehler",
+   "text": "Grazie! 11 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "s/grazie-12-lettere-ora-aiutano-ad-add-1vdh9",
+   "speaker": "erzaehler",
+   "text": "Grazie! 12 lettere ora aiutano ad addestrare il riconoscimento."
+  },
+  {
+   "file": "t/erzaehler-grazie-l2fr9",
+   "speaker": "erzaehler",
+   "text": "Grazie!"
+  },
+  {
+   "file": "t/erzaehler-lettere-ora-aiutano-ad-addestrare-il-12ab2",
+   "speaker": "erzaehler",
+   "text": "lettere ora aiutano ad addestrare il riconoscimento."
   },
   {
    "file": "s/si-continua-mare-1ls5f",
@@ -18746,6 +19096,76 @@
    "text": "12 sinais novos!"
   },
   {
+   "file": "s/obrigado-1-letras-ajudam-agora-a-tre-19ksl",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 1 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-2-letras-ajudam-agora-a-tre-10uqe",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 2 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-3-letras-ajudam-agora-a-tre-jcvug",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 3 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-4-letras-ajudam-agora-a-tre-5dhs9",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 4 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-5-letras-ajudam-agora-a-tre-1he32",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 5 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-6-letras-ajudam-agora-a-tre-1ota1",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 6 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-7-letras-ajudam-agora-a-tre-smog0",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 7 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-8-letras-ajudam-agora-a-tre-p4pjm",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 8 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-9-letras-ajudam-agora-a-tre-vrr00",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 9 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-10-letras-ajudam-agora-a-tr-1lsj5",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 10 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-11-letras-ajudam-agora-a-tr-xfgwn",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 11 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "s/obrigado-12-letras-ajudam-agora-a-tr-1isyk",
+   "speaker": "erzaehler",
+   "text": "Obrigado! 12 letras ajudam agora a treinar o reconhecimento."
+  },
+  {
+   "file": "t/erzaehler-obrigado-11y4z",
+   "speaker": "erzaehler",
+   "text": "Obrigado!"
+  },
+  {
+   "file": "t/erzaehler-letras-ajudam-agora-a-treinar-o-reco-1gur8",
+   "speaker": "erzaehler",
+   "text": "letras ajudam agora a treinar o reconhecimento."
+  },
+  {
    "file": "s/vamos-continuar-mar-3u0pt",
    "speaker": "erzaehler",
    "text": "Vamos continuar: Mar"
@@ -22218,6 +22638,76 @@
    "text": "12 nieuwe tekens!"
   },
   {
+   "file": "s/bedankt-1-letters-helpen-nu-de-herke-znnoc",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 1 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-2-letters-helpen-nu-de-herke-d5kni",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 2 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-3-letters-helpen-nu-de-herke-i5bx2",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 3 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-4-letters-helpen-nu-de-herke-1da8v",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 4 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-5-letters-helpen-nu-de-herke-uuv2v",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 5 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-6-letters-helpen-nu-de-herke-1yvh7",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 6 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-7-letters-helpen-nu-de-herke-pcnre",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 7 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-8-letters-helpen-nu-de-herke-1h2gl",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 8 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-9-letters-helpen-nu-de-herke-1eq36",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 9 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-10-letters-helpen-nu-de-herk-1mko6",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 10 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-11-letters-helpen-nu-de-herk-1dj7a",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 11 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "s/bedankt-12-letters-helpen-nu-de-herk-1y17q",
+   "speaker": "erzaehler",
+   "text": "Bedankt! 12 letters helpen nu de herkenning te trainen."
+  },
+  {
+   "file": "t/erzaehler-bedankt-ox7iz",
+   "speaker": "erzaehler",
+   "text": "Bedankt!"
+  },
+  {
+   "file": "t/erzaehler-letters-helpen-nu-de-herkenning-te-t-twy8n",
+   "speaker": "erzaehler",
+   "text": "letters helpen nu de herkenning te trainen."
+  },
+  {
    "file": "s/we-gaan-verder-zee-1m5do",
    "speaker": "erzaehler",
    "text": "We gaan verder: Zee"
@@ -25635,6 +26125,71 @@
    "text": "Nowe znaki: 12!"
   },
   {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-1ap3q",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 1."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-kmgrv",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 2."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-b6r4s",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 3."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-kmn2v",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 4."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-b6xfs",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 5."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-1b9r8",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 6."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-1jlc5",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 7."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-brem9",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 8."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-1jlig",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 9."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-wgtla",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 10."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-1nnts",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 11."
+  },
+  {
+   "file": "s/dzi-kujemy-litery-kt-re-teraz-pomaga-1vzl1",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania: 12."
+  },
+  {
+   "file": "t/erzaehler-dzi-kujemy-litery-kt-re-teraz-pomaga-174n8",
+   "speaker": "erzaehler",
+   "text": "Dziękujemy! Litery, które teraz pomagają w trenowaniu rozpoznawania"
+  },
+  {
    "file": "s/gramy-dalej-morze-10v86",
    "speaker": "erzaehler",
    "text": "Gramy dalej: Morze"
@@ -28995,6 +29550,76 @@
    "file": "s/12-yeni-karakter-vlpd6",
    "speaker": "erzaehler",
    "text": "12 yeni karakter!"
+  },
+  {
+   "file": "s/te-ekkuerler-1-harf-art-k-tan-man-n-172h9",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 1 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-2-harf-art-k-tan-man-n-1wvkz",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 2 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-3-harf-art-k-tan-man-n-1lxsa",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 3 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-4-harf-art-k-tan-man-n-1p4rs",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 4 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-5-harf-art-k-tan-man-n-1tpgu",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 5 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-6-harf-art-k-tan-man-n-19cct",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 6 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-7-harf-art-k-tan-man-n-1urps",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 7 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-8-harf-art-k-tan-man-n-15m8a",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 8 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-9-harf-art-k-tan-man-n-1bw04",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 9 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-10-harf-art-k-tan-man-n-80zku",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 10 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-11-harf-art-k-tan-man-n-5cagr",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 11 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "s/te-ekkuerler-12-harf-art-k-tan-man-n-1cp7e",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler! 12 harf artık tanımanın eğitimine yardımcı oluyor."
+  },
+  {
+   "file": "t/erzaehler-te-ekkuerler-15997",
+   "speaker": "erzaehler",
+   "text": "Teşekkürler!"
+  },
+  {
+   "file": "t/erzaehler-harf-art-k-tan-man-n-e-itimine-yard-wozt8",
+   "speaker": "erzaehler",
+   "text": "harf artık tanımanın eğitimine yardımcı oluyor."
   },
   {
    "file": "s/devam-deniz-1u812",
@@ -32454,6 +33079,71 @@
    "text": "Нові знаки: 12!"
   },
   {
+   "file": "s/1-9ep9e",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 1."
+  },
+  {
+   "file": "s/2-1id6c",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 2."
+  },
+  {
+   "file": "s/3-18xgp",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 3."
+  },
+  {
+   "file": "s/4-1idcn",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 4."
+  },
+  {
+   "file": "s/5-18xn0",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 5."
+  },
+  {
+   "file": "s/6-9zcqv",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 6."
+  },
+  {
+   "file": "s/7-iaxo6",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 7."
+  },
+  {
+   "file": "s/8-19i46",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 8."
+  },
+  {
+   "file": "s/9-ib3z6",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 9."
+  },
+  {
+   "file": "s/10-s1ye7",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 10."
+  },
+  {
+   "file": "s/11-1j8yl",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 11."
+  },
+  {
+   "file": "s/12-1rkpu",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання: 12."
+  },
+  {
+   "file": "t/erzaehler-zeile-f4v0f",
+   "speaker": "erzaehler",
+   "text": "Дякуємо! Літер, які тепер допомагають навчати розпізнавання"
+  },
+  {
    "file": "s/zeile-t5qpv",
    "speaker": "erzaehler",
    "text": "Ідемо далі: Море"
@@ -35896,6 +36586,71 @@
    "text": "Новых знаков: 12!"
   },
   {
+   "file": "s/1-c5h0f",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 1."
+  },
+  {
+   "file": "s/2-2pl2c",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 2."
+  },
+  {
+   "file": "s/3-c5apf",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 3."
+  },
+  {
+   "file": "s/4-1b3ky",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 4."
+  },
+  {
+   "file": "s/5-1bnnb",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 5."
+  },
+  {
+   "file": "s/6-bktix",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 6."
+  },
+  {
+   "file": "s/7-12rtq",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 7."
+  },
+  {
+   "file": "s/8-bkn7x",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 8."
+  },
+  {
+   "file": "s/9-392am",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 9."
+  },
+  {
+   "file": "s/10-oox0u",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 10."
+  },
+  {
+   "file": "s/11-f97dr",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 11."
+  },
+  {
+   "file": "s/12-1o7og",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание: 12."
+  },
+  {
+   "file": "t/erzaehler-zeile-mk3q0",
+   "speaker": "erzaehler",
+   "text": "Спасибо! Букв, которые теперь помогают обучать распознавание"
+  },
+  {
    "file": "s/zeile-ic2ho",
    "speaker": "erzaehler",
    "text": "Продолжаем: Море"
@@ -39251,6 +40006,76 @@
    "file": "s/12-1w1ii",
    "speaker": "erzaehler",
    "text": "12 νέα σύμβολα!"
+  },
+  {
+   "file": "s/1-g0zb6",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 1 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/2-qbydf",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 2 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/3-iodzo",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 3 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/4-6rxhq",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 4 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/5-1i906",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 5 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/6-eub1c",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 6 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/7-yhg1i",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 7 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/8-18h3g",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 8 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/9-zf612",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 9 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/10-9o7i0",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 10 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/11-fnmlv",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 11 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "s/12-o2wpr",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε! 12 γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
+  },
+  {
+   "file": "t/erzaehler-zeile-ipgv0",
+   "speaker": "erzaehler",
+   "text": "Ευχαριστούμε!"
+  },
+  {
+   "file": "t/erzaehler-zeile-1ulld",
+   "speaker": "erzaehler",
+   "text": "γράμματα βοηθούν τώρα στην εκπαίδευση της αναγνώρισης."
   },
   {
    "file": "s/zeile-fjudo",
@@ -42683,6 +43508,76 @@
    "file": "s/12-1g9u2",
    "speaker": "erzaehler",
    "text": "12 סימנים חדשים!"
+  },
+  {
+   "file": "s/1-cqa6z",
+   "speaker": "erzaehler",
+   "text": "תודה! 1 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/2-dn47i",
+   "speaker": "erzaehler",
+   "text": "תודה! 2 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/3-dlubg",
+   "speaker": "erzaehler",
+   "text": "תודה! 3 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/4-1yj69",
+   "speaker": "erzaehler",
+   "text": "תודה! 4 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/5-1g17z",
+   "speaker": "erzaehler",
+   "text": "תודה! 5 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/6-12hzd",
+   "speaker": "erzaehler",
+   "text": "תודה! 6 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/7-nt4ru",
+   "speaker": "erzaehler",
+   "text": "תודה! 7 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/8-16r87",
+   "speaker": "erzaehler",
+   "text": "תודה! 8 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/9-f5rfk",
+   "speaker": "erzaehler",
+   "text": "תודה! 9 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/10-q65il",
+   "speaker": "erzaehler",
+   "text": "תודה! 10 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/11-clebc",
+   "speaker": "erzaehler",
+   "text": "תודה! 11 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "s/12-u0u62",
+   "speaker": "erzaehler",
+   "text": "תודה! 12 אותיות עוזרות עכשיו לאמן את הזיהוי."
+  },
+  {
+   "file": "t/erzaehler-zeile-1y716",
+   "speaker": "erzaehler",
+   "text": "תודה!"
+  },
+  {
+   "file": "t/erzaehler-zeile-1oq7y",
+   "speaker": "erzaehler",
+   "text": "אותיות עוזרות עכשיו לאמן את הזיהוי."
   },
   {
    "file": "s/zeile-nix15",
@@ -46162,6 +47057,71 @@
    "text": "رموز جديدة: 12!"
   },
   {
+   "file": "s/1-11co1",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 1."
+  },
+  {
+   "file": "s/2-1as7d",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 2."
+  },
+  {
+   "file": "s/3-11chq",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 3."
+  },
+  {
+   "file": "s/4-b9fxh",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 4."
+  },
+  {
+   "file": "s/5-apdkl",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 5."
+  },
+  {
+   "file": "s/6-2dmca",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 6."
+  },
+  {
+   "file": "s/7-1a7q6",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 7."
+  },
+  {
+   "file": "s/8-11vyy",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 8."
+  },
+  {
+   "file": "s/9-1a7jv",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 9."
+  },
+  {
+   "file": "s/10-3qw48",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 10."
+  },
+  {
+   "file": "s/11-13tjl",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 11."
+  },
+  {
+   "file": "s/12-3qpt8",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف: 12."
+  },
+  {
+   "file": "t/erzaehler-zeile-1rbod",
+   "speaker": "erzaehler",
+   "text": "شكرًا! الحروف التي تساعد الآن في تدريب نظام التعرف"
+  },
+  {
    "file": "s/zeile-jnik4",
    "speaker": "erzaehler",
    "text": "هيا نكمل: البحر"
@@ -49454,6 +50414,76 @@
    "text": "12 नए चिह्न!"
   },
   {
+   "file": "s/1-1rz5u",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 1 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/2-kf9dz",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 2 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/3-1ddnk",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 3 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/4-1dqyy",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 4 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/5-4gv17",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 5 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/6-cx0c2",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 6 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/7-18itu",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 7 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/8-1x85l",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 8 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/9-1qgp3",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 9 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/10-tdkme",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 10 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/11-ne9wg",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 11 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "s/12-qbcgc",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद! 12 अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
+   "file": "t/erzaehler-zeile-1xc7d",
+   "speaker": "erzaehler",
+   "text": "धन्यवाद!"
+  },
+  {
+   "file": "t/erzaehler-zeile-mtr1f",
+   "speaker": "erzaehler",
+   "text": "अक्षर अब पहचान-प्रणाली के प्रशिक्षण में मदद कर रहे हैं।"
+  },
+  {
    "file": "s/zeile-9wvsz",
    "speaker": "erzaehler",
    "text": "चलो आगे बढ़ें: समुद्र"
@@ -52654,6 +53684,76 @@
    "file": "t/erzaehler-zeile-hc6a9",
    "speaker": "erzaehler",
    "text": "ตัว!"
+  },
+  {
+   "file": "s/1-16y7r",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 1 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/2-56cox",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 2 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/3-19tju",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 3 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/4-2atqz",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 4 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/5-168pn",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 5 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/6-yuiw9",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 6 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/7-yce7d",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 7 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/8-zr684",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 8 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/9-3vrcc",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 9 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/10-1umye",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 10 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/11-6t78h",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 11 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "s/12-i8n2s",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร 12 ตัวกำลังช่วยฝึกระบบจดจำ"
+  },
+  {
+   "file": "t/erzaehler-zeile-5znfr",
+   "speaker": "erzaehler",
+   "text": "ขอบคุณ! ตอนนี้ตัวอักษร"
+  },
+  {
+   "file": "t/erzaehler-zeile-49bvw",
+   "speaker": "erzaehler",
+   "text": "ตัวกำลังช่วยฝึกระบบจดจำ"
   },
   {
    "file": "s/zeile-1cw76",
@@ -56193,6 +57293,76 @@
    "text": "새 글자 12개!"
   },
   {
+   "file": "s/1-mhisf",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 1개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/2-o7xkg",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 2개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/3-hfz5y",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 3개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/4-2hszp",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 4개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/5-93oaa",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 5개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/6-1aj6j",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 6개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/7-1vvgx",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 7개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/8-1me9v",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 8개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/9-1nlqi",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 9개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/10-1lz2t",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 10개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/11-5xyb5",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 11개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "s/12-1flrk",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자 12개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
+   "file": "t/erzaehler-zeile-1awyd",
+   "speaker": "erzaehler",
+   "text": "고마워요! 이제 글자"
+  },
+  {
+   "file": "t/erzaehler-zeile-i31p8",
+   "speaker": "erzaehler",
+   "text": "개가 인식 기능 학습을 돕고 있어요."
+  },
+  {
    "file": "s/zeile-jrdne",
    "speaker": "erzaehler",
    "text": "계속하기: 바다"
@@ -59458,6 +60628,76 @@
    "file": "t/erzaehler-zeile-hvaxi",
    "speaker": "erzaehler",
    "text": "こ！"
+  },
+  {
+   "file": "s/1-114fc",
+   "speaker": "erzaehler",
+   "text": "ありがとう！1文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/2-quyil",
+   "speaker": "erzaehler",
+   "text": "ありがとう！2文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/3-1i50m",
+   "speaker": "erzaehler",
+   "text": "ありがとう！3文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/4-j155g",
+   "speaker": "erzaehler",
+   "text": "ありがとう！4文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/5-1flf5",
+   "speaker": "erzaehler",
+   "text": "ありがとう！5文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/6-1bjfo",
+   "speaker": "erzaehler",
+   "text": "ありがとう！6文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/7-1yki9",
+   "speaker": "erzaehler",
+   "text": "ありがとう！7文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/8-75541",
+   "speaker": "erzaehler",
+   "text": "ありがとう！8文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/9-1cmu5",
+   "speaker": "erzaehler",
+   "text": "ありがとう！9文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/10-5fd42",
+   "speaker": "erzaehler",
+   "text": "ありがとう！10文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/11-ek1vi",
+   "speaker": "erzaehler",
+   "text": "ありがとう！11文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "s/12-1726q",
+   "speaker": "erzaehler",
+   "text": "ありがとう！12文字が認識機能の学習に役立っています。"
+  },
+  {
+   "file": "t/erzaehler-zeile-vxqvw",
+   "speaker": "erzaehler",
+   "text": "ありがとう！"
+  },
+  {
+   "file": "t/erzaehler-zeile-2x94e",
+   "speaker": "erzaehler",
+   "text": "文字が認識機能の学習に役立っています。"
   },
   {
    "file": "s/zeile-hdhu6",

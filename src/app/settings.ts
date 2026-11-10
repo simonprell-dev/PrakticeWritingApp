@@ -79,6 +79,8 @@ export interface Settings {
     fair: boolean;
     /** after a game: "Wie war das Spiel?" with green, yellow and red */
     feedback: boolean;
+    /** handwriting samples of a lesson for the training (src/app/samples.ts): ask after each lesson, always upload, never */
+    samples: 'fragen' | 'immer' | 'nie';
   };
   practice: {
     mode: 'frei' | 'ueben';
@@ -134,7 +136,7 @@ export const DEFAULTS: Settings = {
   lang: '',
   camera: { mode: 'fest', rotation: 0, mirror: false },
   recog: { pen: 'auto', lineatur: 'auto', strictness: 'mittel', style: 'beide', autoScan: false, autoDelay: 1.5, noMirror: false },
-  game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: null, fair: false, feedback: true },
+  game: { maxCreatures: 30, sound: true, volume: 0.7, habitat: 'meer', autosave: null, fair: false, feedback: true, samples: 'fragen' },
   practice: { mode: 'frei', targets: ['A'], count: 5, surprise: true },
   duel: {
     by: 'pen',
@@ -234,6 +236,7 @@ export function loadSettings(): Settings {
     const kinds = Array.isArray(s.math?.kinds) ? [...new Set(s.math.kinds.filter((k) => (TASK_KINDS as readonly string[]).includes(k)))] : [];
     s.math = { kinds: kinds.length ? kinds : [...DEFAULTS.math.kinds] };
     s.woerter = cleanWoerter(s.woerter);
+    if (!['fragen', 'immer', 'nie'].includes(s.game.samples)) s.game.samples = 'fragen';
     return s;
   } catch {
     return freshSettings();

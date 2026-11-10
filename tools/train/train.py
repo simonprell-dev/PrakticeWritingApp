@@ -3,6 +3,15 @@
 Usage:
   python train.py --quick            # 1 short epoch smoke test
   python train.py --epochs 15        # full run, writes out/glyphnet.pt
+  python train.py --krakel 0.3 --strokes 0.2 --numbers 0.3   # with the optional sources below
+
+Optional sources, each a share of every class's samples per epoch where the class has data (they replace
+EMNIST samples; for sharp s, which EMNIST lacks, font samples). All 0 = the run is bit-identical to before.
+  --krakel  children's handwriting from the app's Schriftproben (import_samples.py, data/krakel/druck)
+  --strokes school letters drawn from the app's stroke definitions (strokes_synth.py)
+  --numbers European handwritten digits (numbers Set 1, download_data.py), digit classes only
+Whenever krakel / numbers data exist, their held-out part is reported after training ("krakel test":
+~20 % of the lessons, "numbers test": every 5th writer), also when the source is not used for training.
 """
 import argparse
 import math
@@ -14,12 +23,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import emnist
+import real_data
 from augment import augment
 from common import CHARSET, GROUPS, NUM_CLASSES, ROOT
 from model import GlyphNet
 from render_fonts import synth_bank
+from strokes_synth import stroke_bank
 
 SHARP_S = CHARSET.index("ß")
+SOURCES = ("emnist", "fonts", "krakel", "strokes", "numbers")
+MAX_REPEAT = 10  # an optional source gives a class at most 10 draws per available sample and epoch
 
 
 def group_ids() -> torch.Tensor:
@@ -69,10 +82,14 @@ def main():
     ap.add_argument("--lr", type=float, default=2e-3)
     ap.add_argument("--synth-share", type=float, default=0.15)
     ap.add_argument("--threads", type=int, default=4)
+    ap.add_argument("--krakel", type=float, default=0.0, help="share from the children's Schriftproben")
+    ap.add_argument("--strokes", type=float, default=0.0, help="share from the app's school letter strokes")
+    ap.add_argument("--numbers", type=float, default=0.0, help="share of the digit classes from numbers Set 1")
     ap.add_argument("--quick", action="store_true")
     args = ap.parse_args()
     if args.quick:
         args.epochs, args.per_class = 1, 300
+    assert args.krakel + args.strokes + args.numbers + args.synth_share <= 1, "the shares add up to more than 1"
     torch.set_num_threads(args.threads)
     torch.manual_seed(0)
     rng = np.random.default_rng(0)
@@ -83,10 +100,30 @@ def main():
     xs, ys = synth_bank()
     print(f"data: train {len(xtr)}  test {len(xte)}  synth {len(xs)}  ({time.time() - t0:.0f}s)")
 
+    # optional sources (no rng use here: with all shares 0 the run stays bit-identical)
+    empty = np.zeros((0, 28, 28), np.uint8), np.zeros(0, np.int64)
+    xk, yk, bk = real_data.load_krakel("druck")
+    ktest = real_data.krakel_test_mask(bk)
+    xk_te, yk_te = xk[ktest], yk[ktest]
+    if len(xk):
+        print(f"krakel: train {int((~ktest).sum())} ({len(set(bk[~ktest].tolist()))} lessons)  "
+              f"test {int(ktest.sum())} ({len(set(bk[ktest].tolist()))} lessons)")
+    xst, yst = stroke_bank() if args.strokes > 0 else empty
+    if args.strokes > 0:
+        print(f"strokes: {len(xst)} images, {len(set(yst.tolist()))} classes")
+    has_numbers = args.numbers > 0 or any((real_data.RAW / "numbers").glob("0*_*/*/*.png"))
+    xnu, ynu, xnu_te, ynu_te = real_data.load("numbers") if has_numbers else (*empty, *empty)
+    if has_numbers:
+        print(f"numbers: train {len(xnu)}  test {len(xnu_te)} (other writers)")
+
     xtr_t = torch.from_numpy(xtr)
     xs_t = torch.from_numpy(xs)
     by_class = [np.nonzero(ytr == c)[0] for c in range(NUM_CLASSES)]
     synth_by_class = [np.nonzero(ys == c)[0] for c in range(NUM_CLASSES)]
+    # optional sources in SOURCES order after emnist and fonts: (share, indices per class)
+    extra = [(args.krakel, xk[~ktest], yk[~ktest]), (args.strokes, xst, yst), (args.numbers, xnu, ynu)]
+    pools = [xtr_t, xs_t] + [torch.from_numpy(x) for _, x, _ in extra]
+    extra = [(share, [np.nonzero(y == c)[0] for c in range(NUM_CLASSES)]) for share, _, y in extra]
 
     # split EMNIST test: first half for temperature, second half for reporting
     perm = rng.permutation(len(xte))
@@ -108,12 +145,14 @@ def main():
     crit = nn.CrossEntropyLoss(label_smoothing=0.1)
 
     for epoch in range(args.epochs):
-        # class-balanced epoch: per class per_class samples, synth_share from fonts (sharp s: fonts only)
+        # class-balanced epoch: per class per_class samples, synth_share from fonts (sharp s: fonts only);
+        # the optional sources' shares (where the class has data) replace EMNIST (sharp s: font) samples
         src, idx, lab = [], [], []
         for c in range(NUM_CLASSES):
             n = args.per_class
-            n_syn = n if c == SHARP_S else int(round(n * args.synth_share))
-            n_em = n - n_syn
+            n_x = [min(int(round(n * share)), MAX_REPEAT * len(pool[c])) if share > 0 else 0 for share, pool in extra]
+            n_syn = n - sum(n_x) if c == SHARP_S else int(round(n * args.synth_share))
+            n_em = n - n_syn - sum(n_x)
             if n_em:
                 idx.append(rng.choice(by_class[c], n_em, replace=len(by_class[c]) < n_em))
                 src.append(np.zeros(n_em, np.int8))
@@ -121,7 +160,14 @@ def main():
             idx.append(rng.choice(synth_by_class[c], n_syn, replace=True))
             src.append(np.ones(n_syn, np.int8))
             lab.append(np.full(n_syn, c))
+            for k, (n_k, (_, pool)) in enumerate(zip(n_x, extra), start=2):
+                if n_k:
+                    idx.append(rng.choice(pool[c], n_k, replace=len(pool[c]) < n_k))
+                    src.append(np.full(n_k, k, np.int8))
+                    lab.append(np.full(n_k, c))
         src, idx, lab = np.concatenate(src), np.concatenate(idx), np.concatenate(lab)
+        counts = np.bincount(src, minlength=len(SOURCES))
+        print("  samples per source: " + "  ".join(f"{name} {k}" for name, k in zip(SOURCES, counts)))
         order = rng.permutation(len(lab))
         src, idx, lab = src[order], idx[order], lab[order]
 
@@ -134,11 +180,10 @@ def main():
             if len(blab) == 0:
                 break
             xb = torch.empty(len(blab), 28, 28, dtype=torch.uint8)
-            em = bsrc == 0
-            if em.any():
-                xb[torch.from_numpy(np.nonzero(em)[0])] = xtr_t[torch.from_numpy(bidx[em])]
-            if (~em).any():
-                xb[torch.from_numpy(np.nonzero(~em)[0])] = xs_t[torch.from_numpy(bidx[~em])]
+            for k, pool in enumerate(pools):
+                m = bsrc == k
+                if m.any():
+                    xb[torch.from_numpy(np.nonzero(m)[0])] = pool[torch.from_numpy(bidx[m])]
             xb = augment(xb.float().unsqueeze(1) / 255.0)
             yb = torch.from_numpy(blab)
             out = model(xb)
@@ -164,6 +209,13 @@ def main():
     temp = fit_temperature(cal_logits, ycal)
     top1, grp, _ = evaluate(model, xrep, yrep)
     print(f"final: test top1 {top1:.4f} group {grp:.4f} temperature {temp:.3f}")
+    if len(yk_te):
+        k1, kg, _ = evaluate(model, torch.from_numpy(xk_te), torch.from_numpy(yk_te))
+        print(f"krakel test: top1 {k1:.4f} group {kg:.4f}  ({len(yk_te)} samples, {len(set(bk[ktest].tolist()))} lessons)")
+    if len(ynu_te):
+        n1, ng, nl = evaluate(model, torch.from_numpy(xnu_te), torch.from_numpy(ynu_te))
+        nd = (nl[:, :10].argmax(1) == torch.from_numpy(ynu_te)).float().mean().item()
+        print(f"numbers test: top1 {n1:.4f} group {ng:.4f} among digits only {nd:.4f}  ({len(ynu_te)} digits)")
     torch.save({"state": model.state_dict(), "width": args.width, "temperature": temp, "top1": top1, "group": grp},
                ROOT / "out" / "glyphnet.pt")
 

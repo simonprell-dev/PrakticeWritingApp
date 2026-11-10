@@ -1,5 +1,6 @@
 // Postgres: connection pool, versioned migrations, queries and the daily clean-up.
 // Only used when DATABASE_URL is set; without it the API answers 503 and the app runs as before.
+import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 
 /** Every migration runs once, in order, in its own transaction. Never change a released one, add a new one. */
@@ -80,6 +81,40 @@ const MIGRATIONS = [
       CREATE INDEX ratings_created ON ratings (created_at DESC);
     `,
   },
+  {
+    // handwriting samples a class gives after a lesson to improve the recognition (server/samples.js)
+    version: 6,
+    sql: `
+      CREATE TABLE samples (
+        id bigserial PRIMARY KEY,
+        batch uuid NOT NULL,
+        seq integer NOT NULL,
+        scan integer NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        label text NOT NULL,
+        label_source text NOT NULL CHECK (label_source IN ('wort', 'uebung', 'erkannt')),
+        recognized text,
+        target text,
+        score real,
+        tier text,
+        mirrored boolean NOT NULL DEFAULT false,
+        rejected boolean NOT NULL DEFAULT false,
+        dots smallint NOT NULL DEFAULT 0,
+        box_x real,
+        box_y real,
+        box_w real,
+        box_h real,
+        script text NOT NULL,
+        style text,
+        mode text,
+        lang text,
+        png bytea NOT NULL,
+        exported_at timestamptz
+      );
+      CREATE INDEX samples_batch ON samples (batch, seq);
+      CREATE INDEX samples_created ON samples (created_at);
+    `,
+  },
 ];
 
 /** the day of a page view in German time (one bucket per calendar day, no time of day is stored) */
@@ -135,6 +170,89 @@ export class Db {
     if (m.rowCount) console.log(`Datenbank: ${m.rowCount} alte Nachrichten gelöscht.`);
     const r = await this.pool.query(`DELETE FROM ratings WHERE created_at < now() - interval '12 months'`);
     if (r.rowCount) console.log(`Datenbank: ${r.rowCount} alte Ampel-Stimmen gelöscht.`);
+    const s = await this.pool.query(`DELETE FROM samples WHERE created_at < now() - interval '12 months'`);
+    if (s.rowCount) console.log(`Datenbank: ${s.rowCount} alte Schriftproben gelöscht.`);
+  }
+
+  /** the letters of one lesson (validateSampleBatch), in one transaction; returns the new batch id */
+  async addSamples(b) {
+    const batch = randomUUID();
+    const c = await this.pool.connect();
+    try {
+      await c.query('BEGIN');
+      for (const s of b.samples) {
+        await c.query(
+          `INSERT INTO samples (batch, seq, scan, label, label_source, recognized, target, score, tier, mirrored, rejected, dots,
+                                box_x, box_y, box_w, box_h, script, style, mode, lang, png)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
+          [batch, s.seq, s.scan, s.label, s.source, s.recognized, s.target, s.score, s.tier, s.mirrored, s.rejected, s.dots,
+            s.box.x, s.box.y, s.box.w, s.box.h, b.script, b.style, b.game, b.lang, s.png],
+        );
+      }
+      await c.query('COMMIT');
+    } catch (e) {
+      await c.query('ROLLBACK').catch(() => undefined);
+      throw e;
+    } finally {
+      c.release();
+    }
+    return batch;
+  }
+
+  async sampleCount() {
+    const { rows } = await this.pool.query('SELECT count(*)::int AS n FROM samples');
+    return rows[0].n;
+  }
+
+  /** what the admin page shows: counts, per label source and script, and the latest lessons */
+  async sampleStats() {
+    const [head, bySource, byScript, latest] = await Promise.all([
+      this.pool.query(
+        `SELECT count(*)::int AS total, count(*) FILTER (WHERE exported_at IS NULL)::int AS fresh,
+                count(DISTINCT batch)::int AS batches, coalesce(sum(octet_length(png)), 0)::bigint AS bytes FROM samples`,
+      ),
+      this.pool.query(`SELECT label_source AS source, count(*)::int AS n FROM samples GROUP BY label_source ORDER BY n DESC`),
+      this.pool.query(`SELECT script, count(*)::int AS n FROM samples GROUP BY script ORDER BY n DESC`),
+      this.pool.query(
+        `SELECT batch::text, min(created_at) AS created_at, count(*)::int AS n, min(mode) AS mode, min(script) AS script, min(lang) AS lang,
+                bool_and(exported_at IS NOT NULL) AS exported, string_agg(label, '' ORDER BY seq) AS labels,
+                (array_agg(id::text ORDER BY seq))[1:60] AS ids, (array_agg(label_source ORDER BY seq))[1:60] AS sources
+         FROM samples GROUP BY batch ORDER BY min(created_at) DESC LIMIT 20`,
+      ),
+    ]);
+    return { ...head.rows[0], bytes: Number(head.rows[0].bytes), bySource: bySource.rows, byScript: byScript.rows, latest: latest.rows };
+  }
+
+  /** the image of one sample, null when there is none */
+  async samplePng(id) {
+    const { rows } = await this.pool.query('SELECT png FROM samples WHERE id = $1', [id]);
+    return rows[0]?.png ?? null;
+  }
+
+  /** a page of samples for the download, in the order they came in: all, or only those not downloaded yet */
+  async samplePage(onlyFresh, afterId, limit) {
+    const { rows } = await this.pool.query(
+      `SELECT id::text, batch::text, seq, scan, created_at, label, label_source, recognized, target, score, tier, mirrored, rejected, dots,
+              box_x, box_y, box_w, box_h, script, style, mode, lang, png
+       FROM samples WHERE id > $1 ${onlyFresh ? 'AND exported_at IS NULL' : ''} ORDER BY id LIMIT $2`,
+      [afterId, limit],
+    );
+    return rows;
+  }
+
+  async markSamplesExported(ids) {
+    if (!ids.length) return;
+    await this.pool.query('UPDATE samples SET exported_at = now() WHERE id = ANY($1::bigint[]) AND exported_at IS NULL', [ids]);
+  }
+
+  /** removes one lesson ({ batch }), the downloaded samples ({ exported }) or all ({ all }); returns how many */
+  async deleteSamples(what) {
+    const r = what.batch
+      ? await this.pool.query('DELETE FROM samples WHERE batch = $1', [what.batch])
+      : what.exported
+        ? await this.pool.query('DELETE FROM samples WHERE exported_at IS NOT NULL')
+        : await this.pool.query('DELETE FROM samples');
+    return r.rowCount;
   }
 
   /** one more page view today, from `country` (ISO code, null when unknown) */

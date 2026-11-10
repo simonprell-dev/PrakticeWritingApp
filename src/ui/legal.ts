@@ -220,6 +220,8 @@ function datenschutz(info: LegalInfo): HTMLElement {
         [t('Es gibt keine Benutzerkonten, keine Cookies, keine Werbung und keine Analysedienste Dritter. Deshalb gibt es auch kein Cookie-Banner.')],
         [t('Wir zählen nur, wie oft die Seite aufgerufen wird und aus welchem Land – Zahlen pro Tag, ohne IP-Adresse, ohne Kennung und ohne Cookie.')],
         [t('Nachrichten über das Kontaktformular speichern wir nur, um sie zu beantworten, und löschen sie spätestens nach 12 Monaten.')],
+        [t('Die Feedback-Ampel nach einem Spiel speichert nur das Spiel und die gewählte Farbe.')],
+        [t('Schriftproben: Nur wenn Sie es nach einer Stunde ausdrücklich wählen, laden wir die ausgeschnittenen Buchstaben dieser Stunde hoch, um die Erkennung zu verbessern – keine Fotos, keine Namen.')],
         [t('Die Kamera startet erst, wenn Sie sie einrichten oder ein Spiel beginnen.')],
         [t('Es werden keine externen Dienste eingebunden – auch Schriftarten und Programmteile kommen ausschließlich von unserem eigenen Server.')],
         [t('Beim Aufruf der Website verarbeitet unser Hosting-Anbieter technisch notwendige Verbindungsdaten (z. B. Ihre IP-Adresse).')],
@@ -233,7 +235,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
         t('Damit aus geschriebenen Buchstaben und Zahlen Spielfiguren werden, nimmt die App nach Ihrer Freigabe Bilder der Kamera (z. B. einer Dokumentenkamera) auf und wertet sie direkt im Browser aus (Erkennen der Zeichen, spielerische Bewertung, Ausschneiden der Zeichen für die Spielfiguren). Im „Mal-Aquarium“ erkennt die App ausgemalte Fisch-Karten und schneidet den Fisch (mit dem darauf geschriebenen Fischnamen) als Spielfigur aus.'),
       ),
       list([
-        [t('Die Verarbeitung findet vollständig auf dem verwendeten Gerät statt. Wir als Anbieter erhalten keinen Zugriff auf Bilder oder Ergebnisse.')],
+        [t('Die Verarbeitung findet vollständig auf dem verwendeten Gerät statt. Wir als Anbieter erhalten keinen Zugriff auf Bilder oder Ergebnisse – außer Sie geben nach einer Stunde ausdrücklich Schriftproben frei (siehe „Schriftproben“).')],
         [t('Die Kamerafotos liegen nur im Arbeitsspeicher und werden nach der Auswertung verworfen.')],
         [t('Ausgeschnittene Zeichen und ausgemalte Fisch-Karten gehören zum Spielstand: Sie werden in Ihrem Browser gespeichert, damit ein Spiel später weitergehen kann (siehe „Speicherung auf Ihrem Gerät“).')],
         [t('Es findet keine Gesichtserkennung und keine Identifizierung von Personen statt. Bitte richten Sie die Kamera so aus, dass nur das Papier zu sehen ist.')],
@@ -263,13 +265,34 @@ function datenschutz(info: LegalInfo): HTMLElement {
     section(
       t('{n}. Kontaktformular', { n: n() }),
       p(
-        t('Über „✉️ Kontakt & Feedback“ auf der Startseite können Sie uns eine Nachricht schicken. Gespeichert werden Ihre Nachricht, Datum und Uhrzeit, die Sprache der App sowie – nur wenn Sie sie angeben – Ihr Name und Ihre E-Mail-Adresse. Die IP-Adresse wird nicht gespeichert; sie wird nur kurz im Arbeitsspeicher genutzt, um massenhaftes Absenden (Spam) zu begrenzen.'),
+        t('Über „✉️ Kontakt & Feedback“ und „💡 Idee einreichen“ auf der Startseite können Sie uns eine Nachricht schicken. Gespeichert werden Ihre Nachricht, die gewählte Art (Idee, Feedback, Fehler, Frage), bei einer Nachricht nach der Feedback-Ampel das Spiel, Datum und Uhrzeit, die Sprache der App sowie – nur wenn Sie sie angeben – Ihr Name und Ihre E-Mail-Adresse. Die IP-Adresse wird nicht gespeichert; sie wird nur kurz im Arbeitsspeicher genutzt, um massenhaftes Absenden (Spam) zu begrenzen.'),
       ),
       p(
         t('Zweck ist die Bearbeitung und Beantwortung Ihrer Anfrage. Rechtsgrundlage: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (unser berechtigtes Interesse, Anfragen und Hinweise zur App zu beantworten) bzw. lit. b DSGVO, wenn Ihre Anfrage auf einen Vertrag zielt; bei öffentlichen Schulen lit. e DSGVO. Die Angaben sind freiwillig.'),
       ),
       p(
         t('Wir löschen die Nachricht, sobald sie erledigt ist, spätestens jedoch automatisch 12 Monate nach dem Eingang. Die Daten liegen in einer Datenbank beim Hosting-Anbieter (siehe „Hosting“) und werden nicht an Dritte weitergegeben. Bitte schreiben Sie keine Namen oder anderen Daten von Kindern in die Nachricht.'),
+      ),
+    ),
+    section(
+      t('{n}. Feedback-Ampel', { n: n() }),
+      p(
+        t('Nach einem Spiel fragt die App „Wie war das Spiel?“ mit Grün, Gelb und Rot. Wählen Sie eine Farbe, speichern wir das Spiel, die Farbe, die Sprache der App und den Zeitpunkt – ohne IP-Adresse, ohne Kennung und ohne Cookie. Damit nicht massenhaft Stimmen abgegeben werden, holt die App beim Spielstart ein Ticket vom Server, das nur das Spiel und die Startzeit enthält; die IP-Adresse wird dafür nur kurz im Arbeitsspeicher genutzt. Bei Rot öffnet sich das Kontaktformular (siehe dort).'),
+      ),
+      p(
+        t('Zweck ist, die App zu verbessern. Rechtsgrundlage: Art. 6 Abs. 1 UAbs. 1 lit. f DSGVO (berechtigtes Interesse zu erfahren, wie die Spiele ankommen), bei öffentlichen Schulen lit. e DSGVO. Die Stimmen werden spätestens 12 Monate nach der Abgabe automatisch gelöscht. Die Ampel lässt sich in den Einstellungen abschalten.'),
+      ),
+    ),
+    section(
+      t('{n}. Schriftproben (freiwillig)', { n: n() }),
+      p(
+        t('Nach einer Stunde fragt die App, ob die Klasse die Buchstaben dieser Stunde spenden möchte, um die Erkennung von Kinderschrift zu verbessern (Einstellungen: „Nach jeder Stunde fragen“, „Immer hochladen“ oder „Nie“). Nur wenn Sie zustimmen, werden übertragen: die ausgeschnittenen Buchstaben als kleine Bilder (nur die Tinte, ohne Hintergrund), ihre Reihenfolge und Lage auf dem Blatt, was die App darin erkannt hat bzw. welches Wort oder welcher Übungsbuchstabe gerade dran war, das Spiel, die eingestellte Schrift und die Sprache der App. Kamerafotos, Namen und Teamnamen werden nicht übertragen. Vor dem Hochladen zeigt die App genau die Buchstaben, die gesendet würden.'),
+      ),
+      p(
+        t('Zweck ist das Training und die Prüfung der Schrifterkennung. Die Proben liegen in der Datenbank beim Hosting-Anbieter (siehe „Hosting“), werden nur von uns ausgewertet und nicht an Dritte weitergegeben. Wir löschen sie nach der Auswertung, spätestens jedoch automatisch 12 Monate nach dem Hochladen. Die trainierte Erkennung enthält keine einzelnen Proben.'),
+      ),
+      p(
+        t('Rechtsgrundlage ist Ihre Einwilligung (Art. 6 Abs. 1 UAbs. 1 lit. a DSGVO). Da es um die Handschrift von Kindern geht, laden Sie bitte nur hoch, wenn Ihre Schule und die Erziehungsberechtigten einverstanden sind. Die Einwilligung können Sie jederzeit für die Zukunft widerrufen („Nie“ in den Einstellungen). Bereits hochgeladene Proben löschen wir auf Anfrage über das Kontaktformular; da sie keinen Namen tragen, nennen Sie uns dafür bitte Datum und ungefähre Uhrzeit der Stunde.'),
       ),
     ),
     section(
@@ -292,7 +315,7 @@ function datenschutz(info: LegalInfo): HTMLElement {
         t('Standort des Servers: {location}.', { location: info.serverLocation }),
       ),
       p(
-        t('Beim Aufruf der Website werden technisch notwendige Daten verarbeitet: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Statuscode, übertragene Datenmenge sowie Angaben zum Browser (User-Agent). Die App selbst schreibt keine Zugriffsprotokolle; die Datenbank für Kontaktformular und Aufrufzähler liegt ebenfalls bei Railway.'),
+        t('Beim Aufruf der Website werden technisch notwendige Daten verarbeitet: IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Statuscode, übertragene Datenmenge sowie Angaben zum Browser (User-Agent). Die App selbst schreibt keine Zugriffsprotokolle; die Datenbank für Kontaktformular, Feedback-Ampel, Schriftproben und Aufrufzähler liegt ebenfalls bei Railway.'),
         ' ',
         t('Die Hosting-Plattform speichert Zugriffsprotokolle für höchstens {days} Tage und löscht sie danach automatisch.', { days: info.logDays }),
       ),

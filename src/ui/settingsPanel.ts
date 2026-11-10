@@ -201,6 +201,19 @@ export function openSettings(d: SettingsDeps, onClose?: () => void): void {
       ),
       h('div', { class: 'help', style: 'margin:-4px 0 8px' }, t('Nach einem Spiel fragt eine Ampel „Wie war das Spiel?“ (Grün, Gelb, Rot). Bei Rot öffnet sich das Kontaktfeld. Gespeichert wird nur die Farbe und das Spiel.')),
     ),
+    row(
+      t('Schriftproben spenden'),
+      segmented(
+        [
+          { value: 'fragen', label: t('Nach jeder Stunde fragen') },
+          { value: 'immer', label: t('Immer hochladen') },
+          { value: 'nie', label: t('Nie') },
+        ],
+        s.game.samples,
+        set((v) => (s.game.samples = v)),
+      ),
+      t('Mit den ausgeschnittenen Buchstaben einer Stunde (keine Fotos, keine Namen) verbessern wir die Erkennung für Kinderschrift. Bitte nur, wenn Schule und Eltern einverstanden sind.'),
+    ),
     ...(RECHENMEER
       ? [
           h('h3', null, t('Rechenmeer')),

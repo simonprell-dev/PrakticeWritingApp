@@ -3,6 +3,8 @@
 import { randomBytes } from 'node:crypto';
 import { Db } from './db.js';
 import { checkRatingTicket, makeRatingTicket, TicketBook } from './ratingGuard.js';
+import { MAX_SAMPLES_BODY, validateSampleBatch, validateSampleDelete } from './samples.js';
+import { ZipWriter } from './zip.js';
 import { GeoIp } from './geo.js';
 import { clearCookie, COOKIE, makeToken, readCookie, safeEqual, sessionCookie, sessionSecret, verifyToken } from './session.js';
 import {
@@ -24,6 +26,30 @@ import {
 } from './validate.js';
 
 const DAY_MS = 24 * 3600 * 1000;
+/** the database keeps at most this many handwriting samples (a few KB each) */
+const MAX_STORED_SAMPLES = 300_000;
+/** at most this many samples in one download package */
+const EXPORT_MAX = 50_000;
+const SAMPLES_README = `Krakel & Krone – Schriftproben
+==============================
+
+Ausgeschnittene Buchstaben, die Klassen nach einer Stunde freiwillig hochgeladen haben, um die Erkennung
+zu verbessern. Keine Fotos, keine Namen.
+
+samples.csv   eine Zeile je Buchstabe (UTF-8):
+  id, batch (eine Stunde), seq (Reihenfolge des Schreibens), scan (welches Foto der Stunde),
+  label (das Zeichen), label_source:
+     wort    – im Wörter-Zoo stand das ganze Wort richtig da (sicher)
+     uebung  – Übungsbuchstabe, und die Erkennung war derselben Meinung (ziemlich sicher)
+     erkannt – nur die Vermutung der Erkennung (bitte prüfen)
+  recognized (Vermutung der Erkennung), target (Übungsbuchstabe), score, tier, mirrored/rejected
+  (Spiegelschrift), dots (Punkte darüber, z. B. i, ä), box_* (Lage auf dem Blatt), script, style, mode (Spiel), lang
+images/<batch>/<seq>.png   der Buchstabe; die Tinte steckt im Alphakanal (Hintergrund durchsichtig)
+
+Einlesen ins Training:  python tools/train/import_samples.py <diese-datei.zip>
+Danach lassen sich falsche Beschriftungen im Ordner tools/train/data/krakel/ prüfen und verschieben
+(siehe Hinweise des Import-Programms).
+`;
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -95,6 +121,8 @@ export function createApi(env = process.env, opts = {}) {
   // the key of the feedback light tickets: new with every start, so nobody can make tickets of their own
   const ticketKey = randomBytes(32);
   const tickets = new TicketBook(now);
+  // a lesson ticket carries one vote and one upload of handwriting samples
+  const sampleTickets = new TicketBook(now);
   const adminPassword = env.ADMIN_PASSWORD || '';
   const secret = sessionSecret(env);
   const limits = {
@@ -103,6 +131,7 @@ export function createApi(env = process.env, opts = {}) {
     ticket: new RateLimiter(60, 3600_000, now),
     rating: new RateLimiter(20, 3600_000, now),
     ratingGame: new RateLimiter(1, 3 * 60_000, now),
+    samples: new RateLimiter(6, 3600_000, now),
     login: new RateLimiter(8, 15 * 60_000),
     admin: new RateLimiter(300, 60_000),
   };
@@ -128,6 +157,7 @@ export function createApi(env = process.env, opts = {}) {
       setInterval(() => {
         Object.values(limits).forEach((l) => l.prune());
         tickets.prune();
+        sampleTickets.prune();
       }, 10 * 60_000).unref(),
     );
   } else {
@@ -157,6 +187,44 @@ export function createApi(env = process.env, opts = {}) {
 
   const isAdmin = (req) => verifyToken(secret, readCookie(req.headers.cookie, COOKIE));
   const secure = (req) => req.headers['x-forwarded-proto'] === 'https';
+
+  /**
+   * The download package of the handwriting samples (see tools/train/import_samples.py): a ZIP with LIESMICH.txt,
+   * samples.csv and images/<lesson>/<seq>.png, written to the response page by page. Everything in it is marked
+   * as downloaded afterwards; at most EXPORT_MAX samples per package (the next download brings the rest).
+   */
+  async function exportSamples(res, onlyFresh) {
+    const d = needDb();
+    const day = new Date(now()).toISOString().slice(0, 10);
+    const name = `krakelkrone-schriftproben-${day}-${onlyFresh ? 'neu' : 'alle'}.zip`;
+    res.writeHead(200, { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'no-store' });
+    const zip = new ZipWriter((b) => res.write(b));
+    zip.add('LIESMICH.txt', Buffer.from(SAMPLES_README, 'utf8'));
+    const cols = ['id', 'batch', 'seq', 'scan', 'created_at', 'label', 'label_source', 'recognized', 'target', 'score', 'tier', 'mirrored', 'rejected', 'dots', 'box_x', 'box_y', 'box_w', 'box_h', 'script', 'style', 'mode', 'lang', 'file'];
+    const csv = [cols.join(',')];
+    const cell = (v) => {
+      const s = v === null || v === undefined ? '' : v instanceof Date ? v.toISOString() : typeof v === 'boolean' ? (v ? '1' : '0') : String(v);
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const ids = [];
+    let after = 0;
+    while (ids.length < EXPORT_MAX) {
+      const rows = await d.samplePage(onlyFresh, after, Math.min(500, EXPORT_MAX - ids.length));
+      if (!rows.length) break;
+      for (const r of rows) {
+        const file = `images/${r.batch}/${r.seq}.png`;
+        zip.add(file, r.png, r.created_at);
+        csv.push(cols.map((c) => cell(c === 'file' ? file : r[c])).join(','));
+        ids.push(r.id);
+      }
+      after = rows[rows.length - 1].id;
+      if (res.writableNeedDrain) await new Promise((ok) => res.once('drain', ok));
+    }
+    zip.add('samples.csv', Buffer.from(csv.join('\n') + '\n', 'utf8'));
+    zip.end();
+    res.end();
+    await d.markSamplesExported(ids);
+  }
 
   /** @returns {Promise<void>} */
   async function route(req, res, url) {
@@ -195,6 +263,20 @@ export function createApi(env = process.env, opts = {}) {
       return send(res, 200, { ok: true });
     }
 
+    // handwriting samples of a lesson, given by the class to improve the recognition (only with the lesson's ticket)
+    if (path === '/api/samples' && method === 'POST') {
+      if (!limits.samples.hit(ip)) throw new HttpError(429, 'Zu viele Uploads – bitte später noch einmal.');
+      const v = validateSampleBatch(await jsonBody(req, MAX_SAMPLES_BODY));
+      if (!v.ok) throw new HttpError(400, v.error);
+      const tk = checkRatingTicket(ticketKey, v.value.ticket, v.value.game, now());
+      if (!tk.ok) throw new HttpError(403, `Upload zählt nicht (${tk.error})`);
+      const d = needDb();
+      if ((await d.sampleCount()) + v.value.samples.length > MAX_STORED_SAMPLES) throw new HttpError(507, 'Der Speicher für Schriftproben ist gerade voll.');
+      if (!sampleTickets.use(tk.nonce, tk.until)) throw new HttpError(403, 'Diese Stunde wurde schon hochgeladen.');
+      await d.addSamples(v.value);
+      return send(res, 200, { ok: true, n: v.value.samples.length });
+    }
+
     // the plan for every visitor; without a database the app keeps its defaults
     if (path === '/api/worlds' && method === 'GET') return send(res, 200, { plan: await loadWorlds() });
 
@@ -227,6 +309,20 @@ export function createApi(env = process.env, opts = {}) {
         const k = url.searchParams.get('kind');
         const kind = MESSAGE_KINDS.includes(k) || k === 'ohne' ? k : null;
         return send(res, 200, await needDb().messages(page, 20, status, kind));
+      }
+      if (path === '/api/admin/samples' && method === 'GET') return send(res, 200, await needDb().sampleStats());
+      const png = /^\/api\/admin\/samples\/png\/(\d{1,18})$/.exec(path);
+      if (png && method === 'GET') {
+        const data = await needDb().samplePng(png[1]);
+        if (!data) throw new HttpError(404, 'Schriftprobe nicht gefunden');
+        res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': data.length, 'Cache-Control': 'private, max-age=3600' }).end(data);
+        return;
+      }
+      if (path === '/api/admin/samples/export' && method === 'GET') return exportSamples(res, url.searchParams.get('which') !== 'alle');
+      if (path === '/api/admin/samples/delete' && method === 'POST') {
+        const v = validateSampleDelete(await jsonBody(req, MAX_BODY));
+        if (!v.ok) throw new HttpError(400, v.error);
+        return send(res, 200, { ok: true, deleted: await needDb().deleteSamples(v.value) });
       }
       if (path === '/api/admin/ratings' && method === 'GET') return send(res, 200, await needDb().ratings(parseDays(url.searchParams.get('days'))));
       if (path === '/api/admin/ratings/delete' && method === 'POST') {

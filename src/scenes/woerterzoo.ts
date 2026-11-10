@@ -835,6 +835,13 @@ export class WoerterZooScene extends HabitatScene {
       bubble: 0,
     };
     this.done = { entry, counted };
+    // spelled right: every letter is what the word says (the case as written for letters that look the same)
+    const w = [...this.word.word];
+    if (!counted && !soundTrue && letters.length === w.length)
+      this.host.confirmSamples?.(
+        letters.map((l) => l.glyph.id),
+        letters.map((l, i) => (l.glyph.score.char.toLowerCase() === w[i].toLowerCase() ? l.glyph.score.char : w[i])),
+      );
     this.feedback = null;
     this.setPhase('alive');
     sfx.fanfare();

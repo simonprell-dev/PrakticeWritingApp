@@ -51,8 +51,10 @@ import type { PlayerId, ScanResult, VisionOptions } from '../vision/types.ts';
 import { packTyped, unpackTyped } from './imageCodec.ts';
 import { autoId, defaultName, deleteSave, downloadSave, FORMAT, getMeta, listSaves, loadSave, MODES, newSaveId, putSave, readSaveFile, type GameMode, type SaveGame } from './saves.ts';
 import { cleanWoerter, firstChar, loadSettings, saveSettings, type CameraMode, type HabitatId, type Settings } from './settings.ts';
-import { t } from '../i18n/i18n.ts';
+import { language, t } from '../i18n/i18n.ts';
 import { openFeedbackLight, requestTicket, shouldAsk } from '../ui/feedbackLight.ts';
+import { openSamplesQuestion } from '../ui/samplesQuestion.ts';
+import { MIN_SAMPLES, SampleCollector } from './samples.ts';
 
 const HABITATS: Partial<Record<HabitatId, HabitatDef>> = { meer: aquarium, weltraum: space, savanne: savanna, zauberland, woerterzoo, rechenmeer, ...SEASON_DEFS, advent };
 const isHabitat = (m: string): m is HabitatId => Object.hasOwn(HABITATS, m);
@@ -134,8 +136,11 @@ export class App {
   /** when the running game started, and whether the feedback light was shown for it */
   private gameStart = 0;
   private rated = false;
-  /** the feedback light's ticket of the running game (spam protection) */
+  /** the ticket of the running game (spam protection of the feedback light and the handwriting samples) */
   private ticket: Promise<string | null> = Promise.resolve(null);
+  /** the letters of the running lesson, for the handwriting samples */
+  private samples = new SampleCollector();
+  private samplesAsked = false;
 
   constructor(canvas: HTMLCanvasElement, ui: HTMLElement) {
     this.ui = ui;
@@ -284,6 +289,7 @@ export class App {
    */
   private toMenu(): void {
     if (this.askFeedback()) return;
+    if (this.askSamples()) return;
     if (this.thankFirst()) return;
     const scene = this.scene;
     if (this.settings.game.autosave !== null || !scene?.saveState || this.frozen) return this.showStart();
@@ -306,8 +312,56 @@ export class App {
     this.thanked = false;
     this.rated = false;
     this.gameStart = performance.now();
+    this.samples.reset();
+    this.samplesAsked = false;
     const game = gameOf(this.mode);
-    this.ticket = game && this.settings.game.feedback ? requestTicket(game) : Promise.resolve(null);
+    const wanted = this.settings.game.feedback || this.settings.game.samples !== 'nie';
+    this.ticket = game && wanted ? requestTicket(game) : Promise.resolve(null);
+  }
+
+  /**
+   * A lesson with letters is left: "Schriftproben spenden?" (or the upload right away when the class always
+   * gives them), then the way to the menu goes on.
+   */
+  private askSamples(): boolean {
+    const game = gameOf(this.mode);
+    const how = this.settings.game.samples;
+    if (!game || this.frozen || this.samplesAsked || how === 'nie' || this.samples.size < MIN_SAMPLES) return false;
+    this.samplesAsked = true;
+    if (how === 'immer') {
+      void this.uploadSamples(game);
+      return false;
+    }
+    const scene = this.scene;
+    openSamplesQuestion({
+      entries: this.samples.entries(),
+      upload: () => void this.uploadSamples(game),
+      never: () => {
+        this.settings.game.samples = 'nie';
+        this.save();
+      },
+      done: () => {
+        if (this.scene === scene) this.toMenu();
+      },
+    });
+    return true;
+  }
+
+  /** sends the letters of the lesson; a thank-you or a short note why it did not work */
+  private async uploadSamples(game: string): Promise<void> {
+    const ticket = await this.ticket;
+    if (!ticket) {
+      toast(t('Hochladen geht gerade nicht – keine Verbindung zum Server.'), 'warn', 5000);
+      return;
+    }
+    try {
+      const body = await this.samples.payload({ game, ticket, script: this.settings.script, style: this.settings.recog.style, lang: language() });
+      const r = await fetch('/api/samples', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'omit', body: JSON.stringify(body) });
+      if (!r.ok) throw new Error(String(r.status));
+      toast(t('Danke! {n} Buchstaben helfen jetzt beim Training der Erkennung. 💚', { n: body.samples.length }), 'good', 5000);
+    } catch {
+      toast(t('Hochladen hat nicht geklappt. Danke trotzdem!'), 'warn', 5000);
+    }
   }
 
   /** a game played for a while is left: the feedback light first, then the way to the menu goes on */
@@ -971,6 +1025,7 @@ export class App {
         this.updateProgress();
         if (!this.frozen) this.autosaveSoon();
       },
+      confirmSamples: (ids, chars) => this.samples.confirm(ids, chars),
       finished: (r) => {
         this.forgetGame();
         if (this.mode.kind === 'siege') this.siegeFinished(r as SiegeResult);
@@ -1188,6 +1243,11 @@ export class App {
       snap.detH = res.frameH / res.scale;
       if (opt.team) for (const g of res.glyphs) g.team = opt.team;
       if (this.scene instanceof RechenScene) this.scene.scanTrigger = trigger;
+      // the letters of the lesson for the handwriting samples (the practice letter before the scene moves on)
+      if (this.settings.game.samples !== 'nie') {
+        const target = this.scene instanceof HabitatScene && this.settings.practice.mode === 'ueben' ? (this.scene.practiceTarget ?? null) : null;
+        this.samples.addScan(res.glyphs, target);
+      }
       this.scene.handleScan(res, snap);
       const mirrored = res.glyphs.filter((g) => g.isNew && g.score.rejected).length;
       if (mirrored) {

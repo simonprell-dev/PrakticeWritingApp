@@ -428,6 +428,32 @@
   "where": "Hinweis – ensureCamera"
  },
  {
+  "id": "hochladen-geht-gerade-nicht-keine-ve-g4ukd",
+  "text": "Hochladen geht gerade nicht – keine Verbindung zum Server.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – uploadSamples"
+ },
+ {
+  "id": "danke-1ggmg",
+  "text": "Danke!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – uploadSamples",
+  "partOf": "Danke! {n} Buchstaben helfen jetzt beim Training der Erkennung."
+ },
+ {
+  "id": "buchstaben-helfen-jetzt-beim-trainin-oeyaa",
+  "text": "Buchstaben helfen jetzt beim Training der Erkennung.",
+  "speaker": "erzaehler",
+  "where": "Hinweis – uploadSamples",
+  "partOf": "Danke! {n} Buchstaben helfen jetzt beim Training der Erkennung."
+ },
+ {
+  "id": "hochladen-hat-nicht-geklappt-danke-t-1gt0z",
+  "text": "Hochladen hat nicht geklappt. Danke trotzdem!",
+  "speaker": "erzaehler",
+  "where": "Hinweis – uploadSamples"
+ },
+ {
   "id": "diesen-spielstand-gibt-es-nicht-mehr-1a45o",
   "text": "Diesen Spielstand gibt es nicht mehr.",
   "speaker": "erzaehler",

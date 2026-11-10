@@ -1,8 +1,16 @@
-"""Download EMNIST byclass (Hugging Face mirror, SHA-256 pinned) and the OFL fonts.
+"""Download EMNIST byclass (Hugging Face mirror, SHA-256 pinned), the OFL fonts and the "numbers" digits.
 
 Usage: python tools/train/download_data.py
+
+numbers (github.com/kensanata/numbers by kensanata and contributors, CC0 1.0 / public domain, see its
+LICENSE.md; tested with commit fb1f8fb of 2020-06-27): handwritten digits of European writers (Swiss /
+German "1" with the up-stroke, "7" with the bar), which EMNIST (US) lacks. Only "Set 1" is fetched (the
+hand-collected folders <writer id>_<country><age decade><sex>/<digit>/*.png, 29 writers), via a sparse git
+checkout into data/raw/numbers/ (needs git): the repo is ~277 MB because of Set 2 (UNCATEGORIZED/, 800k
+automatically cut digits, often mislabelled or printed), which is not used.
 """
 import hashlib
+import subprocess
 import sys
 import urllib.request
 from pathlib import Path
@@ -11,6 +19,7 @@ from common import DATA, FONTS, FONT_LIST, GOOGLE_FONTS
 
 HF = "https://huggingface.co/datasets/Heliosoph/EMNIST/resolve/main/"
 NIST_ZIP = "https://biometrics.nist.gov/cs_links/EMNIST/gzip.zip"  # fallback, ~535 MB
+NUMBERS_GIT = "https://github.com/kensanata/numbers"
 
 EMNIST_FILES = {
     "emnist-byclass-train-images-idx3-ubyte.gz": "9e21987f03a6eb8b870187e785883ddad96947299587908f1a7ec2ca0f4be5f0",
@@ -46,6 +55,27 @@ def fetch(url: str, dest: Path) -> None:
     tmp.replace(dest)
 
 
+def numbers() -> bool:
+    """Sparse checkout of the numbers repo, Set 1 only (top level writer folders + licence/readme)."""
+    dest = DATA / "raw" / "numbers"
+    if dest.exists() and any(dest.glob("0*_*/*/*.png")):
+        print("ok   numbers (Set 1)")
+        return True
+    print(f"get  numbers (Set 1 of {NUMBERS_GIT}, sparse git checkout)")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if not (dest / ".git").exists():
+            subprocess.run(["git", "clone", "--filter=blob:none", "--no-checkout", "--depth", "1", NUMBERS_GIT, str(dest)], check=True)
+        subprocess.run(["git", "-C", str(dest), "sparse-checkout", "set", "--no-cone", "/0*_*/", "/LICENSE.md", "/README.md"], check=True)
+        subprocess.run(["git", "-C", str(dest), "checkout"], check=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(f"FAILED numbers: {e} (needs git on the PATH)")
+        return False
+    n = len(list(dest.glob("0*_*/*/*.png")))
+    print(f"     numbers: {n} digit images")
+    return n > 0
+
+
 def main() -> int:
     DATA.mkdir(parents=True, exist_ok=True)
     FONTS.mkdir(parents=True, exist_ok=True)
@@ -67,6 +97,7 @@ def main() -> int:
             continue
         print(f"get  {fname}")
         fetch(GOOGLE_FONTS + path, dest)
+    ok = numbers() and ok
     return 0 if ok else 1
 
 
